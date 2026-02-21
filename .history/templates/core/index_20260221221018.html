@@ -138,12 +138,15 @@
 
           <!-- Actions -->
           <div class="hidden lg:flex items-center gap-2.5">
+            <a href="#" class="btn-nav">
+              <svg data-feather="log-in" width="13" height="13"></svg>Login
+            </a>
             <a
-              href="{% url 'login_page' %}"
+              href="#cta"
               class="btn-red"
               style="padding: 0.5rem 1.2rem; font-size: 0.78rem"
             >
-              Login
+              Get Started
               <svg data-feather="arrow-right" width="13" height="13"></svg>
             </a>
           </div>
@@ -258,9 +261,11 @@
               margin-top: 6px;
             "
           >
-
+            <a href="#" class="btn-nav" style="flex: 1; justify-content: center"
+              >Login</a
+            >
             <a
-              href="{% url 'login_page' %}"
+              href="#cta"
               onclick="closeNav()"
               class="btn-red"
               style="flex: 1; justify-content: center; font-size: 0.78rem"
@@ -321,10 +326,7 @@
       <div class="hero-left">
         <div class="hero-tag">AI-Powered Banking Intelligence</div>
 
-        <h1>
-          Predict the Exit Before It
-          <span class="text-[#E8C97A]">Happens.</span>
-        </h1>
+        <h1>Predict the Exit Before It <em>Happens</em>.</h1>
 
         <p class="hero-desc">
           ML-powered churn detection that alerts your retention team 30 days
@@ -374,7 +376,7 @@
                 />
               </svg>
             </span>
-            Learn More
+            Learn
           </a>
         </div>
 
@@ -386,7 +388,7 @@
           </div>
           <div class="stat-divider"></div>
           <div class="stat-item">
-            <div class="stat-num">99<span clas="#f0a1a1">%</span></div>
+            <div class="stat-num">99<span>%</span></div>
             <div class="stat-label">Uptime SLA</div>
           </div>
           <div class="stat-divider"></div>
@@ -477,7 +479,7 @@
           </defs>
           <text>
             <textPath href="#circle-path">
-              Early Predictiion • Better Optimisation •&nbsp;
+              banking solution • your one stop •&nbsp;
             </textPath>
           </text>
         </svg>
@@ -502,8 +504,8 @@
       <!-- Users pill -->
       <div class="users-pill">
         <div>
-          <div class="users-num">50k</div>
-          <div class="users-label">Active Banks</div>
+          <div class="users-num">1.24M</div>
+          <div class="users-label">World Active<br />User</div>
         </div>
         <div class="users-avatars">
           <div class="u-av" style="background: #5a3a2a">NK</div>
@@ -532,7 +534,7 @@
               margin-bottom: 0.75rem;
             "
           >
-            Prevent Unexpected Churn
+            Three Steps to Zero Churn Surprises.
           </h2>
           <p
             class="sr d2"
@@ -1425,7 +1427,7 @@
           </div>
           <!-- Copy -->
           <div>
-            <div class="sr label" style="color: rgba(255, 255, 255, 0.84)">
+            <div class="sr label" style="color: rgba(255, 255, 255, 0.4)">
               Banking Intelligence
             </div>
             <h2
@@ -1439,8 +1441,10 @@
                 margin-bottom: 1rem;
               "
             >
-              Every Card Holder<br />Tells a Story,
-              <span style="color: #E8C97A">We Read It.</span>
+              Every Card Holder<br />Tells a Story.<br /><span
+                style="color: var(--red)"
+                >We Read It.</span
+              >
             </h2>
             <p
               class="sr d2"
@@ -1893,7 +1897,7 @@
         <h2
           class="sr d1"
           style="
-            font-size: clamp(2rem, 2vw, 3.5rem);
+            font-size: clamp(2rem, 5vw, 3.5rem);
             font-weight: 900;
             color: #fff;
             line-height: 1.07;
@@ -1901,8 +1905,9 @@
             margin-bottom: 1rem;
           "
         >
-          Stop Losing Customers You Could
-          <span style="color: #E8C97A">Have Kept.</span>
+          Stop Losing Customers<br /><span style="color: var(--red)"
+            >You Could Have Kept.</span
+          >
         </h2>
         <p
           class="sr d2"
@@ -2049,7 +2054,7 @@
               <span
                 style="
                   font-weight: 800;
-                  font-size: 1.1rem;
+                  font-size: 0.95rem;
                   color: #fff;
                   letter-spacing: -0.02em;
                 "

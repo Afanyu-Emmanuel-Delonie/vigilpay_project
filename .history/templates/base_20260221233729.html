@@ -46,14 +46,6 @@
       --stone:     #F6F4F1;
       --stone-mid: #E8E3DC;
       --white:     #ffffff;
-      --sidebar-w: 17rem;
-      --sidebar-collapsed-w: 4.5rem;
-      --topbar-h: 68px;
-    }
-
-    html, body {
-      height: 100%;
-      overflow-x: hidden;
     }
 
     body {
@@ -61,6 +53,7 @@
       background: var(--stone);
       color: var(--navy);
       -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
     }
 
     /* ── Scrollbar ─────────────────────────── */
@@ -70,129 +63,107 @@
     ::-webkit-scrollbar-thumb:hover { background: rgba(140,21,21,0.5); }
 
     /* ═══════════════════════════════════════
-       LAYOUT — the core fix
-       Sidebar is fixed; main content uses
-       a left padding/margin that matches the
-       sidebar width, so nothing overflows.
+       SIDEBAR
     ═══════════════════════════════════════ */
-
     #sidebar {
-      position: fixed;
-      left: 0; top: 0;
-      width: var(--sidebar-w);
-      height: 100vh;
       background: linear-gradient(180deg, #252422 0%, #1a1917 55%, #1e100f 100%);
-      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                  transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      z-index: 50;
-      overflow: hidden;
-    }
-
-    /* Collapsed desktop */
-    #sidebar.is-collapsed { width: var(--sidebar-collapsed-w); }
-
-    /* Mobile: hidden off-screen by default */
-    @media (max-width: 1023px) {
-      #sidebar { transform: translateX(-100%); width: var(--sidebar-w) !important; }
-      #sidebar.mobile-open { transform: translateX(0); }
+      position: relative;
     }
 
     /* Red glow + noise grain */
     #sidebar::before {
       content: '';
-      position: absolute; inset: 0;
+      position: absolute;
+      inset: 0;
       background:
         radial-gradient(ellipse 260px 400px at 100% 20%, rgba(140,21,21,0.28) 0%, transparent 60%),
         radial-gradient(ellipse 200px 300px at 0% 85%,  rgba(201,168,76,0.06) 0%, transparent 55%);
-      pointer-events: none; z-index: 0;
+      pointer-events: none;
+      z-index: 0;
     }
     #sidebar::after {
       content: '';
-      position: absolute; inset: 0;
+      position: absolute;
+      inset: 0;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-      pointer-events: none; z-index: 0;
+      pointer-events: none;
+      z-index: 0;
     }
 
-    /* ── Main wrapper ── */
-    #mainContent {
-      margin-left: var(--sidebar-w);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    #mainContent.sidebar-collapsed { margin-left: var(--sidebar-collapsed-w); }
+    /* Sidebar width transitions */
+    .sidebar-expanded  { width: 17rem; }
+    .sidebar-collapsed { width: 4.5rem; }
+    .sidebar-transition { transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+
+    /* Content margin transitions */
+    .content-expanded  { margin-left: 17rem; }
+    .content-collapsed { margin-left: 4.5rem; }
+    .content-transition { transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 
     @media (max-width: 1023px) {
-      #mainContent { margin-left: 0 !important; }
+      .content-expanded,
+      .content-collapsed { margin-left: 0 !important; }
     }
 
-    /* ─── Nav items ─────────────────────────── */
-    .nav-item { position: relative; }
-
+    /* Nav items */
     .nav-item a {
       display: flex;
       align-items: center;
       gap: 12px;
       padding: 10px 12px;
       border-radius: 10px;
-      color: rgba(255,255,255,0.45);       /* dim inactive */
+      color: rgba(255,255,255,0.55);
       font-size: 0.825rem;
       font-weight: 500;
       text-decoration: none;
-      transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+      transition: background 0.2s, color 0.2s;
       position: relative;
       white-space: nowrap;
     }
-
-    /* Hover — slightly brighter, subtle bg */
     .nav-item a:hover {
-      background: rgba(255,255,255,0.06);
-      color: rgba(255,255,255,0.78);
+      background: rgba(255,255,255,0.07);
+      color: rgba(255,255,255,0.9);
     }
-
-    /* Active — clearly selected */
     .nav-item a.active {
-      background: rgba(140,21,21,0.25);
-      color: #ffffff;
-      box-shadow: inset 0 0 0 1px rgba(140,21,21,0.4),
-                  0 4px 14px rgba(140,21,21,0.12);
+      background: rgba(140,21,21,0.22);
+      color: #fff;
+      box-shadow: inset 0 0 0 1px rgba(140,21,21,0.35);
     }
-
-    /* Active left accent bar */
     .nav-item a.active::before {
       content: '';
       position: absolute;
-      left: 0; top: 50%;
+      left: 0;
+      top: 50%;
       transform: translateY(-50%);
-      width: 3px; height: 60%;
+      width: 3px;
+      height: 60%;
       background: var(--red);
       border-radius: 0 3px 3px 0;
-      box-shadow: 0 0 10px var(--red-glow);
+      box-shadow: 0 0 8px var(--red-glow);
     }
-
     .nav-icon {
-      width: 18px; height: 18px;
+      width: 18px;
+      height: 18px;
       flex-shrink: 0;
-      opacity: 0.5;                        /* dim icons when inactive */
-      transition: opacity 0.18s ease;
+      opacity: 0.8;
     }
-    .nav-item a:hover .nav-icon  { opacity: 0.75; }
     .nav-item a.active .nav-icon { opacity: 1; }
 
-    .nav-item a .nav-text {
-      transition: width 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease;
-    }
+    /* Tooltip (collapsed mode) */
     .tooltip {
       position: absolute;
-      left: calc(100% + 14px); top: 50%;
+      left: calc(100% + 14px);
+      top: 50%;
       transform: translateY(-50%);
-      background: #1a1917;
+      background: var(--navy);
       color: rgba(255,255,255,0.9);
-      font-size: 0.72rem; font-weight: 600;
-      padding: 5px 10px; border-radius: 7px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 7px;
       white-space: nowrap;
-      opacity: 0; pointer-events: none;
+      opacity: 0;
+      pointer-events: none;
       transition: opacity 0.15s;
       border: 1px solid rgba(255,255,255,0.08);
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
@@ -200,114 +171,71 @@
     }
     .tooltip::before {
       content: '';
-      position: absolute; right: 100%; top: 50%;
+      position: absolute;
+      right: 100%;
+      top: 50%;
       transform: translateY(-50%);
       border: 5px solid transparent;
-      border-right-color: #1a1917;
+      border-right-color: var(--navy);
     }
-    /* Only show tooltip when sidebar is collapsed */
-    #sidebar.is-collapsed .nav-item:hover .tooltip { opacity: 1; }
-    #sidebar:not(.is-collapsed) .tooltip           { display: none; }
+    .nav-item:hover .tooltip { opacity: 1; }
+    .sidebar-expanded .tooltip { display: none; }
 
-    /* ─── Sidebar section label ── */
+    /* Sidebar section label */
     .sidebar-section-label {
-      font-size: 0.6rem; font-weight: 800;
-      letter-spacing: 0.12em; text-transform: uppercase;
+      font-size: 0.6rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
       color: rgba(255,255,255,0.2);
-      padding: 0 12px; margin-bottom: 6px;
-      white-space: nowrap; overflow: hidden;
-      transition: opacity 0.2s ease;
-    }
-
-    /* ── Collapsed state ── */
-
-    /* Nav link: center icon, remove gap */
-    #sidebar.is-collapsed .nav-item a {
-      justify-content: center;
-      padding: 10px;
-      gap: 0;
-    }
-
-    /* Nav text spans: collapse to zero width so icon truly centers */
-    #sidebar.is-collapsed .nav-item a .nav-text {
-      width: 0;
-      overflow: hidden;
-      opacity: 0;
-      pointer-events: none;
-      flex-shrink: 0;
+      padding: 0 12px;
+      margin-bottom: 6px;
       white-space: nowrap;
-    }
-
-    /* Section labels: fully hidden */
-    #sidebar.is-collapsed .sidebar-section-label {
-      opacity: 0;
-      pointer-events: none;
-      height: 0;
-      margin: 0;
       overflow: hidden;
     }
 
-    /* Footer: center avatar, collapse text + logout */
-    #sidebar.is-collapsed #sidebarFooterText,
-    #sidebar.is-collapsed #sidebarFooterLogout {
-      width: 0;
-      overflow: hidden;
-      opacity: 0;
-      pointer-events: none;
-      flex-shrink: 0;
+    /* Text fade */
+    .nav-text, .sidebar-section-label {
+      transition: opacity 0.25s ease;
     }
-
-    /* Icon stays full size and centered */
-    #sidebar.is-collapsed .nav-icon {
-      flex-shrink: 0;
-    }
-
-    /* ─── Toggle btn ── */
-    .toggle-btn {
-      width: 30px; height: 30px;
-      display: flex; align-items: center; justify-content: center;
-      background: rgba(255,255,255,0.07);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 8px; cursor: pointer;
-      color: rgba(255,255,255,0.5);
-      transition: background 0.2s, color 0.2s;
-      flex-shrink: 0;
-    }
-    .toggle-btn:hover { background: rgba(255,255,255,0.13); color: #fff; }
 
     /* ═══════════════════════════════════════
        HEADER
     ═══════════════════════════════════════ */
     #topbar {
-      position: sticky; top: 0; z-index: 30;
-      background: rgba(246,244,241,0.92);
+      background: rgba(246,244,241,0.88);
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
       border-bottom: 1px solid var(--stone-mid);
       transition: box-shadow 0.3s;
-      width: 100%;                         /* fills whatever space mainContent gives */
     }
-    #topbar.scrolled { box-shadow: 0 2px 20px rgba(0,0,0,0.07); }
+    #topbar.scrolled { box-shadow: 0 2px 20px rgba(0,0,0,0.06); }
 
-    /* Search */
+    /* Search input */
     .search-input {
-      background: var(--stone); border: 1.5px solid var(--stone-mid);
-      border-radius: 9px; font-family: "Poppins", sans-serif;
-      font-size: 0.8rem; color: var(--navy); outline: none;
+      background: var(--stone);
+      border: 1.5px solid var(--stone-mid);
+      border-radius: 9px;
+      font-family: "Poppins", sans-serif;
+      font-size: 0.8rem;
+      color: var(--navy);
       transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+      outline: none;
     }
     .search-input:focus {
-      border-color: var(--red); background: white;
+      border-color: var(--red);
+      background: white;
       box-shadow: 0 0 0 3px rgba(140,21,21,0.08);
     }
     .search-input::placeholder { color: #bbb; }
 
-    /* Icon buttons */
+    /* Icon buttons in header */
     .hbtn {
       width: 36px; height: 36px;
       display: flex; align-items: center; justify-content: center;
-      border-radius: 9px; border: none; background: transparent;
-      cursor: pointer; color: #888;
+      border-radius: 9px;
+      border: none; background: transparent; cursor: pointer;
+      color: #777;
       transition: background 0.2s, color 0.2s;
     }
     .hbtn:hover { background: var(--stone-mid); color: var(--navy); }
@@ -316,10 +244,13 @@
     .user-avatar {
       width: 36px; height: 36px;
       background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
-      border-radius: 9px; display: flex; align-items: center;
-      justify-content: center; font-weight: 800; font-size: 0.78rem;
-      color: #fff; border: 2px solid var(--stone-mid); flex-shrink: 0;
-      cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s;
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 0.78rem; color: #fff;
+      border: 2px solid var(--stone-mid);
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
     .user-avatar:hover {
       border-color: var(--red);
@@ -328,19 +259,23 @@
 
     /* Dropdown */
     #userDropdown {
-      position: absolute; right: 0; top: calc(100% + 10px);
-      width: 210px; background: white;
-      border: 1px solid var(--stone-mid); border-radius: 14px;
+      position: absolute;
+      right: 0; top: calc(100% + 10px);
+      width: 210px;
+      background: white;
+      border: 1px solid var(--stone-mid);
+      border-radius: 14px;
       box-shadow: 0 16px 40px rgba(0,0,0,0.1);
-      overflow: hidden; z-index: 60;
+      overflow: hidden;
+      z-index: 60;
     }
     .dropdown-item {
       display: flex; align-items: center; gap: 10px;
-      padding: 10px 16px; font-size: 0.8rem; font-weight: 500;
+      padding: 10px 16px;
+      font-size: 0.8rem; font-weight: 500;
       color: #555; text-decoration: none;
       transition: background 0.15s, color 0.15s;
-      cursor: pointer; border: none; background: none;
-      width: 100%; text-align: left;
+      cursor: pointer; border: none; background: none; width: 100%; text-align: left;
     }
     .dropdown-item:hover { background: var(--stone); color: var(--navy); }
     .dropdown-item.danger { color: var(--red); }
@@ -350,34 +285,49 @@
     /* ═══════════════════════════════════════
        MAIN CONTENT
     ═══════════════════════════════════════ */
-    main { padding: 1.75rem 2rem; flex: 1; }
+    main { padding: 1.75rem 2rem; }
 
-    @media (max-width: 640px) { main { padding: 1.25rem; } }
-
-    /* Alerts */
+    /* Alert messages */
     .alert {
       display: flex; align-items: flex-start; gap: 10px;
       padding: 12px 16px; border-radius: 10px;
-      font-size: 0.82rem; font-weight: 500; margin-bottom: 16px;
+      font-size: 0.82rem; font-weight: 500;
+      margin-bottom: 16px;
     }
     .alert-error   { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
     .alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
     .alert-info    { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
 
+    /* Toggle btn */
+    .toggle-btn {
+      width: 30px; height: 30px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      cursor: pointer; color: rgba(255,255,255,0.6);
+      transition: background 0.2s, color 0.2s;
+      flex-shrink: 0;
+    }
+    .toggle-btn:hover { background: rgba(255,255,255,0.14); color: #fff; }
+
     /* Notification dot */
     .notif-dot {
-      position: absolute; top: 6px; right: 6px;
+      position: absolute;
+      top: 6px; right: 6px;
       width: 7px; height: 7px;
-      background: var(--red); border-radius: 50%;
+      background: var(--red);
+      border-radius: 50%;
       border: 2px solid var(--stone);
     }
 
     /* Mobile overlay */
     #mobileOverlay {
       position: fixed; inset: 0;
-      background: rgba(0,0,0,0.45);
+      background: rgba(0,0,0,0.4);
       backdrop-filter: blur(4px);
-      z-index: 40; opacity: 0; pointer-events: none;
+      z-index: 40;
+      opacity: 0; pointer-events: none;
       transition: opacity 0.3s;
     }
     #mobileOverlay.visible { opacity: 1; pointer-events: all; }
@@ -387,6 +337,10 @@
       50%      { opacity: 0.5; transform: scale(1.5); }
     }
     .pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
+
+    @media (max-width: 640px) {
+      main { padding: 1.25rem; }
+    }
   </style>
 
   {% block extra_head %}{% endblock %}
@@ -399,11 +353,13 @@
 <!-- ═══════════════════════════════════════════
      SIDEBAR
 ═══════════════════════════════════════════ -->
-<aside id="sidebar">
+<aside id="sidebar" class="fixed left-0 top-0 h-full sidebar-expanded sidebar-transition z-50 transform -translate-x-full lg:translate-x-0">
+
+  <!-- All sidebar content sits above pseudo-elements -->
   <div class="relative z-10 flex flex-col h-full">
 
     <!-- Logo -->
-    <div class="flex items-center justify-between px-4 border-b border-white/[0.07] flex-shrink-0" style="height:var(--topbar-h)">
+    <div class="flex items-center justify-between px-4 h-[68px] border-b border-white/[0.07] flex-shrink-0">
       <a href="/" class="flex items-center gap-2.5 min-w-0">
         <div style="width:32px;height:32px;background:var(--red);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 16px var(--red-glow)">
           <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
@@ -411,13 +367,13 @@
             <circle cx="10" cy="10" r="2.4" fill="white"/>
           </svg>
         </div>
-        <span class="nav-text font-bold text-white" style="font-size:1rem;letter-spacing:-0.02em;transition:opacity 0.2s">
+        <span id="sidebarTitle" class="nav-text font-bold text-white" style="font-size:1rem;letter-spacing:-0.02em">
           Vigil<span style="color:var(--red)">Pay</span>
         </span>
       </a>
 
       <!-- Desktop collapse toggle -->
-      <button id="toggleSidebar" class="toggle-btn hidden lg:flex ml-2 flex-shrink-0">
+      <button id="toggleSidebar" class="toggle-btn hidden lg:flex ml-auto">
         <svg id="toggleIcon" width="14" height="14" viewBox="0 0 14 14" fill="none" style="transition:transform 0.3s">
           <path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -432,47 +388,47 @@
     </div>
 
     <!-- Navigation -->
-    <nav class="flex-1 overflow-y-auto overflow-x-hidden px-3 py-5 space-y-6">
+    <nav class="flex-1 overflow-y-auto px-3 py-5 space-y-6">
 
       <!-- Main -->
       <div>
-        <div class="sidebar-section-label mb-2">Main</div>
+        <div class="sidebar-section-label nav-text mb-2">Main</div>
         <ul class="space-y-0.5">
 
-          <li class="nav-item">
-            <a href="{% url 'dashboard_page' %}" data-navkey="overview">
+          <li class="nav-item relative">
+            <a href="{% url 'dashboard_page' %}">
               <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 13a1 1 0 011-1h4a1 1 0 011 1v6a1 1 0 01-1 1h-4a1 1 0 01-1-1v-6z"/></svg>
               <span class="nav-text">Overview</span>
               <span class="tooltip">Overview</span>
             </a>
           </li>
 
-          <li class="nav-item">
-            <a href="{% url 'dashboard_page' %}" data-navkey="risk">
+          <li class="nav-item relative">
+            <a href="{% url 'dashboard_page' %}">
               <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
               <span class="nav-text">Risk Tracker</span>
               <span class="tooltip">Risk Tracker</span>
             </a>
           </li>
 
-          <li class="nav-item">
-            <a href="{% url 'dashboard_page' %}" data-navkey="insights">
+          <li class="nav-item relative">
+            <a href="{% url 'dashboard_page' %}">
               <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
               <span class="nav-text">Insights</span>
               <span class="tooltip">Insights</span>
             </a>
           </li>
 
-          <li class="nav-item">
-            <a href="{% url 'dashboard_page' %}" data-navkey="customers">
+          <li class="nav-item relative">
+            <a href="{% url 'dashboard_page' %}">
               <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
               <span class="nav-text">Customers</span>
               <span class="tooltip">Customers</span>
             </a>
           </li>
 
-          <li class="nav-item">
-            <a href="{% url 'dashboard_page' %}" data-navkey="cards">
+          <li class="nav-item relative">
+            <a href="{% url 'dashboard_page' %}">
               <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
               <span class="nav-text">Cards</span>
               <span class="tooltip">Cards</span>
@@ -484,19 +440,19 @@
 
       <!-- Data -->
       <div>
-        <div class="sidebar-section-label mb-2">Data</div>
+        <div class="sidebar-section-label nav-text mb-2">Data</div>
         <ul class="space-y-0.5">
 
-          <li class="nav-item">
-            <a href="{% url 'dashboard_page' %}" data-navkey="data">
+          <li class="nav-item relative">
+            <a href="{% url 'dashboard_page' %}">
               <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg>
               <span class="nav-text">Data Management</span>
               <span class="tooltip">Data Management</span>
             </a>
           </li>
 
-          <li class="nav-item">
-            <a href="{% url 'dashboard_page' %}" data-navkey="reports">
+          <li class="nav-item relative">
+            <a href="{% url 'dashboard_page' %}">
               <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
               <span class="nav-text">Reports</span>
               <span class="tooltip">Reports</span>
@@ -510,17 +466,17 @@
 
     <!-- User footer -->
     <div class="flex-shrink-0 border-t border-white/[0.07] px-3 py-4">
-      <div class="flex items-center gap-3" style="min-width:0">
+      <div class="flex items-center gap-3">
         <div style="width:34px;height:34px;background:linear-gradient(135deg,var(--red) 0%,var(--red-dark) 100%);border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.72rem;color:#fff;flex-shrink:0">
           {% if user.is_authenticated %}{{ user.first_name.0|default:user.username.0|upper }}{% else %}G{% endif %}
         </div>
-        <div id="sidebarFooterText" style="min-width:0;flex:1;overflow:hidden;white-space:nowrap;transition:width 0.3s,opacity 0.2s">
-          <p style="font-size:0.78rem;font-weight:700;color:rgba(255,255,255,0.85);overflow:hidden;text-overflow:ellipsis">
+        <div class="nav-text min-w-0 flex-1 overflow-hidden">
+          <p style="font-size:0.78rem;font-weight:700;color:rgba(255,255,255,0.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
             {% if user.is_authenticated %}{{ user.get_full_name|default:user.username }}{% else %}Guest{% endif %}
           </p>
-          <p style="font-size:0.65rem;color:rgba(255,255,255,0.35)">Administrator</p>
+          <p style="font-size:0.65rem;color:rgba(255,255,255,0.35);white-space:nowrap">Administrator</p>
         </div>
-        <a id="sidebarFooterLogout" href="{% url 'landing' %}" class="toggle-btn flex-shrink-0" title="Logout" style="color:rgba(255,255,255,0.4);transition:width 0.3s,opacity 0.2s">
+        <a href="{% url 'landing' %}" class="nav-text toggle-btn flex-shrink-0" title="Logout" style="color:rgba(255,255,255,0.4)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke="currentColor"/></svg>
         </a>
       </div>
@@ -530,24 +486,24 @@
 </aside>
 
 <!-- ═══════════════════════════════════════════
-     MAIN CONTENT WRAPPER
+     MAIN CONTENT
 ═══════════════════════════════════════════ -->
-<div id="mainContent">
+<div id="mainContent" class="content-expanded content-transition min-h-screen flex flex-col">
 
   <!-- Top Bar -->
-  <header id="topbar">
-    <div class="flex items-center justify-between px-5 lg:px-7 gap-4" style="height:var(--topbar-h)">
+  <header id="topbar" class="sticky top-0 z-30">
+    <div class="flex items-center justify-between h-[68px] px-5 lg:px-7 gap-4">
 
       <!-- Left -->
       <div class="flex items-center gap-3 flex-1 min-w-0">
         <!-- Mobile menu button -->
-        <button id="openSidebar" class="hbtn lg:hidden flex-shrink-0">
+        <button id="openSidebar" class="hbtn lg:hidden">
           <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 6h16M4 12h16M4 18h16"/></svg>
         </button>
 
-        <!-- Page title -->
+        <!-- Page title (set per-page via block) -->
         <div class="min-w-0">
-          <h1 style="font-family:'Playfair Display',serif;font-weight:900;font-size:clamp(1.05rem,2vw,1.35rem);color:var(--navy);letter-spacing:-0.02em;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          <h1 style="font-family:'Playfair Display',serif;font-weight:900;font-size:clamp(1.1rem,2vw,1.35rem);color:var(--navy);letter-spacing:-0.02em;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
             {% block page_title %}Dashboard{% endblock %}
           </h1>
           <p style="font-size:0.7rem;color:#aaa;font-weight:500;margin-top:1px">{% now "l, F j, Y" %}</p>
@@ -621,9 +577,11 @@
   </header>
 
   <!-- Page Content -->
-  <main>
+  <main class="flex-1">
+
+    <!-- Django messages -->
     {% if messages %}
-    <div style="margin-bottom:1.5rem">
+    <div style="padding:0 2rem;padding-top:1.5rem">
       {% for message in messages %}
       <div class="alert {% if message.tags == 'error' %}alert-error{% elif message.tags == 'success' %}alert-success{% else %}alert-info{% endif %}">
         <svg width="15" height="15" fill="currentColor" viewBox="0 0 20 20" style="flex-shrink:0;margin-top:1px">
@@ -654,99 +612,72 @@
   const openBtn     = document.getElementById('openSidebar');
   const closeBtn    = document.getElementById('closeSidebar');
 
-  /* ── Collapse state ─────────────────────── */
+  const navTexts    = document.querySelectorAll('.nav-text');
+  const sidebarTitle= document.getElementById('sidebarTitle');
+
   let collapsed = localStorage.getItem('vpSidebarCollapsed') === 'true';
 
-  function applyCollapsed(animate) {
+  // Apply saved state silently on load (desktop)
+  if (collapsed && window.innerWidth >= 1024) applySidebarState(false);
+
+  function applySidebarState(animate = true) {
     if (collapsed) {
-      sidebar.classList.add('is-collapsed');
-      mainContent.classList.add('sidebar-collapsed');
+      sidebar.classList.replace('sidebar-expanded', 'sidebar-collapsed');
+      mainContent.classList.replace('content-expanded', 'content-collapsed');
       toggleIcon.style.transform = 'rotate(180deg)';
+      navTexts.forEach(el => {
+        if (animate) { el.style.opacity = '0'; setTimeout(() => el.style.display = 'none', 220); }
+        else { el.style.display = 'none'; el.style.opacity = '0'; }
+      });
     } else {
-      sidebar.classList.remove('is-collapsed');
-      mainContent.classList.remove('sidebar-collapsed');
+      sidebar.classList.replace('sidebar-collapsed', 'sidebar-expanded');
+      mainContent.classList.replace('content-collapsed', 'content-expanded');
       toggleIcon.style.transform = 'rotate(0deg)';
+      setTimeout(() => {
+        navTexts.forEach(el => {
+          el.style.display = 'block';
+          setTimeout(() => el.style.opacity = '1', animate ? 10 : 0);
+        });
+      }, animate ? 120 : 0);
     }
     localStorage.setItem('vpSidebarCollapsed', collapsed);
   }
 
-  // Apply on load (no animation)
-  if (window.innerWidth >= 1024) applyCollapsed(false);
-
   toggleBtn?.addEventListener('click', () => {
     collapsed = !collapsed;
-    applyCollapsed(true);
+    applySidebarState(true);
   });
 
-  /* ── Mobile sidebar ─────────────────────── */
-  function openMobile()  {
-    sidebar.classList.add('mobile-open');
-    overlay.classList.add('visible');
-    document.body.style.overflow = 'hidden';
-  }
-  function closeMobile() {
-    sidebar.classList.remove('mobile-open');
-    overlay.classList.remove('visible');
-    document.body.style.overflow = '';
-  }
-
+  // Mobile
+  function openMobile()  { sidebar.classList.remove('-translate-x-full'); overlay.classList.add('visible'); document.body.style.overflow = 'hidden'; }
+  function closeMobile() { sidebar.classList.add('-translate-x-full');    overlay.classList.remove('visible'); document.body.style.overflow = ''; }
   openBtn?.addEventListener('click', openMobile);
   closeBtn?.addEventListener('click', closeMobile);
   overlay?.addEventListener('click', closeMobile);
-  sidebar.querySelectorAll('a').forEach(a => {
-    a.addEventListener('click', () => { if (window.innerWidth < 1024) closeMobile(); });
+
+  // Close on nav link click (mobile)
+  sidebar.querySelectorAll('a').forEach(a => a.addEventListener('click', () => { if (window.innerWidth < 1024) closeMobile(); }));
+
+  // Resize handler
+  window.addEventListener('resize', () => {
+    if (window.innerWidth >= 1024) { closeMobile(); applySidebarState(false); }
+  }, { passive: true });
+
+  // Active nav link
+  const currentPath = window.location.pathname;
+  sidebar.querySelectorAll('.nav-item a').forEach(link => {
+    if (link.getAttribute('href') === currentPath) link.classList.add('active');
   });
 
-  window.addEventListener('resize', () => {
-    if (window.innerWidth >= 1024) {
-      closeMobile();
-      applyCollapsed(false);
-    }
-  }, { passive: true });
-
-  /* ── Active nav highlight ───────────────────
-     Strategy: match by URL path first.
-     If multiple links share the same path (as
-     in this template), also check a
-     data-active-key attribute set by child
-     templates, or default to the first match.
-  ─────────────────────────────────────────── */
-  const currentPath   = window.location.pathname;
-  // Child templates can set: <meta name="active-nav" content="risk">
-  const activeKeyMeta = document.querySelector('meta[name="active-nav"]');
-  const activeKey     = activeKeyMeta ? activeKeyMeta.getAttribute('content') : null;
-
-  const navLinks = sidebar.querySelectorAll('.nav-item a');
-
-  if (activeKey) {
-    // Explicit key match (most reliable)
-    navLinks.forEach(link => {
-      if (link.dataset.navkey === activeKey) link.classList.add('active');
-    });
-  } else {
-    // Fallback: path match — highlight first exact match
-    let matched = false;
-    navLinks.forEach(link => {
-      if (!matched && link.getAttribute('href') === currentPath) {
-        link.classList.add('active');
-        matched = true;
-      }
-    });
-    // If still no match, highlight first link as default
-    if (!matched && navLinks.length) navLinks[0].classList.add('active');
-  }
-
-  /* ── Topbar scroll shadow ───────────────── */
+  // Topbar scroll shadow
   const topbar = document.getElementById('topbar');
-  window.addEventListener('scroll', () => {
-    topbar.classList.toggle('scrolled', window.scrollY > 10);
-  }, { passive: true });
+  window.addEventListener('scroll', () => topbar.classList.toggle('scrolled', window.scrollY > 10), { passive: true });
 
-  /* ── User dropdown ──────────────────────── */
+  // User dropdown
   const userBtn      = document.getElementById('userMenuButton');
   const userDropdown = document.getElementById('userDropdown');
   userBtn?.addEventListener('click', e => { e.stopPropagation(); userDropdown.classList.toggle('hidden'); });
-  document.addEventListener('click', () => userDropdown?.classList.add('hidden'));
+  document.addEventListener('click', e => { if (!userBtn?.contains(e.target)) userDropdown?.classList.add('hidden'); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') userDropdown?.classList.add('hidden'); });
 </script>
 

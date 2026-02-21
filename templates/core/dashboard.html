@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}VigilPay Dashboard{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <section>
+    <h2 class="text-2xl font-bold text-gray-900">Dashboard Overview</h2>
+    <p class="text-sm text-gray-500 mt-1">
+      Demo data preview for the VigilPay dashboard layout.
+    </p>
+  </section>
+
+  <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+    {% for metric in metrics %}
+    <div class="bg-white rounded-xl border border-surface-200 shadow-soft p-5 card-hover">
+      <p class="text-xs uppercase tracking-wide text-gray-500">{{ metric.label }}</p>
+      <p class="text-2xl font-bold text-gray-900 mt-2">{{ metric.value }}</p>
+      <p class="text-xs text-emerald-600 mt-2">{{ metric.trend }} this week</p>
+    </div>
+    {% endfor %}
+  </section>
+
+  <section class="bg-white rounded-xl border border-surface-200 shadow-soft overflow-hidden">
+    <div class="px-5 py-4 border-b border-surface-200 flex items-center justify-between">
+      <h3 class="text-sm font-semibold text-gray-900">Recent Risk Alerts</h3>
+      <span class="text-xs text-gray-500">Last updated just now</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-surface-50">
+          <tr class="text-left text-gray-600">
+            <th class="px-5 py-3 font-medium">Bank</th>
+            <th class="px-5 py-3 font-medium">Segment</th>
+            <th class="px-5 py-3 font-medium">Risk Score</th>
+            <th class="px-5 py-3 font-medium">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for alert in alerts %}
+          <tr class="border-t border-surface-100">
+            <td class="px-5 py-3.5 text-gray-900">{{ alert.bank }}</td>
+            <td class="px-5 py-3.5 text-gray-700">{{ alert.segment }}</td>
+            <td class="px-5 py-3.5 text-gray-700">{{ alert.risk_score }}</td>
+            <td class="px-5 py-3.5">
+              <span
+                class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium {% if alert.status == 'High' %}bg-red-100 text-red-700{% elif alert.status == 'Medium' %}bg-amber-100 text-amber-700{% else %}bg-emerald-100 text-emerald-700{% endif %}"
+              >
+                {{ alert.status }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}

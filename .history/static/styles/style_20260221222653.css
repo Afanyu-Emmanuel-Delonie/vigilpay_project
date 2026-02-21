@@ -410,7 +410,7 @@ body {
   min-height: calc(100vh - 68px);
   margin-top: 68px;
   padding: 0 5%;
-  gap: clamp(1rem, 2.2vw, 3rem);
+  gap: 0;
   overflow: hidden;
   background:
     radial-gradient(ellipse 900px 700px at 75% 40%, rgba(140, 21, 21, 0.18) 0%, transparent 60%),
@@ -447,7 +447,7 @@ body {
   position: relative;
   z-index: 2;
   padding: 5rem 0;
-  max-width: 620px;
+  max-width: 580px;
 }
 
 .hero-tag {
@@ -556,7 +556,7 @@ body {
   align-items: center;
   justify-content: center;
   height: 100%;
-  min-height: clamp(470px, 58vh, 620px);
+  min-height: 600px;
   opacity: 0;
   animation: fadeIn 0.9s 0.55s forwards;
 }
@@ -590,8 +590,8 @@ body {
   animation: float 6s ease-in-out infinite;
 }
 .img-placeholder {
-  width: min(100%, 560px);
-  height: min(380px, 62vh);
+  width: 480px;
+  height: 380px;
   position: relative;
   z-index: 2;
   display: flex;
@@ -601,25 +601,17 @@ body {
 }
 
 /* ── CSS Credit Card Stack ─────────────────── */
-.cards-stack {
-  --stack-w: clamp(280px, 30vw, 360px);
-  --stack-h: calc(var(--stack-w) * 0.618);
-  --card-w: calc(var(--stack-w) * 0.912);
-  --card-h: calc(var(--stack-w) * 0.553);
-  position: relative;
-  width: var(--stack-w);
-  height: var(--stack-h);
-}
+.cards-stack { position: relative; width: 340px; height: 210px; }
 .cc {
   position: absolute;
-  width: var(--card-w);
-  height: var(--card-h);
+  width: 310px;
+  height: 188px;
   border-radius: 18px;
-  padding: clamp(14px, 1.35vw, 20px) clamp(16px, 1.7vw, 24px);
+  padding: 20px 24px;
 }
 .cc-back {
-  top: calc(var(--stack-h) * 0.133);
-  left: calc(var(--stack-w) * 0.071);
+  top: 28px;
+  left: 24px;
   transform: rotate(-8deg);
   background: linear-gradient(135deg, #3d0a0a 0%, var(--red) 80%);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -627,8 +619,8 @@ body {
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
 }
 .cc-mid {
-  top: calc(var(--stack-h) * 0.067);
-  left: calc(var(--stack-w) * 0.035);
+  top: 14px;
+  left: 12px;
   transform: rotate(-3.5deg);
   background: linear-gradient(135deg, #2e2b28 0%, #3a3330 100%);
   border: 1px solid rgba(255, 255, 255, 0.07);
@@ -697,7 +689,7 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr auto auto;
   align-items: center;
-  gap: clamp(1rem, 2.2vw, 3rem);
+  gap: 0;
   padding: 0 5%;
   background: var(--navy-dark);
   backdrop-filter: blur(12px);
@@ -713,7 +705,7 @@ body {
 .strip-item:last-child { border-right: none; padding-right: 0; margin-right: 0; }
 .strip-num   { font-size: 1.5rem; font-weight: 700; color: #f0a1a1; letter-spacing: 0.06em; margin-bottom: 4px; }
 .strip-title { font-weight: 700; font-size: 0.82rem; color: var(--white); margin-bottom: 3px; }
-.strip-desc  { font-size: 0.92rem; color: rgba(255, 255, 255, 0.38); line-height: 1.5; max-width: 220px; }
+.strip-desc  { font-size: 0.72rem; color: rgba(255, 255, 255, 0.38); line-height: 1.5; max-width: 220px; }
 
 /* Spinning badge */
 .badge-circle {
@@ -755,14 +747,14 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: rgba(201, 76, 76, 0.1);
+  background: rgba(201, 168, 76, 0.1);
   border: 1px solid rgba(201, 168, 76, 0.2);
   border-radius: 14px;
   padding: 12px 18px;
   flex-shrink: 0;
   margin: 1.5rem 0;
 }
-.users-num     { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 1.5rem; color: #f0a1a1; line-height: 1; }
+.users-num     { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 1.5rem; color: var(--gold-light); line-height: 1; }
 .users-label   { font-size: 0.65rem; color: rgba(255, 255, 255, 0.42); font-weight: 500; line-height: 1.4; }
 .users-avatars { display: flex; }
 .u-av {
@@ -809,42 +801,8 @@ body {
   .users-pill   { margin: 1rem auto; }
 }
 
-
-@media (min-width: 1025px) and (max-width: 1366px) {
-  .hero {
-    padding: 0 4%;
-    gap: 1.25rem;
-  }
-  .hero-left {
-    max-width: 520px;
-    padding: 3rem 0;
-  }
-  .hero h1 {
-    font-size: clamp(2.2rem, 3.8vw, 3.2rem);
-  }
-  .hero-desc {
-    max-width: 390px;
-  }
-  .cards-stack {
-    --stack-w: clamp(250px, 24vw, 320px);
-  }
-}
-
-@media (min-width: 1600px) {
-  .hero {
-    padding: 0 8%;
-  }
-  .hero-left {
-    max-width: 660px;
-  }
-  .cards-stack {
-    --stack-w: clamp(340px, 22vw, 420px);
-  }
-}
 @media (max-width: 640px) {
-  .cards-stack { --stack-w: min(82vw, 320px); }
+  .cards-stack    { transform: scale(0.86); transform-origin: center; }
   .hero-btns      { flex-wrap: wrap; }
-  .img-placeholder { width: 100%; height: auto; }
+  .img-placeholder { width: 100%; }
 }
-
-
