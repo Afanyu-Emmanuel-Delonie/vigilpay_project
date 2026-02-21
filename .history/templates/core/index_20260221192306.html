@@ -1,0 +1,3973 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VigilPay — Predict the Exit Before it Happens</title>
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Fonts: Instrument Serif (display) + Figtree (body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Figtree:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Feather Icons (actual SVG icon set — lightweight, clean) -->
+    <script src="https://unpkg.com/feather-icons@4.29.0/dist/feather.min.js"></script>
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              red: {
+                DEFAULT: "#8C1515",
+                light: "#B01E1E",
+                dark: "#6A0F0F",
+                muted: "#F5E6E6",
+              },
+              navy: {
+                DEFAULT: "#002147",
+                light: "#003166",
+                dark: "#001530",
+                ghost: "#F0F4FA",
+              },
+              stone: { DEFAULT: "#F7F5F2", mid: "#EAE6E0", deep: "#C8C0B4" },
+            },
+            fontFamily: {
+              serif: ["Instrument Serif", "Georgia", "serif"],
+              sans: ["Figtree", "system-ui", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      /* ─── Base ─────────────────────────────────────────────── */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        font-family: "Figtree", system-ui, sans-serif;
+        background: #f7f5f2;
+        color: #0d1520;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* ─── CSS Variables ─────────────────────────────────────── */
+      :root {
+        --red: #8c1515;
+        --red-light: #b01e1e;
+        --red-dark: #6a0f0f;
+        --red-muted: #f5e6e6;
+        --navy: #002147;
+        --navy-light: #003166;
+        --navy-dark: #001530;
+        --stone: #f7f5f2;
+        --stone-mid: #eae6e0;
+        --stone-deep: #c8c0b4;
+        --white: #ffffff;
+      }
+
+      /* ─── Scrollbar ─────────────────────────────────────────── */
+      ::-webkit-scrollbar {
+        width: 5px;
+      }
+      ::-webkit-scrollbar-track {
+        background: var(--stone);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--red);
+        border-radius: 99px;
+      }
+
+      /* ─── Navbar ────────────────────────────────────────────── */
+      #navbar {
+        background: rgba(247, 245, 242, 0.88);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        border-bottom: 1px solid transparent;
+        transition:
+          border-color 0.3s,
+          box-shadow 0.3s;
+      }
+      #navbar.scrolled {
+        border-color: rgba(140, 21, 21, 0.1);
+        box-shadow: 0 2px 24px rgba(0, 33, 71, 0.07);
+      }
+
+      /* ─── Buttons ────────────────────────────────────────────── */
+      .btn-red {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--red);
+        color: #fff;
+        font-weight: 600;
+        font-size: 0.875rem;
+        padding: 0.75rem 1.75rem;
+        border-radius: 8px;
+        border: 2px solid var(--red);
+        transition:
+          background 0.2s,
+          transform 0.18s,
+          box-shadow 0.2s;
+        cursor: pointer;
+        text-decoration: none;
+      }
+      .btn-red:hover {
+        background: var(--red-dark);
+        border-color: var(--red-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 8px 24px rgba(140, 21, 21, 0.28);
+      }
+      .btn-outline {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: transparent;
+        color: var(--red);
+        font-weight: 600;
+        font-size: 0.875rem;
+        padding: 0.75rem 1.75rem;
+        border-radius: 8px;
+        border: 2px solid var(--red);
+        transition:
+          background 0.2s,
+          color 0.2s,
+          transform 0.18s;
+        cursor: pointer;
+        text-decoration: none;
+      }
+      .btn-outline:hover {
+        background: var(--red);
+        color: #fff;
+        transform: translateY(-1px);
+      }
+      .btn-outline-navy {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: transparent;
+        color: rgba(255, 255, 255, 0.75);
+        font-weight: 600;
+        font-size: 0.875rem;
+        padding: 0.75rem 1.75rem;
+        border-radius: 8px;
+        border: 2px solid rgba(255, 255, 255, 0.25);
+        transition:
+          background 0.2s,
+          color 0.2s,
+          border-color 0.2s,
+          transform 0.18s;
+        cursor: pointer;
+        text-decoration: none;
+      }
+      .btn-outline-navy:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: translateY(-1px);
+      }
+
+      /* ─── Nav login (small outline) ──────────────────────────── */
+      .btn-nav-login {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--red);
+        font-weight: 600;
+        font-size: 0.8125rem;
+        padding: 0.5rem 1.125rem;
+        border-radius: 7px;
+        border: 1.5px solid var(--red);
+        transition:
+          background 0.2s,
+          color 0.2s;
+        cursor: pointer;
+        text-decoration: none;
+      }
+      .btn-nav-login:hover {
+        background: var(--red);
+        color: #fff;
+      }
+
+      /* ─── Section label ──────────────────────────────────────── */
+      .section-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--red);
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        margin-bottom: 1rem;
+      }
+      .section-label::before {
+        content: "";
+        display: block;
+        width: 20px;
+        height: 2px;
+        background: var(--red);
+        border-radius: 2px;
+      }
+
+      /* ─── Cards ──────────────────────────────────────────────── */
+      .card {
+        background: #fff;
+        border: 1px solid var(--stone-mid);
+        border-radius: 16px;
+        transition:
+          transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+          box-shadow 0.28s ease,
+          border-color 0.28s;
+      }
+      .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 48px rgba(0, 33, 71, 0.09);
+        border-color: rgba(140, 21, 21, 0.18);
+      }
+
+      /* ─── Icon box ───────────────────────────────────────────── */
+      .icon-box {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: var(--red-muted);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .icon-box svg {
+        color: var(--red);
+        stroke: var(--red);
+      }
+
+      /* ─── Dashboard mockup ───────────────────────────────────── */
+      .mockup-shell {
+        background: #fff;
+        border: 1px solid var(--stone-mid);
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow:
+          0 32px 80px rgba(0, 33, 71, 0.14),
+          0 4px 16px rgba(0, 33, 71, 0.06);
+      }
+      .mockup-titlebar {
+        background: var(--navy);
+        height: 42px;
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        gap: 8px;
+      }
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+      }
+
+      /* ─── Risk meter arc ─────────────────────────────────────── */
+      .risk-arc-track {
+        fill: none;
+        stroke: #eae6e0;
+        stroke-width: 12;
+        stroke-linecap: round;
+      }
+      .risk-arc-fill {
+        fill: none;
+        stroke: var(--red);
+        stroke-width: 12;
+        stroke-linecap: round;
+        stroke-dasharray: 220;
+        stroke-dashoffset: 220;
+        transition: stroke-dashoffset 1.6s cubic-bezier(0.34, 1.2, 0.64, 1);
+      }
+      .risk-arc-fill.animate {
+        stroke-dashoffset: 46; /* 88% of 220 ≈ 174; offset = 220-174=46 */
+      }
+
+      /* ─── Scroll reveal ──────────────────────────────────────── */
+      .sr {
+        opacity: 0;
+        transform: translateY(22px);
+        transition:
+          opacity 0.65s ease,
+          transform 0.65s ease;
+      }
+      .sr.sr-left {
+        transform: translateX(-22px);
+      }
+      .sr.sr-right {
+        transform: translateX(22px);
+      }
+      .sr.in {
+        opacity: 1;
+        transform: translate(0, 0);
+      }
+
+      .sr-d1 {
+        transition-delay: 0.08s;
+      }
+      .sr-d2 {
+        transition-delay: 0.16s;
+      }
+      .sr-d3 {
+        transition-delay: 0.24s;
+      }
+      .sr-d4 {
+        transition-delay: 0.32s;
+      }
+      .sr-d5 {
+        transition-delay: 0.4s;
+      }
+
+      /* ─── KPI ribbon ─────────────────────────────────────────── */
+      .kpi-divider {
+        width: 1px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.12);
+      }
+
+      /* ─── Step connector ─────────────────────────────────────── */
+      .step-connector {
+        position: absolute;
+        top: 24px;
+        left: calc(50% + 32px);
+        right: calc(-50% + 32px);
+        height: 1px;
+        background: var(--stone-mid);
+      }
+      .step-connector::after {
+        content: "";
+        position: absolute;
+        right: -4px;
+        top: -3px;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--stone-deep);
+      }
+
+      /* ─── Risk bar ───────────────────────────────────────────── */
+      .risk-bar-track {
+        height: 6px;
+        background: var(--stone-mid);
+        border-radius: 99px;
+        overflow: hidden;
+      }
+      .risk-bar-fill {
+        height: 100%;
+        border-radius: 99px;
+        width: 0;
+        transition: width 1.4s cubic-bezier(0.34, 1.2, 0.64, 1);
+      }
+      .risk-bar-fill.animate-bar {
+        /* width set inline via JS */
+      }
+
+      /* ─── Testimonial ring ───────────────────────────────────── */
+      .avatar-stack .av {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        border: 2.5px solid white;
+        font-weight: 700;
+        font-size: 0.7rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: -10px;
+        flex-shrink: 0;
+      }
+      .avatar-stack .av:first-child {
+        margin-left: 0;
+      }
+
+      /* ─── Pricing card ───────────────────────────────────────── */
+      .pricing-card {
+        background: #fff;
+        border: 1px solid var(--stone-mid);
+        border-radius: 20px;
+        padding: 2rem;
+        transition:
+          transform 0.28s cubic-bezier(0.34, 1.4, 0.64, 1),
+          box-shadow 0.28s;
+      }
+      .pricing-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 24px 56px rgba(0, 33, 71, 0.1);
+      }
+      .pricing-card.featured {
+        background: var(--navy);
+        border-color: var(--navy);
+      }
+      .pricing-card.featured .feature-check {
+        color: #93c5fd;
+      }
+
+      /* ─── Noise texture ──────────────────────────────────────── */
+      .noise-overlay {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+        border-radius: inherit;
+      }
+
+      /* ─── Mobile nav ─────────────────────────────────────────── */
+      #mobile-nav {
+        max-height: 0;
+        overflow: hidden;
+        transition:
+          max-height 0.38s cubic-bezier(0.4, 0, 0.2, 1),
+          opacity 0.3s;
+        opacity: 0;
+      }
+      #mobile-nav.open {
+        max-height: 420px;
+        opacity: 1;
+      }
+
+      /* ─── Pulse dot ──────────────────────────────────────────── */
+      @keyframes pulse-dot {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(1.8);
+          opacity: 0.4;
+        }
+      }
+      .pulse-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        animation: pulse-dot 2s ease-in-out infinite;
+      }
+
+      /* ─── Hero gradient mesh (brand-safe) ───────────────────── */
+      .hero-bg {
+        background-color: var(--stone);
+        background-image:
+          radial-gradient(
+            ellipse 800px 600px at 110% 10%,
+            rgba(140, 21, 21, 0.055) 0%,
+            transparent 70%
+          ),
+          radial-gradient(
+            ellipse 600px 500px at -10% 90%,
+            rgba(0, 33, 71, 0.055) 0%,
+            transparent 70%
+          );
+      }
+
+      /* ─── Grid decoration ─────────────────────────────────────── */
+      .grid-dot-pattern {
+        background-image: radial-gradient(
+          circle,
+          var(--stone-deep) 1px,
+          transparent 1px
+        );
+        background-size: 28px 28px;
+      }
+
+      /* ─── Floating card animation ────────────────────────────── */
+      @keyframes float-card {
+        0%,
+        100% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-8px);
+        }
+      }
+      .float-anim {
+        animation: float-card 5s ease-in-out infinite;
+      }
+      .float-anim-slow {
+        animation: float-card 7s ease-in-out infinite;
+        animation-delay: -2s;
+      }
+
+      /* ─── Trust badge ─────────────────────────────────────────── */
+      .trust-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 999px;
+        padding: 6px 14px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.75);
+      }
+
+      /* ─── Check list ─────────────────────────────────────────── */
+      .check-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        font-size: 0.9rem;
+        color: #374151;
+        margin-bottom: 0.875rem;
+      }
+      .check-icon {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--red-muted);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
+
+      /* ─── Compliance icon box ────────────────────────────────── */
+      .comp-box {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 1.75rem;
+        transition:
+          background 0.25s,
+          border-color 0.25s,
+          transform 0.25s;
+      }
+      .comp-box:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.2);
+        transform: translateY(-3px);
+      }
+
+      /* Footer link hover */
+      .footer-link {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.875rem;
+        transition: color 0.2s;
+        text-decoration: none;
+      }
+      .footer-link:hover {
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      /* Responsive hero image stack */
+      @media (max-width: 1023px) {
+        .hero-visual {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- ================================================================
+     NAVBAR
+================================================================ -->
+    <nav id="navbar" class="fixed top-0 inset-x-0 z-50">
+      <div class="max-w-7xl mx-auto px-5 sm:px-8">
+        <div class="flex items-center justify-between h-[68px]">
+          <!-- Logo -->
+          <a href="#" class="flex items-center gap-3 flex-shrink-0">
+            <div
+              style="
+                width: 36px;
+                height: 36px;
+                background: var(--red);
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              "
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path
+                  d="M10 2.5L16.5 6v8L10 17.5 3.5 14V6L10 2.5z"
+                  stroke="white"
+                  stroke-width="1.6"
+                  fill="none"
+                  stroke-linejoin="round"
+                />
+                <circle cx="10" cy="10" r="2.5" fill="white" />
+                <path
+                  d="M10 7.5v-.01M10 12.5v-.01"
+                  stroke="white"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+            <span
+              style="
+                font-family: &quot;Figtree&quot;, sans-serif;
+                font-weight: 700;
+                font-size: 1.125rem;
+                color: var(--navy);
+                letter-spacing: -0.01em;
+              "
+            >
+              Vigil<span style="color: var(--red)">Pay</span>
+            </span>
+          </a>
+
+          <!-- Desktop links -->
+          <div class="hidden lg:flex items-center gap-8">
+            <a
+              href="#features"
+              class="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+              >Features</a
+            >
+            <a
+              href="#how-it-works"
+              class="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+              >How It Works</a
+            >
+            <a
+              href="#risk-matrix"
+              class="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+              >Risk Matrix</a
+            >
+            <a
+              href="#pricing"
+              class="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+              >Pricing</a
+            >
+            <a
+              href="#security"
+              class="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+              >Security</a
+            >
+          </div>
+
+          <!-- Right actions -->
+          <div class="hidden lg:flex items-center gap-3">
+            <a href="#" class="btn-nav-login">
+              <svg data-feather="log-in" width="14" height="14"></svg>
+              Login
+            </a>
+            <a
+              href="#cta"
+              class="btn-red"
+              style="padding: 0.55rem 1.25rem; font-size: 0.8125rem"
+            >
+              Get Started
+              <svg data-feather="arrow-right" width="14" height="14"></svg>
+            </a>
+          </div>
+
+          <!-- Hamburger -->
+          <button
+            id="hamburger"
+            onclick="toggleNav()"
+            class="lg:hidden w-10 h-10 flex flex-col justify-center items-center gap-1.5 rounded-lg hover:bg-stone-mid transition-colors"
+            aria-label="Menu"
+          >
+            <span
+              id="hb1"
+              class="w-5 h-0.5 bg-gray-700 rounded transition-all duration-300 origin-center"
+            ></span>
+            <span
+              id="hb2"
+              class="w-5 h-0.5 bg-gray-700 rounded transition-all duration-300"
+            ></span>
+            <span
+              id="hb3"
+              class="w-5 h-0.5 bg-gray-700 rounded transition-all duration-300 origin-center"
+            ></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile nav -->
+      <div id="mobile-nav" class="lg:hidden border-t border-stone-mid/60">
+        <div class="max-w-7xl mx-auto px-5 py-5 flex flex-col gap-1">
+          <a
+            href="#features"
+            onclick="closeNav()"
+            class="py-2.5 text-sm font-medium text-gray-600 hover:text-red-DEFAULT hover:pl-2 transition-all"
+            >Features</a
+          >
+          <a
+            href="#how-it-works"
+            onclick="closeNav()"
+            class="py-2.5 text-sm font-medium text-gray-600 hover:text-red-DEFAULT hover:pl-2 transition-all"
+            >How It Works</a
+          >
+          <a
+            href="#risk-matrix"
+            onclick="closeNav()"
+            class="py-2.5 text-sm font-medium text-gray-600 hover:text-red-DEFAULT hover:pl-2 transition-all"
+            >Risk Matrix</a
+          >
+          <a
+            href="#pricing"
+            onclick="closeNav()"
+            class="py-2.5 text-sm font-medium text-gray-600 hover:text-red-DEFAULT hover:pl-2 transition-all"
+            >Pricing</a
+          >
+          <a
+            href="#security"
+            onclick="closeNav()"
+            class="py-2.5 text-sm font-medium text-gray-600 hover:text-red-DEFAULT hover:pl-2 transition-all"
+            >Security</a
+          >
+          <div class="pt-4 flex gap-3 border-t border-stone-mid mt-2">
+            <a href="#" class="btn-nav-login flex-1 justify-center">Login</a>
+            <a
+              href="#cta"
+              onclick="closeNav()"
+              class="btn-red flex-1 justify-center"
+              style="font-size: 0.8125rem; padding: 0.6rem 1rem"
+              >Get Started</a
+            >
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ================================================================
+     HERO SECTION
+================================================================ -->
+    <section
+      class="hero-bg min-h-screen pt-[68px] flex items-center relative overflow-hidden"
+    >
+      <!-- Dot grid background -->
+      <div
+        class="absolute inset-0 grid-dot-pattern opacity-40 pointer-events-none"
+      ></div>
+
+      <!-- Vertical red accent line -->
+      <div
+        style="
+          position: absolute;
+          top: 0;
+          left: 50%;
+          width: 1px;
+          height: 100%;
+          background: linear-gradient(
+            to bottom,
+            transparent,
+            rgba(140, 21, 21, 0.08),
+            transparent
+          );
+          pointer-events: none;
+        "
+      ></div>
+
+      <div class="max-w-7xl mx-auto px-5 sm:px-8 py-24 lg:py-32 w-full">
+        <div class="grid lg:grid-cols-2 gap-16 lg:gap-20 items-center">
+          <!-- ── Left: Copy ── -->
+          <div>
+            <!-- Badge -->
+            <div
+              class="sr sr-d1 inline-flex items-center gap-2.5 mb-7 bg-white border border-stone-mid rounded-full px-4 py-2 shadow-sm"
+            >
+              <span class="pulse-dot" style="background: var(--red)"></span>
+              <span
+                style="
+                  font-size: 0.75rem;
+                  font-weight: 600;
+                  color: var(--red);
+                  letter-spacing: 0.04em;
+                  text-transform: uppercase;
+                "
+                >AI-Powered Churn Intelligence</span
+              >
+            </div>
+
+            <!-- Headline -->
+            <h1
+              class="sr sr-d2"
+              style="
+                font-family: &quot;Instrument Serif&quot;, serif;
+                font-size: clamp(2.6rem, 5vw, 4rem);
+                line-height: 1.08;
+                color: var(--navy);
+                margin-bottom: 1.5rem;
+                letter-spacing: -0.01em;
+              "
+            >
+              Predict the Exit<br />
+              <em style="color: var(--red); font-style: italic">Before</em> it
+              Happens.
+            </h1>
+
+            <!-- Sub-headline -->
+            <p
+              class="sr sr-d3"
+              style="
+                font-size: 1.0625rem;
+                line-height: 1.75;
+                color: #4b5563;
+                max-width: 480px;
+                margin-bottom: 2.5rem;
+              "
+            >
+              VigilPay uses advanced machine learning to identify at-risk
+              customers, allowing your retention team to act
+              <strong style="color: var(--navy); font-weight: 600"
+                >30 days before churn occurs</strong
+              >.
+            </p>
+
+            <!-- CTAs -->
+            <div class="sr sr-d4 flex flex-col sm:flex-row gap-3 mb-10">
+              <a
+                href="#cta"
+                class="btn-red"
+                style="padding: 0.875rem 2rem; font-size: 0.9375rem"
+              >
+                Get Started
+                <svg data-feather="arrow-right" width="16" height="16"></svg>
+              </a>
+              <a
+                href="#demo"
+                class="btn-outline"
+                style="padding: 0.875rem 2rem; font-size: 0.9375rem"
+              >
+                <svg data-feather="play-circle" width="16" height="16"></svg>
+                Watch Demo
+              </a>
+            </div>
+
+            <!-- Social proof -->
+            <div class="sr sr-d5 flex items-center gap-4">
+              <div class="avatar-stack flex items-center">
+                <div class="av" style="background: var(--navy); color: #fff">
+                  NK
+                </div>
+                <div class="av" style="background: var(--red); color: #fff">
+                  JO
+                </div>
+                <div class="av" style="background: #374151; color: #fff">
+                  CW
+                </div>
+                <div class="av" style="background: #6b7280; color: #fff">
+                  AM
+                </div>
+              </div>
+              <div>
+                <div class="flex gap-0.5 mb-0.5">
+                  <svg
+                    width="13"
+                    height="13"
+                    viewBox="0 0 13 13"
+                    fill="#8C1515"
+                  >
+                    <path
+                      d="M6.5 1L8.2 4.5H12L9 6.8l1.2 3.7L6.5 8.3 3.8 10.5 5 6.8 2 4.5h3.8z"
+                    />
+                  </svg>
+                  <svg
+                    width="13"
+                    height="13"
+                    viewBox="0 0 13 13"
+                    fill="#8C1515"
+                  >
+                    <path
+                      d="M6.5 1L8.2 4.5H12L9 6.8l1.2 3.7L6.5 8.3 3.8 10.5 5 6.8 2 4.5h3.8z"
+                    />
+                  </svg>
+                  <svg
+                    width="13"
+                    height="13"
+                    viewBox="0 0 13 13"
+                    fill="#8C1515"
+                  >
+                    <path
+                      d="M6.5 1L8.2 4.5H12L9 6.8l1.2 3.7L6.5 8.3 3.8 10.5 5 6.8 2 4.5h3.8z"
+                    />
+                  </svg>
+                  <svg
+                    width="13"
+                    height="13"
+                    viewBox="0 0 13 13"
+                    fill="#8C1515"
+                  >
+                    <path
+                      d="M6.5 1L8.2 4.5H12L9 6.8l1.2 3.7L6.5 8.3 3.8 10.5 5 6.8 2 4.5h3.8z"
+                    />
+                  </svg>
+                  <svg
+                    width="13"
+                    height="13"
+                    viewBox="0 0 13 13"
+                    fill="#8C1515"
+                  >
+                    <path
+                      d="M6.5 1L8.2 4.5H12L9 6.8l1.2 3.7L6.5 8.3 3.8 10.5 5 6.8 2 4.5h3.8z"
+                    />
+                  </svg>
+                </div>
+                <p style="font-size: 0.8rem; color: #6b7280">
+                  Trusted by
+                  <strong style="color: var(--navy)"
+                    >40+ banking institutions</strong
+                  >
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Right: Dashboard Mockup ── -->
+          <div class="hero-visual sr sr-right relative">
+            <!-- Floating alert chip -->
+            <div
+              class="float-anim absolute -top-4 -left-6 z-20 bg-white border border-stone-mid rounded-xl shadow-lg px-4 py-3 flex items-center gap-3"
+              style="min-width: 200px"
+            >
+              <div
+                style="
+                  width: 36px;
+                  height: 36px;
+                  background: var(--red-muted);
+                  border-radius: 10px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  flex-shrink: 0;
+                "
+              >
+                <svg
+                  data-feather="alert-triangle"
+                  width="18"
+                  height="18"
+                  style="color: var(--red); stroke: var(--red)"
+                ></svg>
+              </div>
+              <div>
+                <p
+                  style="
+                    font-size: 0.75rem;
+                    font-weight: 700;
+                    color: var(--navy);
+                  "
+                >
+                  New High-Risk Alert
+                </p>
+                <p style="font-size: 0.7rem; color: #6b7280">
+                  John Doe — Risk: 91%
+                </p>
+              </div>
+            </div>
+
+            <!-- Floating metric chip -->
+            <div
+              class="float-anim-slow absolute -bottom-4 -right-2 z-20 bg-white border border-stone-mid rounded-xl shadow-lg px-4 py-3 flex items-center gap-3"
+            >
+              <div
+                style="
+                  width: 36px;
+                  height: 36px;
+                  background: #ecfdf5;
+                  border-radius: 10px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  flex-shrink: 0;
+                "
+              >
+                <svg
+                  data-feather="trending-up"
+                  width="18"
+                  height="18"
+                  style="color: #059669; stroke: #059669"
+                ></svg>
+              </div>
+              <div>
+                <p style="font-size: 0.7rem; color: #6b7280; font-weight: 500">
+                  Revenue Saved
+                </p>
+                <p
+                  style="font-size: 1rem; font-weight: 800; color: var(--navy)"
+                >
+                  $2.4M
+                </p>
+              </div>
+            </div>
+
+            <!-- Main Dashboard card -->
+            <div class="mockup-shell">
+              <!-- Titlebar -->
+              <div class="mockup-titlebar">
+                <div class="dot" style="background: #ff5f57"></div>
+                <div class="dot" style="background: #febc2e"></div>
+                <div class="dot" style="background: #28c840"></div>
+                <span
+                  style="
+                    margin-left: 12px;
+                    font-size: 0.7rem;
+                    color: rgba(255, 255, 255, 0.45);
+                    font-weight: 500;
+                  "
+                  >VigilPay — Risk Console</span
+                >
+                <div
+                  style="
+                    margin-left: auto;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                  "
+                >
+                  <span
+                    style="
+                      width: 6px;
+                      height: 6px;
+                      background: #28c840;
+                      border-radius: 50%;
+                      display: block;
+                    "
+                  ></span>
+                  <span
+                    style="font-size: 0.65rem; color: rgba(255, 255, 255, 0.45)"
+                    >Live</span
+                  >
+                </div>
+              </div>
+
+              <!-- Dashboard body -->
+              <div style="padding: 20px; background: #fafaf9">
+                <!-- Top row -->
+                <div
+                  style="
+                    display: grid;
+                    grid-template-columns: 1fr 1fr 1fr;
+                    gap: 10px;
+                    margin-bottom: 16px;
+                  "
+                >
+                  <div
+                    style="
+                      background: #fff;
+                      border: 1px solid var(--stone-mid);
+                      border-radius: 10px;
+                      padding: 12px;
+                      text-align: center;
+                    "
+                  >
+                    <p
+                      style="
+                        font-size: 1.375rem;
+                        font-weight: 800;
+                        color: var(--red);
+                        font-family: &quot;Instrument Serif&quot;, serif;
+                      "
+                    >
+                      247
+                    </p>
+                    <p
+                      style="
+                        font-size: 0.65rem;
+                        color: #9ca3af;
+                        font-weight: 500;
+                        margin-top: 2px;
+                      "
+                    >
+                      At Risk
+                    </p>
+                  </div>
+                  <div
+                    style="
+                      background: #fff;
+                      border: 1px solid var(--stone-mid);
+                      border-radius: 10px;
+                      padding: 12px;
+                      text-align: center;
+                    "
+                  >
+                    <p
+                      style="
+                        font-size: 1.375rem;
+                        font-weight: 800;
+                        color: #059669;
+                        font-family: &quot;Instrument Serif&quot;, serif;
+                      "
+                    >
+                      183
+                    </p>
+                    <p
+                      style="
+                        font-size: 0.65rem;
+                        color: #9ca3af;
+                        font-weight: 500;
+                        margin-top: 2px;
+                      "
+                    >
+                      Saved
+                    </p>
+                  </div>
+                  <div
+                    style="
+                      background: #fff;
+                      border: 1px solid var(--stone-mid);
+                      border-radius: 10px;
+                      padding: 12px;
+                      text-align: center;
+                    "
+                  >
+                    <p
+                      style="
+                        font-size: 1.375rem;
+                        font-weight: 800;
+                        color: #d97706;
+                        font-family: &quot;Instrument Serif&quot;, serif;
+                      "
+                    >
+                      64
+                    </p>
+                    <p
+                      style="
+                        font-size: 0.65rem;
+                        color: #9ca3af;
+                        font-weight: 500;
+                        margin-top: 2px;
+                      "
+                    >
+                      Pending
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Risk arc meter -->
+                <div
+                  style="
+                    background: #fff;
+                    border: 1px solid var(--stone-mid);
+                    border-radius: 12px;
+                    padding: 18px;
+                    margin-bottom: 16px;
+                  "
+                >
+                  <div
+                    style="
+                      display: flex;
+                      justify-content: space-between;
+                      align-items: center;
+                      margin-bottom: 12px;
+                    "
+                  >
+                    <div>
+                      <p
+                        style="
+                          font-size: 0.7rem;
+                          color: #9ca3af;
+                          font-weight: 600;
+                          text-transform: uppercase;
+                          letter-spacing: 0.06em;
+                        "
+                      >
+                        Churn Risk Score
+                      </p>
+                      <p
+                        style="
+                          font-size: 0.75rem;
+                          color: var(--navy);
+                          font-weight: 600;
+                          margin-top: 2px;
+                        "
+                      >
+                        John Doe — Acc: ••••4821
+                      </p>
+                    </div>
+                    <span
+                      style="
+                        background: var(--red-muted);
+                        color: var(--red);
+                        font-size: 0.65rem;
+                        font-weight: 700;
+                        padding: 3px 10px;
+                        border-radius: 99px;
+                        border: 1px solid rgba(140, 21, 21, 0.15);
+                      "
+                      >HIGH RISK</span
+                    >
+                  </div>
+
+                  <!-- SVG arc -->
+                  <div style="display: flex; align-items: center; gap: 16px">
+                    <div
+                      style="
+                        flex-shrink: 0;
+                        position: relative;
+                        width: 90px;
+                        height: 90px;
+                      "
+                    >
+                      <svg
+                        viewBox="0 0 100 100"
+                        width="90"
+                        height="90"
+                        style="transform: rotate(-90deg)"
+                      >
+                        <circle cx="50" cy="50" r="35" class="risk-arc-track" />
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="35"
+                          id="arc-fill"
+                          class="risk-arc-fill"
+                        />
+                      </svg>
+                      <div
+                        style="
+                          position: absolute;
+                          inset: 0;
+                          display: flex;
+                          flex-direction: column;
+                          align-items: center;
+                          justify-content: center;
+                        "
+                      >
+                        <span
+                          style="
+                            font-size: 1.25rem;
+                            font-weight: 800;
+                            color: var(--red);
+                            font-family: &quot;Instrument Serif&quot;, serif;
+                          "
+                          id="arc-label"
+                          >88%</span
+                        >
+                      </div>
+                    </div>
+                    <div style="flex: 1">
+                      <div style="margin-bottom: 8px">
+                        <div
+                          style="
+                            display: flex;
+                            justify-content: space-between;
+                            font-size: 0.65rem;
+                            color: #9ca3af;
+                            margin-bottom: 4px;
+                          "
+                        >
+                          <span>Low Activity</span><span>76%</span>
+                        </div>
+                        <div class="risk-bar-track">
+                          <div
+                            class="risk-bar-fill"
+                            data-width="76"
+                            style="background: var(--red)"
+                          ></div>
+                        </div>
+                      </div>
+                      <div>
+                        <div
+                          style="
+                            display: flex;
+                            justify-content: space-between;
+                            font-size: 0.65rem;
+                            color: #9ca3af;
+                            margin-bottom: 4px;
+                          "
+                        >
+                          <span>Decreasing Balance</span><span>62%</span>
+                        </div>
+                        <div class="risk-bar-track">
+                          <div
+                            class="risk-bar-fill"
+                            data-width="62"
+                            style="background: #d97706"
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Mini chart bars -->
+                <div
+                  style="
+                    background: #fff;
+                    border: 1px solid var(--stone-mid);
+                    border-radius: 12px;
+                    padding: 14px;
+                  "
+                >
+                  <p
+                    style="
+                      font-size: 0.65rem;
+                      font-weight: 600;
+                      color: #9ca3af;
+                      text-transform: uppercase;
+                      letter-spacing: 0.06em;
+                      margin-bottom: 10px;
+                    "
+                  >
+                    7-Day Alert Volume
+                  </p>
+                  <div
+                    style="
+                      display: flex;
+                      align-items: flex-end;
+                      gap: 5px;
+                      height: 44px;
+                    "
+                  >
+                    <div
+                      style="
+                        flex: 1;
+                        background: rgba(140, 21, 21, 0.15);
+                        border-radius: 3px;
+                        height: 35%;
+                      "
+                    ></div>
+                    <div
+                      style="
+                        flex: 1;
+                        background: rgba(140, 21, 21, 0.25);
+                        border-radius: 3px;
+                        height: 55%;
+                      "
+                    ></div>
+                    <div
+                      style="
+                        flex: 1;
+                        background: rgba(140, 21, 21, 0.35);
+                        border-radius: 3px;
+                        height: 42%;
+                      "
+                    ></div>
+                    <div
+                      style="
+                        flex: 1;
+                        background: rgba(140, 21, 21, 0.5);
+                        border-radius: 3px;
+                        height: 75%;
+                      "
+                    ></div>
+                    <div
+                      style="
+                        flex: 1;
+                        background: rgba(140, 21, 21, 0.6);
+                        border-radius: 3px;
+                        height: 60%;
+                      "
+                    ></div>
+                    <div
+                      style="
+                        flex: 1;
+                        background: rgba(140, 21, 21, 0.75);
+                        border-radius: 3px;
+                        height: 88%;
+                      "
+                    ></div>
+                    <div
+                      style="
+                        flex: 1;
+                        background: var(--red);
+                        border-radius: 3px;
+                        height: 100%;
+                      "
+                    ></div>
+                  </div>
+                  <div
+                    style="
+                      display: flex;
+                      justify-content: space-between;
+                      font-size: 0.6rem;
+                      color: #d1d5db;
+                      margin-top: 5px;
+                    "
+                  >
+                    <span>Mon</span><span>Tue</span><span>Wed</span
+                    ><span>Thu</span><span>Fri</span><span>Sat</span
+                    ><span>Sun</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- end mockup -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom fade -->
+      <div
+        style="
+          position: absolute;
+          bottom: 0;
+          inset-x: 0;
+          height: 80px;
+          background: linear-gradient(to bottom, transparent, var(--stone));
+          pointer-events: none;
+        "
+      ></div>
+    </section>
+
+    <!-- ================================================================
+     KPI RIBBON
+================================================================ -->
+    <section
+      style="
+        background: var(--navy);
+        padding: 2.25rem 0;
+        position: relative;
+        overflow: hidden;
+      "
+    >
+      <!-- Subtle texture -->
+      <div class="noise-overlay"></div>
+
+      <div class="max-w-7xl mx-auto px-5 sm:px-8">
+        <div
+          class="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-0 sm:divide-x divide-white/10"
+        >
+          <div
+            class="sr flex flex-col sm:flex-row items-center gap-3 sm:px-12 text-center sm:text-left"
+          >
+            <div
+              style="
+                width: 42px;
+                height: 42px;
+                background: rgba(255, 255, 255, 0.08);
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+              "
+            >
+              <svg
+                data-feather="target"
+                width="20"
+                height="20"
+                style="color: var(--red); stroke: var(--red)"
+              ></svg>
+            </div>
+            <div>
+              <p
+                style="
+                  font-size: 1.75rem;
+                  font-weight: 800;
+                  color: #fff;
+                  font-family: &quot;Instrument Serif&quot;, serif;
+                  line-height: 1;
+                "
+              >
+                92<span style="color: var(--red)">%</span>
+              </p>
+              <p
+                style="
+                  font-size: 0.75rem;
+                  color: rgba(255, 255, 255, 0.5);
+                  font-weight: 500;
+                  margin-top: 2px;
+                "
+              >
+                Prediction Accuracy
+              </p>
+            </div>
+          </div>
+
+          <div
+            class="sr sr-d1 flex flex-col sm:flex-row items-center gap-3 sm:px-12 text-center sm:text-left"
+          >
+            <div
+              style="
+                width: 42px;
+                height: 42px;
+                background: rgba(255, 255, 255, 0.08);
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+              "
+            >
+              <svg
+                data-feather="shield"
+                width="20"
+                height="20"
+                style="color: var(--red); stroke: var(--red)"
+              ></svg>
+            </div>
+            <div>
+              <p
+                style="
+                  font-size: 1.75rem;
+                  font-weight: 800;
+                  color: #fff;
+                  font-family: &quot;Instrument Serif&quot;, serif;
+                  line-height: 1;
+                "
+              >
+                $2.4M
+              </p>
+              <p
+                style="
+                  font-size: 0.75rem;
+                  color: rgba(255, 255, 255, 0.5);
+                  font-weight: 500;
+                  margin-top: 2px;
+                "
+              >
+                Revenue Protected
+              </p>
+            </div>
+          </div>
+
+          <div
+            class="sr sr-d2 flex flex-col sm:flex-row items-center gap-3 sm:px-12 text-center sm:text-left"
+          >
+            <div
+              style="
+                width: 42px;
+                height: 42px;
+                background: rgba(255, 255, 255, 0.08);
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+              "
+            >
+              <svg
+                data-feather="bell"
+                width="20"
+                height="20"
+                style="color: var(--red); stroke: var(--red)"
+              ></svg>
+            </div>
+            <div>
+              <p
+                style="
+                  font-size: 1.75rem;
+                  font-weight: 800;
+                  color: #fff;
+                  font-family: &quot;Instrument Serif&quot;, serif;
+                  line-height: 1;
+                "
+              >
+                15k<span style="color: var(--red)">+</span>
+              </p>
+              <p
+                style="
+                  font-size: 0.75rem;
+                  color: rgba(255, 255, 255, 0.5);
+                  font-weight: 500;
+                  margin-top: 2px;
+                "
+              >
+                High-Risk Alerts Sent
+              </p>
+            </div>
+          </div>
+
+          <div
+            class="sr sr-d3 flex flex-col sm:flex-row items-center gap-3 sm:px-12 text-center sm:text-left"
+          >
+            <div
+              style="
+                width: 42px;
+                height: 42px;
+                background: rgba(255, 255, 255, 0.08);
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+              "
+            >
+              <svg
+                data-feather="clock"
+                width="20"
+                height="20"
+                style="color: var(--red); stroke: var(--red)"
+              ></svg>
+            </div>
+            <div>
+              <p
+                style="
+                  font-size: 1.75rem;
+                  font-weight: 800;
+                  color: #fff;
+                  font-family: &quot;Instrument Serif&quot;, serif;
+                  line-height: 1;
+                "
+              >
+                30
+                <span style="font-size: 1.1rem; color: var(--red)">days</span>
+              </p>
+              <p
+                style="
+                  font-size: 0.75rem;
+                  color: rgba(255, 255, 255, 0.5);
+                  font-weight: 500;
+                  margin-top: 2px;
+                "
+              >
+                Early Warning Window
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+     HOW IT WORKS
+================================================================ -->
+    <section id="how-it-works" style="background: #fff; padding: 6rem 0">
+      <div class="max-w-7xl mx-auto px-5 sm:px-8">
+        <!-- Header -->
+        <div class="text-center mb-16">
+          <div class="sr section-label justify-center">The Engine</div>
+          <h2
+            class="sr sr-d1"
+            style="
+              font-family: &quot;Instrument Serif&quot;, serif;
+              font-size: clamp(2rem, 4vw, 2.75rem);
+              color: var(--navy);
+              line-height: 1.15;
+              margin-bottom: 1rem;
+            "
+          >
+            How VigilPay Works
+          </h2>
+          <p
+            class="sr sr-d2"
+            style="
+              color: #6b7280;
+              max-width: 500px;
+              margin: 0 auto;
+              line-height: 1.7;
+              font-size: 0.9375rem;
+            "
+          >
+            Three simple steps turn your raw transaction data into actionable
+            retention intelligence.
+          </p>
+        </div>
+
+        <!-- Steps -->
+        <div class="grid md:grid-cols-3 gap-6 relative">
+          <div class="sr sr-d1 card p-8 relative">
+            <!-- Step number -->
+            <div
+              style="
+                position: absolute;
+                top: 20px;
+                right: 24px;
+                font-family: &quot;Instrument Serif&quot;, serif;
+                font-size: 4rem;
+                font-weight: 700;
+                color: var(--stone-mid);
+                line-height: 1;
+                user-select: none;
+              "
+            >
+              01
+            </div>
+            <div class="icon-box mb-6">
+              <svg data-feather="upload-cloud" width="22" height="22"></svg>
+            </div>
+            <h3
+              style="
+                font-weight: 700;
+                font-size: 1.0625rem;
+                color: var(--navy);
+                margin-bottom: 0.625rem;
+              "
+            >
+              Data Ingestion
+            </h3>
+            <p style="font-size: 0.875rem; color: #6b7280; line-height: 1.7">
+              Upload your transaction logs securely via API, SFTP, or direct
+              core banking integration. We accept CSV, JSON, and ISO 8583.
+            </p>
+            <div
+              style="
+                margin-top: 1.25rem;
+                padding-top: 1.25rem;
+                border-top: 1px solid var(--stone-mid);
+                display: flex;
+                align-items: center;
+                gap: 6px;
+              "
+            >
+              <svg
+                data-feather="check-circle"
+                width="14"
+                height="14"
+                style="color: #059669; stroke: #059669; flex-shrink: 0"
+              ></svg>
+              <span style="font-size: 0.78rem; color: #059669; font-weight: 600"
+                >Bank-grade TLS 1.3 encryption</span
+              >
+            </div>
+          </div>
+
+          <div class="sr sr-d2 card p-8 relative">
+            <div
+              style="
+                position: absolute;
+                top: 20px;
+                right: 24px;
+                font-family: &quot;Instrument Serif&quot;, serif;
+                font-size: 4rem;
+                font-weight: 700;
+                color: var(--stone-mid);
+                line-height: 1;
+                user-select: none;
+              "
+            >
+              02
+            </div>
+            <div class="icon-box mb-6">
+              <svg data-feather="cpu" width="22" height="22"></svg>
+            </div>
+            <h3
+              style="
+                font-weight: 700;
+                font-size: 1.0625rem;
+                color: var(--navy);
+                margin-bottom: 0.625rem;
+              "
+            >
+              ML Analysis
+            </h3>
+            <p style="font-size: 0.875rem; color: #6b7280; line-height: 1.7">
+              Our Random Forest model scans 40+ behavioral signals — activity
+              decline, balance trends, product disengagement — updated daily.
+            </p>
+            <div
+              style="
+                margin-top: 1.25rem;
+                padding-top: 1.25rem;
+                border-top: 1px solid var(--stone-mid);
+                display: flex;
+                align-items: center;
+                gap: 6px;
+              "
+            >
+              <svg
+                data-feather="check-circle"
+                width="14"
+                height="14"
+                style="color: #059669; stroke: #059669; flex-shrink: 0"
+              ></svg>
+              <span style="font-size: 0.78rem; color: #059669; font-weight: 600"
+                >92% prediction accuracy</span
+              >
+            </div>
+          </div>
+
+          <div class="sr sr-d3 card p-8 relative">
+            <div
+              style="
+                position: absolute;
+                top: 20px;
+                right: 24px;
+                font-family: &quot;Instrument Serif&quot;, serif;
+                font-size: 4rem;
+                font-weight: 700;
+                color: var(--stone-mid);
+                line-height: 1;
+                user-select: none;
+              "
+            >
+              03
+            </div>
+            <div class="icon-box mb-6">
+              <svg data-feather="bar-chart-2" width="22" height="22"></svg>
+            </div>
+            <h3
+              style="
+                font-weight: 700;
+                font-size: 1.0625rem;
+                color: var(--navy);
+                margin-bottom: 0.625rem;
+              "
+            >
+              Actionable Insights
+            </h3>
+            <p style="font-size: 0.875rem; color: #6b7280; line-height: 1.7">
+              Get a prioritized retention queue with personalized intervention
+              scripts ranked by customer lifetime value at risk.
+            </p>
+            <div
+              style="
+                margin-top: 1.25rem;
+                padding-top: 1.25rem;
+                border-top: 1px solid var(--stone-mid);
+                display: flex;
+                align-items: center;
+                gap: 6px;
+              "
+            >
+              <svg
+                data-feather="check-circle"
+                width="14"
+                height="14"
+                style="color: #059669; stroke: #059669; flex-shrink: 0"
+              ></svg>
+              <span style="font-size: 0.78rem; color: #059669; font-weight: 600"
+                >30-day advance warning</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+     FEATURES SECTION
+================================================================ -->
+    <section id="features" style="background: var(--stone); padding: 6rem 0">
+      <div class="max-w-7xl mx-auto px-5 sm:px-8">
+        <!-- Header -->
+        <div class="text-center mb-16">
+          <div class="sr section-label justify-center">Platform Features</div>
+          <h2
+            class="sr sr-d1"
+            style="
+              font-family: &quot;Instrument Serif&quot;, serif;
+              font-size: clamp(2rem, 4vw, 2.75rem);
+              color: var(--navy);
+              line-height: 1.15;
+              margin-bottom: 1rem;
+            "
+          >
+            Everything Your Retention Team Needs
+          </h2>
+          <p
+            class="sr sr-d2"
+            style="
+              color: #6b7280;
+              max-width: 520px;
+              margin: 0 auto;
+              line-height: 1.7;
+              font-size: 0.9375rem;
+            "
+          >
+            Built specifically for banking retention teams who need precision,
+            speed, and regulatory compliance.
+          </p>
+        </div>
+
+        <!-- 6-card grid -->
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div class="sr sr-d1 card bg-white p-7">
+            <div class="icon-box mb-5">
+              <svg data-feather="alert-octagon" width="22" height="22"></svg>
+            </div>
+            <h3
+              style="
+                font-weight: 700;
+                font-size: 1rem;
+                color: var(--navy);
+                margin-bottom: 0.5rem;
+              "
+            >
+              Early Warning System
+            </h3>
+            <p style="font-size: 0.875rem; color: #6b7280; line-height: 1.7">
+              Receive alerts 30 days before a customer is statistically likely
+              to close their account. Time is the most valuable retention asset.
+            </p>
+          </div>
+
+          <div class="sr sr-d2 card bg-white p-7">
+            <div class="icon-box mb-5">
+              <svg data-feather="activity" width="22" height="22"></svg>
+            </div>
+            <h3
+              style="
+                font-weight: 700;
+                font-size: 1rem;
+                color: var(--navy);
+                margin-bottom: 0.5rem;
+              "
+            >
+              Real-Time Monitoring
+            </h3>
+            <p style="font-size: 0.875rem; color: #6b7280; line-height: 1.7">
+              Continuous behavioral analysis updates risk scores daily. Never
+              miss a sudden shift that signals imminent churn.
+            </p>
+          </div>
+
+          <div class="sr sr-d3 card bg-white p-7">
+            <div class="icon-box mb-5">
+              <svg data-feather="users" width="22" height="22"></svg>
+            </div>
+            <h3
+              style="
+                font-weight: 700;
+                font-size: 1rem;
+                color: var(--navy);
+                margin-bottom: 0.5rem;
+              "
+            >
+              Retention Prioritization
+            </h3>
+            <p style="font-size: 0.875rem; color: #6b7280; line-height: 1.7">
+              Focus your agents on customers with highest lifetime value at
+              risk. Maximize ROI on every retention action.
+            </p>
+          </div>
+
+          <div class="sr sr-d1 card bg-white p-7">
+            <div class="icon-box mb-5">
+              <svg data-feather="eye" width="22" height="22"></svg>
+            </div>
+            <h3
+              style="
+                font-weight: 700;
+                font-size: 1rem;
+                color: var(--navy);
+                margin-bottom: 0.5rem;
+              "
+            >
+              Explainable AI
+            </h3>
+            <p style="font-size: 0.875rem; color: #6b7280; line-height: 1.7">
+              Every prediction includes a human-readable explanation. Your
+              agents know exactly why — no black boxes, no guesswork.
+            </p>
+          </div>
+
+          <div class="sr sr-d2 card bg-white p-7">
+            <div class="icon-box mb-5">
+              <svg data-feather="pie-chart" width="22" height="22"></svg>
+            </div>
+            <h3
+              style="
+                font-weight: 700;
+                font-size: 1rem;
+                color: var(--navy);
+                margin-bottom: 0.5rem;
+              "
+            >
+              Executive Analytics
+            </h3>
+            <p style="font-size: 0.875rem; color: #6b7280; line-height: 1.7">
+              Board-ready reporting on churn trends, retention rates, and
+              revenue impact with customizable date ranges and export options.
+            </p>
+          </div>
+
+          <div class="sr sr-d3 card bg-white p-7">
+            <div class="icon-box mb-5">
+              <svg data-feather="code" width="22" height="22"></svg>
+            </div>
+            <h3
+              style="
+                font-weight: 700;
+                font-size: 1rem;
+                color: var(--navy);
+                margin-bottom: 0.5rem;
+              "
+            >
+              API-First Integration
+            </h3>
+            <p style="font-size: 0.875rem; color: #6b7280; line-height: 1.7">
+              Connect to your CRM, core banking platform, or call center with
+              our REST API, webhooks, and pre-built connectors.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+     RISK MATRIX — SPLIT SCREEN
+================================================================ -->
+    <section id="risk-matrix" style="background: #fff; padding: 6rem 0">
+      <div class="max-w-7xl mx-auto px-5 sm:px-8">
+        <div class="grid lg:grid-cols-2 gap-16 items-center">
+          <!-- Left: Explanation -->
+          <div>
+            <div class="sr section-label">The Value</div>
+            <h2
+              class="sr sr-d1"
+              style="
+                font-family: &quot;Instrument Serif&quot;, serif;
+                font-size: clamp(1.875rem, 3.5vw, 2.75rem);
+                color: var(--navy);
+                line-height: 1.15;
+                margin-bottom: 1.25rem;
+              "
+            >
+              We Don't Just Say <em style="color: var(--red)">"Who."</em
+              ><br />We Say "Why."
+            </h2>
+            <p
+              class="sr sr-d2"
+              style="
+                font-size: 0.9375rem;
+                color: #6b7280;
+                line-height: 1.75;
+                margin-bottom: 2rem;
+              "
+            >
+              Generic churn scores tell you a customer is at risk. VigilPay's
+              Risk Matrix tells you the precise behavioral combination that
+              triggered the alert — and the exact intervention most likely to
+              succeed.
+            </p>
+
+            <div class="sr sr-d3">
+              <div class="check-item">
+                <div class="check-icon">
+                  <svg
+                    data-feather="check"
+                    width="11"
+                    height="11"
+                    style="
+                      color: var(--red);
+                      stroke: var(--red);
+                      stroke-width: 3;
+                    "
+                  ></svg>
+                </div>
+                <p>
+                  Identify the primary driver — inactivity, rate shopping,
+                  service issues, or lifecycle exit
+                </p>
+              </div>
+              <div class="check-item">
+                <div class="check-icon">
+                  <svg
+                    data-feather="check"
+                    width="11"
+                    height="11"
+                    style="
+                      color: var(--red);
+                      stroke: var(--red);
+                      stroke-width: 3;
+                    "
+                  ></svg>
+                </div>
+                <p>
+                  See contributing behavioral signals ranked by weight and
+                  recency impact
+                </p>
+              </div>
+              <div class="check-item">
+                <div class="check-icon">
+                  <svg
+                    data-feather="check"
+                    width="11"
+                    height="11"
+                    style="
+                      color: var(--red);
+                      stroke: var(--red);
+                      stroke-width: 3;
+                    "
+                  ></svg>
+                </div>
+                <p>
+                  Receive AI-generated retention scripts tailored to each
+                  customer's specific profile
+                </p>
+              </div>
+              <div class="check-item">
+                <div class="check-icon">
+                  <svg
+                    data-feather="check"
+                    width="11"
+                    height="11"
+                    style="
+                      color: var(--red);
+                      stroke: var(--red);
+                      stroke-width: 3;
+                    "
+                  ></svg>
+                </div>
+                <p>
+                  Track intervention outcomes and feed results back to improve
+                  model accuracy over time
+                </p>
+              </div>
+            </div>
+
+            <div class="sr sr-d4 mt-8">
+              <a href="#cta" class="btn-red" style="padding: 0.875rem 2rem">
+                See Full Risk Matrix
+                <svg data-feather="arrow-right" width="16" height="16"></svg>
+              </a>
+            </div>
+          </div>
+
+          <!-- Right: Customer Card Table -->
+          <div class="sr sr-right">
+            <div
+              style="
+                background: #fff;
+                border: 1px solid var(--stone-mid);
+                border-radius: 20px;
+                overflow: hidden;
+                box-shadow: 0 24px 64px rgba(0, 33, 71, 0.1);
+              "
+            >
+              <!-- Table header -->
+              <div
+                style="
+                  background: var(--navy);
+                  padding: 16px 20px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+                "
+              >
+                <div style="display: flex; align-items: center; gap: 8px">
+                  <svg
+                    data-feather="list"
+                    width="16"
+                    height="16"
+                    style="
+                      color: rgba(255, 255, 255, 0.6);
+                      stroke: rgba(255, 255, 255, 0.6);
+                    "
+                  ></svg>
+                  <span style="font-size: 0.8rem; font-weight: 600; color: #fff"
+                    >Customer Risk Queue</span
+                  >
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px">
+                  <span
+                    style="
+                      width: 6px;
+                      height: 6px;
+                      background: #28c840;
+                      border-radius: 50%;
+                      display: block;
+                    "
+                  ></span>
+                  <span
+                    style="font-size: 0.65rem; color: rgba(255, 255, 255, 0.5)"
+                    >Live — 3 of 247</span
+                  >
+                </div>
+              </div>
+
+              <!-- Customer rows -->
+              <div>
+                <!-- Row 1 — HIGH -->
+                <div
+                  style="
+                    padding: 16px 20px;
+                    border-bottom: 1px solid var(--stone-mid);
+                    transition: background 0.2s;
+                  "
+                  onmouseenter="this.style.background = 'var(--stone)'"
+                  onmouseleave="this.style.background = 'transparent'"
+                >
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      gap: 12px;
+                      margin-bottom: 10px;
+                    "
+                  >
+                    <div
+                      style="
+                        width: 38px;
+                        height: 38px;
+                        background: var(--red-muted);
+                        border-radius: 10px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-weight: 700;
+                        font-size: 0.75rem;
+                        color: var(--red);
+                        flex-shrink: 0;
+                      "
+                    >
+                      JD
+                    </div>
+                    <div style="flex: 1; min-width: 0">
+                      <p
+                        style="
+                          font-weight: 700;
+                          font-size: 0.875rem;
+                          color: var(--navy);
+                        "
+                      >
+                        John Doe
+                      </p>
+                      <p
+                        style="
+                          font-size: 0.72rem;
+                          color: #9ca3af;
+                          white-space: nowrap;
+                          overflow: hidden;
+                          text-overflow: ellipsis;
+                        "
+                      >
+                        Acc: •••• 4821 — Premium Savings
+                      </p>
+                    </div>
+                    <div style="text-align: right; flex-shrink: 0">
+                      <span
+                        style="
+                          background: var(--red-muted);
+                          color: var(--red);
+                          font-size: 0.7rem;
+                          font-weight: 800;
+                          padding: 3px 9px;
+                          border-radius: 99px;
+                          border: 1px solid rgba(140, 21, 21, 0.15);
+                        "
+                        >88%</span
+                      >
+                      <p
+                        style="
+                          font-size: 0.65rem;
+                          color: #9ca3af;
+                          margin-top: 3px;
+                          font-weight: 600;
+                        "
+                      >
+                        HIGH RISK
+                      </p>
+                    </div>
+                  </div>
+                  <div style="margin-left: 50px">
+                    <div class="risk-bar-track" style="margin-bottom: 6px">
+                      <div
+                        class="risk-bar-fill"
+                        data-width="88"
+                        style="background: var(--red)"
+                      ></div>
+                    </div>
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap">
+                      <span
+                        style="
+                          background: var(--red-muted);
+                          color: var(--red);
+                          font-size: 0.65rem;
+                          font-weight: 600;
+                          padding: 2px 8px;
+                          border-radius: 4px;
+                        "
+                        >Low Activity</span
+                      >
+                      <span
+                        style="
+                          background: var(--red-muted);
+                          color: var(--red);
+                          font-size: 0.65rem;
+                          font-weight: 600;
+                          padding: 2px 8px;
+                          border-radius: 4px;
+                        "
+                        >Decreasing Balance</span
+                      >
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Row 2 — MEDIUM -->
+                <div
+                  style="
+                    padding: 16px 20px;
+                    border-bottom: 1px solid var(--stone-mid);
+                    transition: background 0.2s;
+                  "
+                  onmouseenter="this.style.background = 'var(--stone)'"
+                  onmouseleave="this.style.background = 'transparent'"
+                >
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      gap: 12px;
+                      margin-bottom: 10px;
+                    "
+                  >
+                    <div
+                      style="
+                        width: 38px;
+                        height: 38px;
+                        background: #fef3c7;
+                        border-radius: 10px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-weight: 700;
+                        font-size: 0.75rem;
+                        color: #b45309;
+                        flex-shrink: 0;
+                      "
+                    >
+                      AM
+                    </div>
+                    <div style="flex: 1; min-width: 0">
+                      <p
+                        style="
+                          font-weight: 700;
+                          font-size: 0.875rem;
+                          color: var(--navy);
+                        "
+                      >
+                        Amara Mwangi
+                      </p>
+                      <p
+                        style="
+                          font-size: 0.72rem;
+                          color: #9ca3af;
+                          white-space: nowrap;
+                          overflow: hidden;
+                          text-overflow: ellipsis;
+                        "
+                      >
+                        Acc: •••• 7703 — Business Checking
+                      </p>
+                    </div>
+                    <div style="text-align: right; flex-shrink: 0">
+                      <span
+                        style="
+                          background: #fef3c7;
+                          color: #b45309;
+                          font-size: 0.7rem;
+                          font-weight: 800;
+                          padding: 3px 9px;
+                          border-radius: 99px;
+                          border: 1px solid rgba(180, 83, 9, 0.15);
+                        "
+                        >64%</span
+                      >
+                      <p
+                        style="
+                          font-size: 0.65rem;
+                          color: #9ca3af;
+                          margin-top: 3px;
+                          font-weight: 600;
+                        "
+                      >
+                        MEDIUM RISK
+                      </p>
+                    </div>
+                  </div>
+                  <div style="margin-left: 50px">
+                    <div class="risk-bar-track" style="margin-bottom: 6px">
+                      <div
+                        class="risk-bar-fill"
+                        data-width="64"
+                        style="background: #d97706"
+                      ></div>
+                    </div>
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap">
+                      <span
+                        style="
+                          background: #fef3c7;
+                          color: #b45309;
+                          font-size: 0.65rem;
+                          font-weight: 600;
+                          padding: 2px 8px;
+                          border-radius: 4px;
+                        "
+                        >Rate Shopping</span
+                      >
+                      <span
+                        style="
+                          background: #fef3c7;
+                          color: #b45309;
+                          font-size: 0.65rem;
+                          font-weight: 600;
+                          padding: 2px 8px;
+                          border-radius: 4px;
+                        "
+                        >Reduced Deposits</span
+                      >
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Row 3 — WATCH -->
+                <div
+                  style="padding: 16px 20px; transition: background 0.2s"
+                  onmouseenter="this.style.background = 'var(--stone)'"
+                  onmouseleave="this.style.background = 'transparent'"
+                >
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      gap: 12px;
+                      margin-bottom: 10px;
+                    "
+                  >
+                    <div
+                      style="
+                        width: 38px;
+                        height: 38px;
+                        background: #eff6ff;
+                        border-radius: 10px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-weight: 700;
+                        font-size: 0.75rem;
+                        color: #1d4ed8;
+                        flex-shrink: 0;
+                      "
+                    >
+                      SO
+                    </div>
+                    <div style="flex: 1; min-width: 0">
+                      <p
+                        style="
+                          font-weight: 700;
+                          font-size: 0.875rem;
+                          color: var(--navy);
+                        "
+                      >
+                        Sarah Ochieng
+                      </p>
+                      <p
+                        style="
+                          font-size: 0.72rem;
+                          color: #9ca3af;
+                          white-space: nowrap;
+                          overflow: hidden;
+                          text-overflow: ellipsis;
+                        "
+                      >
+                        Acc: •••• 2290 — Youth Account
+                      </p>
+                    </div>
+                    <div style="text-align: right; flex-shrink: 0">
+                      <span
+                        style="
+                          background: #eff6ff;
+                          color: #1d4ed8;
+                          font-size: 0.7rem;
+                          font-weight: 800;
+                          padding: 3px 9px;
+                          border-radius: 99px;
+                          border: 1px solid rgba(29, 78, 216, 0.15);
+                        "
+                        >38%</span
+                      >
+                      <p
+                        style="
+                          font-size: 0.65rem;
+                          color: #9ca3af;
+                          margin-top: 3px;
+                          font-weight: 600;
+                        "
+                      >
+                        WATCH
+                      </p>
+                    </div>
+                  </div>
+                  <div style="margin-left: 50px">
+                    <div class="risk-bar-track" style="margin-bottom: 6px">
+                      <div
+                        class="risk-bar-fill"
+                        data-width="38"
+                        style="background: #3b82f6"
+                      ></div>
+                    </div>
+                    <div style="display: flex; gap: 6px; flex-wrap: wrap">
+                      <span
+                        style="
+                          background: #eff6ff;
+                          color: #1d4ed8;
+                          font-size: 0.65rem;
+                          font-weight: 600;
+                          padding: 2px 8px;
+                          border-radius: 4px;
+                        "
+                        >Login Frequency Drop</span
+                      >
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Footer -->
+              <div
+                style="
+                  padding: 12px 20px;
+                  background: var(--stone);
+                  border-top: 1px solid var(--stone-mid);
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+                "
+              >
+                <span style="font-size: 0.72rem; color: #9ca3af"
+                  >Showing 3 of 247 at-risk customers</span
+                >
+                <a
+                  href="#cta"
+                  style="
+                    font-size: 0.72rem;
+                    font-weight: 700;
+                    color: var(--red);
+                    text-decoration: none;
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                  "
+                >
+                  View All
+                  <svg
+                    data-feather="arrow-right"
+                    width="12"
+                    height="12"
+                    style="color: var(--red); stroke: var(--red)"
+                  ></svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+     CREDIT CARD SHOWCASE (placeholder — user will supply images)
+================================================================ -->
+    <section
+      style="
+        background: var(--navy);
+        padding: 6rem 0;
+        position: relative;
+        overflow: hidden;
+      "
+    >
+      <div class="noise-overlay"></div>
+      <!-- Background radial brand glow -->
+      <div
+        style="
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          background: radial-gradient(
+            ellipse 700px 500px at 80% 50%,
+            rgba(140, 21, 21, 0.12) 0%,
+            transparent 70%
+          );
+        "
+      ></div>
+
+      <div class="max-w-7xl mx-auto px-5 sm:px-8">
+        <div class="grid lg:grid-cols-2 gap-16 items-center">
+          <!-- Left: Cards visual placeholder -->
+          <div
+            class="sr sr-left relative flex items-center justify-center min-h-[320px]"
+          >
+            <!-- Card stack placeholder -->
+            <div style="position: relative; width: 320px; height: 200px">
+              <!-- Back card -->
+              <div
+                style="
+                  position: absolute;
+                  top: 24px;
+                  left: 24px;
+                  width: 280px;
+                  height: 168px;
+                  background: rgba(140, 21, 21, 0.4);
+                  border-radius: 16px;
+                  border: 1px solid rgba(140, 21, 21, 0.3);
+                  transform: rotate(-6deg);
+                "
+              ></div>
+              <!-- Mid card -->
+              <div
+                style="
+                  position: absolute;
+                  top: 12px;
+                  left: 12px;
+                  width: 280px;
+                  height: 168px;
+                  background: rgba(0, 49, 102, 0.7);
+                  border-radius: 16px;
+                  border: 1px solid rgba(255, 255, 255, 0.1);
+                  transform: rotate(-2deg);
+                "
+              ></div>
+              <!-- Front card -->
+              <div
+                style="
+                  position: absolute;
+                  top: 0;
+                  left: 0;
+                  width: 280px;
+                  height: 168px;
+                  background: rgba(255, 255, 255, 0.07);
+                  border-radius: 16px;
+                  border: 1px solid rgba(255, 255, 255, 0.15);
+                  backdrop-filter: blur(12px);
+                "
+              >
+                <!-- Card chip -->
+                <div
+                  style="
+                    position: absolute;
+                    top: 22px;
+                    left: 22px;
+                    width: 30px;
+                    height: 22px;
+                    background: rgba(255, 255, 255, 0.2);
+                    border-radius: 4px;
+                    border: 1px solid rgba(255, 255, 255, 0.3);
+                  "
+                ></div>
+                <!-- NFC -->
+                <div style="position: absolute; top: 20px; right: 22px">
+                  <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                    <path
+                      d="M6 11a5 5 0 0010 0M8 11a3 3 0 006 0M10 11a1 1 0 002 0"
+                      stroke="rgba(255,255,255,0.6)"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </div>
+                <!-- Card number -->
+                <div
+                  style="
+                    position: absolute;
+                    bottom: 40px;
+                    left: 22px;
+                    right: 22px;
+                  "
+                >
+                  <p
+                    style="
+                      font-size: 0.875rem;
+                      letter-spacing: 0.2em;
+                      color: rgba(255, 255, 255, 0.7);
+                      font-family: monospace;
+                    "
+                  >
+                    •••• •••• •••• 4821
+                  </p>
+                </div>
+                <div
+                  style="
+                    position: absolute;
+                    bottom: 18px;
+                    left: 22px;
+                    right: 22px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                  "
+                >
+                  <div>
+                    <p
+                      style="
+                        font-size: 0.55rem;
+                        color: rgba(255, 255, 255, 0.4);
+                        text-transform: uppercase;
+                        letter-spacing: 0.06em;
+                      "
+                    >
+                      Card Holder
+                    </p>
+                    <p
+                      style="
+                        font-size: 0.75rem;
+                        color: rgba(255, 255, 255, 0.8);
+                        font-weight: 600;
+                        margin-top: 1px;
+                      "
+                    >
+                      John Doe
+                    </p>
+                  </div>
+                  <div style="display: flex">
+                    <div
+                      style="
+                        width: 22px;
+                        height: 22px;
+                        border-radius: 50%;
+                        background: rgba(140, 21, 21, 0.7);
+                        margin-right: -8px;
+                      "
+                    ></div>
+                    <div
+                      style="
+                        width: 22px;
+                        height: 22px;
+                        border-radius: 50%;
+                        background: rgba(140, 21, 21, 0.4);
+                      "
+                    ></div>
+                  </div>
+                </div>
+                <!-- Placeholder text -->
+                <div
+                  style="
+                    position: absolute;
+                    inset: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding-top: 10px;
+                  "
+                >
+                  <p
+                    style="
+                      font-size: 0.65rem;
+                      color: rgba(255, 255, 255, 0.2);
+                      text-align: center;
+                      padding: 0 20px;
+                    "
+                  >
+                    Your card image will<br />be placed here
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Copy -->
+          <div>
+            <div
+              class="sr section-label"
+              style="color: rgba(255, 255, 255, 0.5)"
+            >
+              Banking Intelligence
+            </div>
+            <h2
+              class="sr sr-d1"
+              style="
+                font-family: &quot;Instrument Serif&quot;, serif;
+                font-size: clamp(1.875rem, 3.5vw, 2.75rem);
+                color: #fff;
+                line-height: 1.15;
+                margin-bottom: 1.25rem;
+              "
+            >
+              Every Card Holder<br />Tells a Story.<br /><em
+                style="color: var(--red)"
+                >We Read It.</em
+              >
+            </h2>
+            <p
+              class="sr sr-d2"
+              style="
+                font-size: 0.9375rem;
+                color: rgba(255, 255, 255, 0.55);
+                line-height: 1.75;
+                margin-bottom: 2rem;
+              "
+            >
+              VigilPay analyzes spending patterns, channel activity, product
+              usage, and balance behavior on every account — before small
+              signals become irreversible departures.
+            </p>
+            <div
+              class="sr sr-d3"
+              style="
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-bottom: 2rem;
+              "
+            >
+              <div class="trust-badge">
+                <svg
+                  data-feather="credit-card"
+                  width="12"
+                  height="12"
+                  style="
+                    flex-shrink: 0;
+                    color: rgba(255, 255, 255, 0.6);
+                    stroke: rgba(255, 255, 255, 0.6);
+                  "
+                ></svg>
+                Card Spending Analysis
+              </div>
+              <div class="trust-badge">
+                <svg
+                  data-feather="smartphone"
+                  width="12"
+                  height="12"
+                  style="
+                    flex-shrink: 0;
+                    color: rgba(255, 255, 255, 0.6);
+                    stroke: rgba(255, 255, 255, 0.6);
+                  "
+                ></svg>
+                Digital Channel Tracking
+              </div>
+              <div class="trust-badge">
+                <svg
+                  data-feather="git-branch"
+                  width="12"
+                  height="12"
+                  style="
+                    flex-shrink: 0;
+                    color: rgba(255, 255, 255, 0.6);
+                    stroke: rgba(255, 255, 255, 0.6);
+                  "
+                ></svg>
+                Cross-Product Behavior
+              </div>
+              <div class="trust-badge">
+                <svg
+                  data-feather="dollar-sign"
+                  width="12"
+                  height="12"
+                  style="
+                    flex-shrink: 0;
+                    color: rgba(255, 255, 255, 0.6);
+                    stroke: rgba(255, 255, 255, 0.6);
+                  "
+                ></svg>
+                Balance Pattern Scoring
+              </div>
+            </div>
+            <div class="sr sr-d4">
+              <a href="#cta" class="btn-red" style="padding: 0.875rem 2rem">
+                Request a Demo
+                <svg data-feather="arrow-right" width="16" height="16"></svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+     TESTIMONIALS
+================================================================ -->
+    <section style="background: var(--stone); padding: 6rem 0">
+      <div class="max-w-7xl mx-auto px-5 sm:px-8">
+        <div class="text-center mb-14">
+          <div class="sr section-label justify-center">Client Stories</div>
+          <h2
+            class="sr sr-d1"
+            style="
+              font-family: &quot;Instrument Serif&quot;, serif;
+              font-size: clamp(2rem, 4vw, 2.75rem);
+              color: var(--navy);
+              line-height: 1.15;
+            "
+          >
+            Trusted by Banking Leaders
+          </h2>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-5">
+          <div class="sr sr-d1 card bg-white p-7">
+            <div style="display: flex; gap: 2px; margin-bottom: 1.25rem">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="#8C1515">
+                <path
+                  d="M7 1L8.8 4.8H13L9.7 7.3l1.2 4L7 9l-3.9 2.3 1.2-4L1 4.8h4.2z"
+                />
+              </svg>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="#8C1515">
+                <path
+                  d="M7 1L8.8 4.8H13L9.7 7.3l1.2 4L7 9l-3.9 2.3 1.2-4L1 4.8h4.2z"
+                />
+              </svg>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="#8C1515">
+                <path
+                  d="M7 1L8.8 4.8H13L9.7 7.3l1.2 4L7 9l-3.9 2.3 1.2-4L1 4.8h4.2z"
+                />
+              </svg>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="#8C1515">
+                <path
+                  d="M7 1L8.8 4.8H13L9.7 7.3l1.2 4L7 9l-3.9 2.3 1.2-4L1 4.8h4.2z"
+                />
+              </svg>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="#8C1515">
+                <path
+                  d="M7 1L8.8 4.8H13L9.7 7.3l1.2 4L7 9l-3.9 2.3 1.2-4L1 4.8h4.2z"
+                />
+              </svg>
+            </div>
+            <p
+              style="
+                font-size: 0.9rem;
+                color: #374151;
+                line-height: 1.75;
+                margin-bottom: 1.5rem;
+              "
+            >
+              "VigilPay gave our retention team a 30-day runway they never had
+              before. We protected $780K in at-risk deposits in the first
+              quarter alone."
+            </p>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding-top: 1.25rem;
+                border-top: 1px solid var(--stone-mid);
+              "
+            >
+              <div
+                style="
+                  width: 38px;
+                  height: 38px;
+                  background: var(--navy);
+                  border-radius: 10px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-weight: 700;
+                  font-size: 0.72rem;
+                  color: #fff;
+                  flex-shrink: 0;
+                "
+              >
+                NK
+              </div>
+              <div>
+                <p
+                  style="
+                    font-weight: 700;
+                    font-size: 0.875rem;
+                    color: var(--navy);
+                  "
+                >
+                  Nadia Kamau
+                </p>
+                <p style="font-size: 0.75rem; color: #9ca3af">
+                  Head of Retail Banking, Crest Bank
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="sr sr-d2 card bg-white p-7"
+            style="border-color: rgba(140, 21, 21, 0.2)"
+          >
+            <div style="display: flex; gap: 2px; margin-bottom: 1.25rem">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="#8C1515">
+                <path
+                  d="M7 1L8.8 4.8H13L9.7 7.3l1.2 4L7 9l-3.9 2.3 1.2-4L1 4.8h4.2z"
+                />
+              </svg>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="#8C1515">
+                <path
+                  d="M7 1L8.8 4.8H13L9.7 7.3l1.2 4L7 9l-3.9 2.3 1.2-4L1 4.8h4.2z"
+                />
+              </svg>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="#8C1515">
+                <path
+                  d="M7 1L8.8 4.8H13L9.7 7.3l1.2 4L7 9l-3.9 2.3 1.2-4L1 4.8h4.2z"
+                />
+              </svg>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="#8C1515">
+                <path
+                  d="M7 1L8.8 4.8H13L9.7 7.3l1.2 4L7 9l-3.9 2.3 1.2-4L1 4.8h4.2z"
+                />
+              </svg>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="#8C1515">
+                <path
+                  d="M7 1L8.8 4.8H13L9.7 7.3l1.2 4L7 9l-3.9 2.3 1.2-4L1 4.8h4.2z"
+                />
+              </svg>
+            </div>
+            <p
+              style="
+                font-size: 0.9rem;
+                color: #374151;
+                line-height: 1.75;
+                margin-bottom: 1.5rem;
+              "
+            >
+              "The explainability is what sets it apart. Our agents know exactly
+              what to say to each customer. Retention rate improved by 23% in 6
+              months."
+            </p>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding-top: 1.25rem;
+                border-top: 1px solid var(--stone-mid);
+              "
+            >
+              <div
+                style="
+                  width: 38px;
+                  height: 38px;
+                  background: var(--red);
+                  border-radius: 10px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-weight: 700;
+                  font-size: 0.72rem;
+                  color: #fff;
+                  flex-shrink: 0;
+                "
+              >
+                JO
+              </div>
+              <div>
+                <p
+                  style="
+                    font-weight: 700;
+                    font-size: 0.875rem;
+                    color: var(--navy);
+                  "
+                >
+                  James Odhiambo
+                </p>
+                <p style="font-size: 0.75rem; color: #9ca3af">
+                  Director of Analytics, Apex Finance
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="sr sr-d3 card bg-white p-7">
+            <div style="display: flex; gap: 2px; margin-bottom: 1.25rem">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="#8C1515">
+                <path
+                  d="M7 1L8.8 4.8H13L9.7 7.3l1.2 4L7 9l-3.9 2.3 1.2-4L1 4.8h4.2z"
+                />
+              </svg>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="#8C1515">
+                <path
+                  d="M7 1L8.8 4.8H13L9.7 7.3l1.2 4L7 9l-3.9 2.3 1.2-4L1 4.8h4.2z"
+                />
+              </svg>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="#8C1515">
+                <path
+                  d="M7 1L8.8 4.8H13L9.7 7.3l1.2 4L7 9l-3.9 2.3 1.2-4L1 4.8h4.2z"
+                />
+              </svg>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="#8C1515">
+                <path
+                  d="M7 1L8.8 4.8H13L9.7 7.3l1.2 4L7 9l-3.9 2.3 1.2-4L1 4.8h4.2z"
+                />
+              </svg>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="#8C1515">
+                <path
+                  d="M7 1L8.8 4.8H13L9.7 7.3l1.2 4L7 9l-3.9 2.3 1.2-4L1 4.8h4.2z"
+                />
+              </svg>
+            </div>
+            <p
+              style="
+                font-size: 0.9rem;
+                color: #374151;
+                line-height: 1.75;
+                margin-bottom: 1.5rem;
+              "
+            >
+              "Security and compliance were our biggest concerns. VigilPay
+              passed our internal audit with zero findings. The GDPR compliance
+              was thorough."
+            </p>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding-top: 1.25rem;
+                border-top: 1px solid var(--stone-mid);
+              "
+            >
+              <div
+                style="
+                  width: 38px;
+                  height: 38px;
+                  background: #374151;
+                  border-radius: 10px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-weight: 700;
+                  font-size: 0.72rem;
+                  color: #fff;
+                  flex-shrink: 0;
+                "
+              >
+                CW
+              </div>
+              <div>
+                <p
+                  style="
+                    font-weight: 700;
+                    font-size: 0.875rem;
+                    color: var(--navy);
+                  "
+                >
+                  Caroline Wanjiku
+                </p>
+                <p style="font-size: 0.75rem; color: #9ca3af">
+                  CISO, Heritage Savings & Loan
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+     SECURITY & COMPLIANCE
+================================================================ -->
+    <section
+      id="security"
+      style="
+        background: var(--navy-dark);
+        padding: 6rem 0;
+        position: relative;
+        overflow: hidden;
+      "
+    >
+      <div class="noise-overlay"></div>
+      <div
+        style="
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          background: radial-gradient(
+            ellipse 600px 600px at 20% 50%,
+            rgba(140, 21, 21, 0.1) 0%,
+            transparent 70%
+          );
+        "
+      ></div>
+      <!-- Grid lines -->
+      <div
+        style="
+          position: absolute;
+          inset: 0;
+          opacity: 0.04;
+          background-image:
+            linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+            linear-gradient(
+              90deg,
+              rgba(255, 255, 255, 0.5) 1px,
+              transparent 1px
+            );
+          background-size: 60px 60px;
+          pointer-events: none;
+        "
+      ></div>
+
+      <div class="max-w-7xl mx-auto px-5 sm:px-8">
+        <div class="text-center mb-14">
+          <div
+            class="sr section-label justify-center"
+            style="color: rgba(255, 255, 255, 0.4)"
+          >
+            The Fintech Essential
+          </div>
+          <h2
+            class="sr sr-d1"
+            style="
+              font-family: &quot;Instrument Serif&quot;, serif;
+              font-size: clamp(2rem, 4vw, 2.75rem);
+              color: #fff;
+              line-height: 1.15;
+              margin-bottom: 1rem;
+            "
+          >
+            Security You Can Audit
+          </h2>
+          <p
+            class="sr sr-d2"
+            style="
+              color: rgba(255, 255, 255, 0.5);
+              max-width: 500px;
+              margin: 0 auto;
+              line-height: 1.7;
+              font-size: 0.9375rem;
+            "
+          >
+            Built to the same standards your regulators expect. Every component
+            independently audited and certified.
+          </p>
+        </div>
+
+        <!-- 3-column security cards -->
+        <div class="grid md:grid-cols-3 gap-5 mb-12">
+          <div class="sr sr-d1 comp-box">
+            <div
+              style="
+                width: 48px;
+                height: 48px;
+                background: rgba(140, 21, 21, 0.25);
+                border: 1px solid rgba(140, 21, 21, 0.3);
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-bottom: 1.25rem;
+              "
+            >
+              <svg
+                data-feather="lock"
+                width="22"
+                height="22"
+                style="color: var(--red); stroke: var(--red)"
+              ></svg>
+            </div>
+            <h3
+              style="
+                font-weight: 700;
+                font-size: 1rem;
+                color: #fff;
+                margin-bottom: 0.5rem;
+              "
+            >
+              AES-256 Encryption
+            </h3>
+            <p
+              style="
+                font-size: 0.875rem;
+                color: rgba(255, 255, 255, 0.5);
+                line-height: 1.7;
+              "
+            >
+              All data encrypted at rest and in transit using AES-256-GCM and
+              TLS 1.3. Encryption keys rotated automatically on a 90-day cycle.
+            </p>
+          </div>
+
+          <div class="sr sr-d2 comp-box">
+            <div
+              style="
+                width: 48px;
+                height: 48px;
+                background: rgba(140, 21, 21, 0.25);
+                border: 1px solid rgba(140, 21, 21, 0.3);
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-bottom: 1.25rem;
+              "
+            >
+              <svg
+                data-feather="shield"
+                width="22"
+                height="22"
+                style="color: var(--red); stroke: var(--red)"
+              ></svg>
+            </div>
+            <h3
+              style="
+                font-weight: 700;
+                font-size: 1rem;
+                color: #fff;
+                margin-bottom: 0.5rem;
+              "
+            >
+              GDPR Compliant
+            </h3>
+            <p
+              style="
+                font-size: 0.875rem;
+                color: rgba(255, 255, 255, 0.5);
+                line-height: 1.7;
+              "
+            >
+              Full GDPR, CCPA, and PDPA compliance. Data residency options for
+              EU, UK, and East Africa. DPA agreements available on request.
+            </p>
+          </div>
+
+          <div class="sr sr-d3 comp-box">
+            <div
+              style="
+                width: 48px;
+                height: 48px;
+                background: rgba(140, 21, 21, 0.25);
+                border: 1px solid rgba(140, 21, 21, 0.3);
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-bottom: 1.25rem;
+              "
+            >
+              <svg
+                data-feather="file-text"
+                width="22"
+                height="22"
+                style="color: var(--red); stroke: var(--red)"
+              ></svg>
+            </div>
+            <h3
+              style="
+                font-weight: 700;
+                font-size: 1rem;
+                color: #fff;
+                margin-bottom: 0.5rem;
+              "
+            >
+              Immutable Audit Logs
+            </h3>
+            <p
+              style="
+                font-size: 0.875rem;
+                color: rgba(255, 255, 255, 0.5);
+                line-height: 1.7;
+              "
+            >
+              Every prediction, data access, and user action is logged to an
+              immutable audit trail. Exportable for regulatory review in
+              minutes.
+            </p>
+          </div>
+        </div>
+
+        <!-- Additional security badges -->
+        <div class="sr flex flex-wrap justify-center gap-3">
+          <div class="trust-badge">
+            <svg
+              data-feather="check-circle"
+              width="12"
+              height="12"
+              style="color: #4ade80; stroke: #4ade80; flex-shrink: 0"
+            ></svg>
+            SOC 2 Type II Certified
+          </div>
+          <div class="trust-badge">
+            <svg
+              data-feather="check-circle"
+              width="12"
+              height="12"
+              style="color: #4ade80; stroke: #4ade80; flex-shrink: 0"
+            ></svg>
+            ISO 27001
+          </div>
+          <div class="trust-badge">
+            <svg
+              data-feather="check-circle"
+              width="12"
+              height="12"
+              style="color: #4ade80; stroke: #4ade80; flex-shrink: 0"
+            ></svg>
+            PCI DSS Level 1
+          </div>
+          <div class="trust-badge">
+            <svg
+              data-feather="check-circle"
+              width="12"
+              height="12"
+              style="color: #4ade80; stroke: #4ade80; flex-shrink: 0"
+            ></svg>
+            99.9% Uptime SLA
+          </div>
+          <div class="trust-badge">
+            <svg
+              data-feather="check-circle"
+              width="12"
+              height="12"
+              style="color: #4ade80; stroke: #4ade80; flex-shrink: 0"
+            ></svg>
+            Pen-Tested Annually
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ================================================================
+     CALL TO ACTION
+================================================================ -->
+    <section
+      id="cta"
+      style="
+        background: var(--navy);
+        padding: 7rem 0;
+        position: relative;
+        overflow: hidden;
+      "
+    >
+      <div class="noise-overlay"></div>
+      <div
+        style="
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          background: radial-gradient(
+            ellipse 800px 600px at 30% 60%,
+            rgba(140, 21, 21, 0.18) 0%,
+            transparent 65%
+          );
+        "
+      ></div>
+      <!-- Grid -->
+      <div
+        style="
+          position: absolute;
+          inset: 0;
+          opacity: 0.03;
+          background-image:
+            linear-gradient(rgba(255, 255, 255, 1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 1) 1px, transparent 1px);
+          background-size: 48px 48px;
+          pointer-events: none;
+        "
+      ></div>
+
+      <div class="max-w-3xl mx-auto px-5 sm:px-8 text-center relative">
+        <div
+          class="sr inline-flex items-center gap-2.5 mb-7 bg-white/8 border border-white/15 rounded-full px-4 py-2"
+        >
+          <span class="pulse-dot" style="background: var(--red)"></span>
+          <span
+            style="
+              font-size: 0.75rem;
+              font-weight: 600;
+              color: rgba(255, 255, 255, 0.65);
+              letter-spacing: 0.04em;
+              text-transform: uppercase;
+            "
+            >Start Today — Setup in 48 Hours</span
+          >
+        </div>
+
+        <h2
+          class="sr sr-d1"
+          style="
+            font-family: &quot;Instrument Serif&quot;, serif;
+            font-size: clamp(2.25rem, 5vw, 3.75rem);
+            color: #fff;
+            line-height: 1.1;
+            margin-bottom: 1.25rem;
+          "
+        >
+          Stop Losing Customers<br />
+          <em style="color: var(--red)">You Could Have Kept.</em>
+        </h2>
+
+        <p
+          class="sr sr-d2"
+          style="
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.55);
+            line-height: 1.75;
+            margin-bottom: 2.5rem;
+            max-width: 520px;
+            margin-left: auto;
+            margin-right: auto;
+          "
+        >
+          Join 40+ financial institutions using VigilPay to protect revenue and
+          build lasting customer relationships.
+        </p>
+
+        <div
+          class="sr sr-d3 flex flex-col sm:flex-row gap-4 justify-center mb-8"
+        >
+          <a
+            href="#"
+            class="btn-red"
+            style="padding: 1rem 2.25rem; font-size: 1rem"
+          >
+            Request a Demo
+            <svg data-feather="arrow-right" width="18" height="18"></svg>
+          </a>
+          <a
+            href="mailto:sales@vigilpay.io"
+            class="btn-outline-navy"
+            style="padding: 1rem 2.25rem; font-size: 1rem"
+          >
+            Talk to Sales
+          </a>
+        </div>
+
+        <p
+          class="sr sr-d4"
+          style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.3)"
+        >
+          No credit card required. 30-day free pilot available for qualifying
+          institutions.
+        </p>
+
+        <!-- Trust row -->
+        <div class="sr sr-d5 flex flex-wrap justify-center gap-3 mt-10">
+          <div class="trust-badge">
+            <svg
+              data-feather="shield"
+              width="12"
+              height="12"
+              style="
+                flex-shrink: 0;
+                color: rgba(255, 255, 255, 0.5);
+                stroke: rgba(255, 255, 255, 0.5);
+              "
+            ></svg>
+            SOC 2 Certified
+          </div>
+          <div class="trust-badge">
+            <svg
+              data-feather="lock"
+              width="12"
+              height="12"
+              style="
+                flex-shrink: 0;
+                color: rgba(255, 255, 255, 0.5);
+                stroke: rgba(255, 255, 255, 0.5);
+              "
+            ></svg>
+            AES-256 Encrypted
+          </div>
+          <div class="trust-badge">
+            <svg
+              data-feather="globe"
+              width="12"
+              height="12"
+              style="
+                flex-shrink: 0;
+                color: rgba(255, 255, 255, 0.5);
+                stroke: rgba(255, 255, 255, 0.5);
+              "
+            ></svg>
+            GDPR Compliant
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+     FOOTER
+================================================================ -->
+    <footer
+      style="
+        background: var(--navy-dark);
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+      "
+    >
+      <div class="max-w-7xl mx-auto px-5 sm:px-8 py-16">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-10 mb-14">
+          <!-- Brand -->
+          <div class="col-span-2 md:col-span-1">
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 1rem;
+              "
+            >
+              <div
+                style="
+                  width: 34px;
+                  height: 34px;
+                  background: var(--red);
+                  border-radius: 9px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                "
+              >
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                  <path
+                    d="M10 2.5L16.5 6v8L10 17.5 3.5 14V6L10 2.5z"
+                    stroke="white"
+                    stroke-width="1.6"
+                    fill="none"
+                    stroke-linejoin="round"
+                  />
+                  <circle cx="10" cy="10" r="2.5" fill="white" />
+                </svg>
+              </div>
+              <span
+                style="
+                  font-family: &quot;Figtree&quot;, sans-serif;
+                  font-weight: 700;
+                  font-size: 1.0625rem;
+                  color: #fff;
+                  letter-spacing: -0.01em;
+                "
+                >Vigil<span style="color: var(--red)">Pay</span></span
+              >
+            </div>
+            <p
+              style="
+                font-size: 0.85rem;
+                color: rgba(255, 255, 255, 0.4);
+                line-height: 1.7;
+                max-width: 200px;
+                margin-bottom: 1.25rem;
+              "
+            >
+              AI-powered churn prediction for financial institutions. Built for
+              banks. Trusted by analysts.
+            </p>
+            <div style="display: flex; gap: 8px">
+              <a
+                href="#"
+                aria-label="LinkedIn"
+                style="
+                  width: 34px;
+                  height: 34px;
+                  background: rgba(255, 255, 255, 0.06);
+                  border: 1px solid rgba(255, 255, 255, 0.1);
+                  border-radius: 8px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  transition: background 0.2s;
+                "
+                onmouseenter="this.style.background = 'rgba(255,255,255,0.12)'"
+                onmouseleave="this.style.background = 'rgba(255,255,255,0.06)'"
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <rect
+                    x="1"
+                    y="5"
+                    width="2.5"
+                    height="8"
+                    fill="rgba(255,255,255,0.5)"
+                  />
+                  <circle
+                    cx="2.25"
+                    cy="2.25"
+                    r="1.25"
+                    fill="rgba(255,255,255,0.5)"
+                  />
+                  <path
+                    d="M6 5v8M6 8c0-1.5 1-3 3-3s3 1.5 3 3v5"
+                    stroke="rgba(255,255,255,0.5)"
+                    stroke-width="1.2"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </a>
+              <a
+                href="#"
+                aria-label="Twitter/X"
+                style="
+                  width: 34px;
+                  height: 34px;
+                  background: rgba(255, 255, 255, 0.06);
+                  border: 1px solid rgba(255, 255, 255, 0.1);
+                  border-radius: 8px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  transition: background 0.2s;
+                "
+                onmouseenter="this.style.background = 'rgba(255,255,255,0.12)'"
+                onmouseleave="this.style.background = 'rgba(255,255,255,0.06)'"
+              >
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 13 13"
+                  fill="rgba(255,255,255,0.5)"
+                >
+                  <path
+                    d="M12 1.5L7.75 6.25 12.5 12.5H9.25L6.25 8.5 3 12.5H1.5L6 7.25 1.5 1.5H4.75L7.5 5.25 10.5 1.5H12z"
+                  />
+                </svg>
+              </a>
+            </div>
+          </div>
+
+          <!-- Product -->
+          <div>
+            <p
+              style="
+                font-size: 0.7rem;
+                font-weight: 700;
+                color: rgba(255, 255, 255, 0.3);
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+                margin-bottom: 1rem;
+              "
+            >
+              Product
+            </p>
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <a href="#features" class="footer-link">Features</a>
+              <a href="#how-it-works" class="footer-link">How It Works</a>
+              <a href="#risk-matrix" class="footer-link">Risk Matrix</a>
+              <a href="#pricing" class="footer-link">Pricing</a>
+              <a href="#" class="footer-link">Changelog</a>
+              <a href="#" class="footer-link">API Docs</a>
+            </div>
+          </div>
+
+          <!-- Company -->
+          <div>
+            <p
+              style="
+                font-size: 0.7rem;
+                font-weight: 700;
+                color: rgba(255, 255, 255, 0.3);
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+                margin-bottom: 1rem;
+              "
+            >
+              Company
+            </p>
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <a href="#" class="footer-link">About</a>
+              <a href="#" class="footer-link">Blog</a>
+              <a href="#" class="footer-link">Careers</a>
+              <a href="#" class="footer-link">Press</a>
+              <a href="#" class="footer-link">Contact</a>
+            </div>
+          </div>
+
+          <!-- Legal -->
+          <div>
+            <p
+              style="
+                font-size: 0.7rem;
+                font-weight: 700;
+                color: rgba(255, 255, 255, 0.3);
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+                margin-bottom: 1rem;
+              "
+            >
+              Legal
+            </p>
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <a href="#" class="footer-link">Privacy Policy</a>
+              <a href="#" class="footer-link">Terms of Service</a>
+              <a href="#" class="footer-link">Security Policy</a>
+              <a href="#" class="footer-link">DPA Agreement</a>
+              <a href="#" class="footer-link">Cookie Policy</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom bar -->
+      <div style="border-top: 1px solid rgba(255, 255, 255, 0.06)">
+        <div
+          class="max-w-7xl mx-auto px-5 sm:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-3"
+        >
+          <p style="font-size: 0.78rem; color: rgba(255, 255, 255, 0.25)">
+            2025 VigilPay Technologies Ltd. All rights reserved.
+          </p>
+          <!-- System status -->
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              background: rgba(255, 255, 255, 0.04);
+              border: 1px solid rgba(255, 255, 255, 0.08);
+              border-radius: 99px;
+              padding: 5px 12px;
+            "
+          >
+            <span
+              style="
+                width: 7px;
+                height: 7px;
+                background: #22c55e;
+                border-radius: 50%;
+                display: block;
+                animation: pulse-dot 2s ease-in-out infinite;
+              "
+            ></span>
+            <span
+              style="
+                font-size: 0.72rem;
+                color: rgba(255, 255, 255, 0.4);
+                font-weight: 500;
+              "
+              >System Status:
+              <span style="color: #22c55e; font-weight: 700"
+                >Healthy</span
+              ></span
+            >
+          </div>
+        </div>
+      </div>
+    </footer>
+
+ <script>
+      // ── Feather Icons ───────────────────────────────────────────────
+      feather.replace({ "stroke-width": 1.75 });
+
+      // Re-run feather after DOM is ready to catch dynamically rendered icons
+      document.addEventListener("DOMContentLoaded", () => {
+        feather.replace({ "stroke-width": 1.75 });
+      });
+
+      // ── Navbar scroll effect ────────────────────────────────────────
+      const navbar = document.getElementById("navbar");
+      window.addEventListener(
+        "scroll",
+        () => {
+          navbar.classList.toggle("scrolled", window.scrollY > 24);
+        },
+        { passive: true },
+      );
+
+      // ── Mobile nav toggle ───────────────────────────────────────────
+      let navOpen = false;
+      function toggleNav() {
+        navOpen = !navOpen;
+        const mn = document.getElementById("mobile-nav");
+        const h1 = document.getElementById("hb1");
+        const h2 = document.getElementById("hb2");
+        const h3 = document.getElementById("hb3");
+        mn.classList.toggle("open", navOpen);
+        if (navOpen) {
+          h1.style.transform = "rotate(45deg) translate(4px, 4px)";
+          h2.style.opacity = "0";
+          h3.style.transform = "rotate(-45deg) translate(4px, -4px)";
+        } else {
+          h1.style.transform = "";
+          h2.style.opacity = "";
+          h3.style.transform = "";
+        }
+      }
+      function closeNav() {
+        navOpen = false;
+        document.getElementById("mobile-nav").classList.remove("open");
+        const h1 = document.getElementById("hb1");
+        const h2 = document.getElementById("hb2");
+        const h3 = document.getElementById("hb3");
+        h1.style.transform = "";
+        h2.style.opacity = "";
+        h3.style.transform = "";
+      }
+
+      // ── Demo modal ──────────────────────────────────────────────────
+      function openDemo() {
+        const modal = document.getElementById("demo-modal");
+        const box = document.getElementById("demo-box");
+        modal.style.display = "flex";
+        document.body.style.overflow = "hidden";
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            box.style.transform = "scale(1)";
+            box.style.opacity = "1";
+          });
+        });
+      }
+      function closeDemo() {
+        const modal = document.getElementById("demo-modal");
+        const box = document.getElementById("demo-box");
+        box.style.transform = "scale(0.95)";
+        box.style.opacity = "0";
+        setTimeout(() => {
+          modal.style.display = "none";
+          document.body.style.overflow = "";
+        }, 300);
+      }
+      document
+        .getElementById("demo-modal")
+        .addEventListener("click", function (e) {
+          if (e.target === this) closeDemo();
+        });
+
+      // Wire up "Watch Demo" buttons
+      document.querySelectorAll('[href="#demo"]').forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          openDemo();
+        });
+      });
+
+      // ── Scroll reveal (Intersection Observer) ───────────────────────
+      const srObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("in");
+              srObserver.unobserve(entry.target); // once only
+            }
+          });
+        },
+        { threshold: 0.12, rootMargin: "0px 0px -40px 0px" },
+      );
+
+      document.querySelectorAll(".sr").forEach((el) => srObserver.observe(el));
+
+      // ── Risk arc animation ──────────────────────────────────────────
+      const arcObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              document.getElementById("arc-fill")?.classList.add("animate");
+              arcObserver.disconnect();
+            }
+          });
+        },
+        { threshold: 0.3 },
+      );
+      const arcEl = document.getElementById("arc-fill");
+      if (arcEl) arcObserver.observe(arcEl);
+
+      // ── Risk bar animations ─────────────────────────────────────────
+      const barObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              const bars = entry.target.querySelectorAll(
+                ".risk-bar-fill[data-width]",
+              );
+              bars.forEach((bar) => {
+                const w = bar.getAttribute("data-width");
+                setTimeout(() => {
+                  bar.style.width = w + "%";
+                }, 200);
+              });
+              barObserver.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.2 },
+      );
+
+      document
+        .querySelectorAll('.mockup-shell, [style*="border-radius:20px"]')
+        .forEach((el) => {
+          if (el.querySelector(".risk-bar-fill")) barObserver.observe(el);
+        });
+
+      // Also directly observe risk bar parents
+      document.querySelectorAll(".risk-bar-track").forEach((track) => {
+        const fill = track.querySelector(".risk-bar-fill[data-width]");
+        if (!fill) return;
+        const trackObserver = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                setTimeout(() => {
+                  fill.style.width = fill.getAttribute("data-width") + "%";
+                }, 200);
+                trackObserver.unobserve(entry.target);
+              }
+            });
+          },
+          { threshold: 0.5 },
+        );
+        trackObserver.observe(track);
+      });
+
+      // Escape key closes modals
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeDemo();
+      });
+    </script>
+  </body>
+</html>

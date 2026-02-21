@@ -1,0 +1,93 @@
+/* ─── CARD SECTION ─── */
+#cards{background:var(--coal);padding:6rem 0;position:relative;overflow:hidden;}
+#cards::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 700px 600px at 80% 50%,rgba(120,0,0,.15) 0%,transparent 70%);
+}
+.cards-grid{max-width:1200px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;position:relative;}
+/* MASTERCARD stack */
+.mc-stack{position:relative;width:320px;height:210px;margin:0 auto;}
+.mc-card{
+  position:absolute;
+  width:290px;height:175px;border-radius:16px;
+  overflow:hidden;
+}
+.mc-back{
+  top:30px;left:22px;
+  transform:rotate(-7deg);
+  background:linear-gradient(135deg,var(--crimson-d) 0%,var(--crimson) 60%,#a51c1c 100%);
+  border:1px solid rgba(255,255,255,.07);
+  opacity:.55;
+}
+.mc-mid{
+  top:16px;left:12px;
+  transform:rotate(-3deg);
+  background:linear-gradient(135deg,#3a3835 0%,var(--coal-l) 100%);
+  border:1px solid rgba(255,255,255,.06);
+  opacity:.75;
+}
+.mc-front{
+  top:0;left:0;
+  background:linear-gradient(135deg,#2f2d2a 0%,#1a1917 40%,#2a2826 100%);
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 24px 56px rgba(0,0,0,.45);
+}
+/* Front card elements */
+.mc-chip{
+  position:absolute;top:22px;left:22px;
+  width:36px;height:27px;border-radius:5px;
+  background:linear-gradient(135deg,var(--gold-l),var(--gold));
+  display:flex;align-items:center;justify-content:center;
+  font-size:.45rem;color:rgba(255,255,255,.5);
+  border:1px solid var(--gold);
+}
+.mc-chip::after{
+  content:'';position:absolute;inset:0;
+  background:
+    linear-gradient(90deg,rgba(0,0,0,.1) 50%,transparent 50%),
+    linear-gradient(rgba(0,0,0,.1) 50%,transparent 50%);
+  background-size:8px 100%,100% 9px;
+  border-radius:4px;
+}
+.mc-logo{
+  position:absolute;top:18px;right:18px;
+  display:flex;align-items:center;
+}
+.mc-circle{width:28px;height:28px;border-radius:50%;}
+.mc-c1{background:rgba(235,0,0,.85);}
+.mc-c2{background:rgba(255,160,0,.85);margin-left:-10px;}
+.mc-number{
+  position:absolute;bottom:46px;left:22px;right:22px;
+  font-family:monospace;font-size:.82rem;
+  letter-spacing:.2em;color:rgba(255,255,255,.75);
+  font-weight:400;
+}
+.mc-holder{position:absolute;bottom:22px;left:22px;}
+.mc-holder-lbl{font-size:.5rem;color:rgba(255,255,255,.35);letter-spacing:.1em;text-transform:uppercase;font-weight:500;}
+.mc-holder-name{font-size:.72rem;color:rgba(255,255,255,.8);font-weight:600;margin-top:2px;letter-spacing:.05em;}
+.mc-exp{position:absolute;bottom:22px;right:18px;text-align:right;}
+.mc-network{
+  position:absolute;bottom:18px;right:18px;
+  font-size:.65rem;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.08em;text-transform:uppercase;
+}
+.mc-band{
+  position:absolute;top:28px;left:0;right:0;height:36px;
+  background:rgba(0,0,0,.7);
+}
+/* shimmer */
+.mc-front::after{
+  content:'';position:absolute;top:-50%;left:-50%;width:40%;height:200%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.04),transparent);
+  transform:rotate(15deg);
+  animation:shimmer 4s ease-in-out infinite;
+}
+@keyframes shimmer{0%,100%{left:-50%;}50%{left:110%;}}
+
+.badge-wrap{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px;}
+.wbadge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+  border-radius:999px;padding:5px 13px;
+  font-size:.7rem;font-weight:500;color:rgba(255,255,255,.55);
+}
+.wbadge i{font-size:.65rem;}

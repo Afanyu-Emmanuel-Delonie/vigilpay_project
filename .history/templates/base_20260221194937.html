@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VigilPay — Predict Churn. Protect Revenue.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+
+<style>
+:root {
+  --crimson:     #780000;
+  --crimson-d:   #5a0000;
+  --crimson-l:   #9e0000;
+  --crimson-g:   rgba(120,0,0,0.08);
+  --coal:        #252422;
+  --coal-l:      #3a3835;
+  --coal-ll:     #52504d;
+  --bone:        #f5f2ed;
+  --bone-d:      #e8e3db;
+  --bone-dd:     #d4cec4;
+  --white:       #ffffff;
+  --gold:        #c8a951;
+  --gold-l:      #e2c97e;
+
+  --fs-hero:     clamp(3rem,6vw,5.2rem);
+  --fs-h2:       clamp(2rem,4vw,3.2rem);
+  --fs-h3:       1.15rem;
+  --fs-body:     0.9375rem;
+  --fs-sm:       0.8125rem;
+  --fs-xs:       0.6875rem;
+  --r:           12px;
+  --r-lg:        20px;
+  --shadow:      0 2px 16px rgba(37,36,34,0.07);
+  --shadow-lg:   0 20px 60px rgba(37,36,34,0.13);
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;scroll-padding-top:72px;}
+
+body{
+  font-family:'DM Sans',system-ui,sans-serif;
+  background:var(--bone);
+  color:var(--coal);
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+  line-height:1.6;
+}
+
+h1,h2,h3,h4,.syne{font-family:'Syne',sans-serif;}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:var(--bone);}
+::-webkit-scrollbar-thumb{background:var(--crimson);border-radius:99px;}
+
+/* ─── NAVBAR ─── */
+#nav{
+  position:fixed;top:0;inset-x:0;z-index:100;
+  height:68px;
+  background:rgba(245,242,237,0.85);
+  backdrop-filter:blur(24px);
+  -webkit-backdrop-filter:blur(24px);
+  border-bottom:1px solid transparent;
+  transition:border-color .3s,box-shadow .3s;
+}
+#nav.sc{border-color:var(--bone-dd);box-shadow:0 2px 20px rgba(37,36,34,0.07);}
+.nav-inner{
+  max-width:1200px;margin:0 auto;padding:0 24px;
+  height:100%;display:flex;align-items:center;justify-content:space-between;gap:20px;
+}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.logo-icon{
+  width:36px;height:36px;background:var(--crimson);border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1rem;color:#fff;
+  transition:background .2s;
+}
+.logo:hover .logo-icon{background:var(--crimson-d);}
+.logo-text{font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;color:var(--coal);letter-spacing:-.02em;}
+.logo-text span{color:var(--crimson);}
+.nav-links{display:flex;align-items:center;gap:28px;}
+.nav-links a{
+  font-size:.8rem;font-weight:500;color:var(--coal-ll);text-decoration:none;
+  transition:color .2s;letter-spacing:.01em;
+}
+.nav-links a:hover{color:var(--crimson);}
+.nav-ctas{display:flex;align-items:center;gap:8px;}
+
+/* ─── BUTTONS ─── */
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:'Syne',sans-serif;font-weight:700;font-size:.8rem;
+  padding:.55rem 1.2rem;border-radius:8px;
+  border:2px solid transparent;cursor:pointer;text-decoration:none;
+  transition:all .2s cubic-bezier(.34,1.4,.64,1);white-space:nowrap;
+  letter-spacing:.01em;
+}
+.btn-primary{background:var(--crimson);color:#fff;border-color:var(--crimson);}
+.btn-primary:hover{background:var(--crimson-d);border-color:var(--crimson-d);transform:translateY(-1px);box-shadow:0 8px 28px rgba(120,0,0,0.35);}
+.btn-outline{background:transparent;color:var(--crimson);border-color:var(--crimson);}
+.btn-outline:hover{background:var(--crimson);color:#fff;transform:translateY(-1px);}
+.btn-ghost{background:transparent;color:rgba(255,255,255,.65);border-color:rgba(255,255,255,.2);}
+.btn-ghost:hover{background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.4);}
+.btn-lg{padding:.85rem 1.85rem;font-size:.9rem;border-radius:10px;}
+.btn-nav{font-size:.75rem;padding:.42rem .95rem;}
+
+/* ─── SECTION LABEL ─── */
+.label{
+  display:inline-flex;align-items:center;gap:9px;
+  color:var(--crimson);font-size:.65rem;font-weight:700;
+  letter-spacing:.16em;text-transform:uppercase;margin-bottom:14px;
+}
+.label::before{content:'';width:20px;height:2px;background:var(--crimson);border-radius:2px;}
+
+/* ─── CARDS ─── */
+.card{
+  background:var(--white);border:1px solid var(--bone-dd);border-radius:var(--r-lg);
+  transition:transform .3s cubic-bezier(.34,1.4,.64,1),box-shadow .3s,border-color .3s;
+}
+.card:hover{
+  transform:translateY(-5px);
+  box-shadow:0 24px 56px rgba(37,36,34,0.1);
+  border-color:rgba(120,0,0,0.18);
+}
+
+/* ─── ICON BOX ─── */
+.ibox{
+  width:48px;height:48px;border-radius:12px;
+  background:rgba(120,0,0,0.07);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;color:var(--crimson);flex-shrink:0;
+}
+
+/* ─── HERO ─── */
+#hero{
+  min-height:100svh;padding-top:68px;
+  display:flex;align-items:center;
+  position:relative;overflow:hidden;
+}
+.hero-bg{
+  position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 800px 600px at 110% -5%,rgba(120,0,0,.06) 0%,transparent 65%),
+    radial-gradient(ellipse 600px 500px at -10% 100%,rgba(37,36,34,.05) 0%,transparent 65%);
+}
+.dot-grid{
+  position:absolute;inset:0;pointer-events:none;
+  background-image:radial-gradient(circle,var(--bone-dd) 1px,transparent 1px);
+  background-size:28px 28px;opacity:.45;
+}
+.hero-grid{
+  max-width:1200px;margin:0 auto;padding:80px 24px;
+  display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;width:100%;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:10px;
+  background:var(--white);border:1px solid var(--bone-dd);
+  border-radius:999px;padding:7px 16px;
+  font-size:.68rem;font-weight:700;color:var(--crimson);
+  letter-spacing:.1em;text-transform:uppercase;
+  margin-bottom:22px;
+  box-shadow:var(--shadow);
+}
+.pulse{
+  width:7px;height:7px;border-radius:50%;background:var(--crimson);
+  animation:pulse-anim 2s ease-in-out infinite;flex-shrink:0;
+}
+@keyframes pulse-anim{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.9);opacity:.4;}}
+.hero-h1{
+  font-family:'Syne',sans-serif;
+  font-size:var(--fs-hero);font-weight:800;line-height:1.05;
+  color:var(--coal);letter-spacing:-.03em;margin-bottom:22px;
+}
+.hero-h1 em{color:var(--crimson);font-style:italic;}
+.hero-lead{font-size:1.05rem;color:var(--coal-ll);max-width:440px;margin-bottom:32px;line-height:1.7;font-weight:300;}
+.hero-ctas{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:36px;}
+.social-proof{display:flex;align-items:center;gap:12px;}
+.avatars{display:flex;}
+.av{
+  width:34px;height:34px;border-radius:50%;
+  border:2.5px solid var(--bone);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:.62rem;color:#fff;
+  flex-shrink:0;
+}
+.av+.av{margin-left:-10px;}
+.stars{display:flex;gap:2px;margin-bottom:3px;}
+.stars i{font-size:.65rem;color:var(--crimson);}
+.proof-text{font-size:.75rem;color:var(--coal-ll);}
+.proof-text strong{color:var(--coal);font-weight:600;}
+
+/* ─── DASHBOARD MOCKUP ─── */
+.mockup-wrap{position:relative;}
+.mockup{
+  background:var(--white);border:1px solid var(--bone-dd);border-radius:20px;
+  overflow:hidden;box-shadow:0 40px 80px rgba(37,36,34,0.14),0 4px 20px rgba(37,36,34,0.05);
+}
+.mock-bar{
+  background:var(--coal);height:42px;padding:0 16px;
+  display:flex;align-items:center;gap:7px;
+}
+.mdot{width:9px;height:9px;border-radius:50%;}
+.mock-body{padding:18px;background:#f8f7f5;}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.stat-cell{
+  background:var(--white);border:1px solid var(--bone-dd);border-radius:11px;
+  padding:12px;text-align:center;
+}
+.stat-num{font-family:'Syne',sans-serif;font-size:1.35rem;font-weight:800;line-height:1;}
+.stat-lbl{font-size:.58rem;color:#aaa;font-weight:600;margin-top:3px;text-transform:uppercase;letter-spacing:.05em;}
+.risk-card{background:var(--white);border:1px solid var(--bone-dd);border-radius:13px;padding:16px;margin-bottom:14px;}
+.arc-wrap{position:relative;width:84px;height:84px;flex-shrink:0;}
+.arc-track{fill:none;stroke:var(--bone-dd);stroke-width:10;stroke-linecap:round;}
+.arc-fill{
+  fill:none;stroke:var(--crimson);stroke-width:10;stroke-linecap:round;
+  stroke-dasharray:220;stroke-dashoffset:220;
+  transition:stroke-dashoffset 2s cubic-bezier(.34,1.1,.64,1);
+}
+.arc-fill.go{stroke-dashoffset:44;}
+.arc-pct{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;color:var(--crimson);
+}
+.bar-t{height:5px;background:var(--bone-dd);border-radius:99px;overflow:hidden;}
+.bar-f{height:100%;border-radius:99px;width:0%;transition:width 1.4s cubic-bezier(.34,1.1,.64,1);}
+.mini-bars{display:flex;align-items:flex-end;gap:4px;height:42px;}
+.mini-bar{flex:1;border-radius:3px 3px 0 0;}
+
+/* Floating chips */
+.chip-float{
+  position:absolute;background:var(--white);border:1px solid var(--bone-dd);
+  border-radius:15px;padding:12px 15px;display:flex;align-items:center;gap:10px;
+  box-shadow:0 10px 32px rgba(37,36,34,0.12);z-index:5;
+}
+.cf1{top:-22px;left:-24px;animation:float 5s ease-in-out infinite;}
+.cf2{bottom:-18px;right:-8px;animation:float 6.5s ease-in-out infinite;animation-delay:-2.5s;}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-9px);}}
+.chip-icon{
+  width:36px;height:36px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;
+}
+
+/* ─── KPI RIBBON ─── */
+#kpi{background:var(--coal);padding:2.5rem 0;position:relative;overflow:hidden;}
+#kpi::before{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.02) 0,rgba(255,255,255,.02) 1px,transparent 1px,transparent 60px);
+}
+.kpi-grid{
+  max-width:1200px;margin:0 auto;padding:0 24px;
+  display:grid;grid-template-columns:repeat(4,1fr);
+  background:rgba(255,255,255,.05);border-radius:14px;overflow:hidden;
+}
+.kpi-item{padding:1.75rem 1.5rem;display:flex;align-items:center;gap:14px;position:relative;}
+.kpi-item+.kpi-item::before{
+  content:'';position:absolute;left:0;top:20%;height:60%;
+  width:1px;background:rgba(255,255,255,.07);
+}
+.kpi-icon{
+  width:44px;height:44px;border-radius:11px;
+  background:rgba(120,0,0,.25);border:1px solid rgba(120,0,0,.3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1rem;color:var(--crimson);flex-shrink:0;
+}
+.kpi-num{font-family:'Syne',sans-serif;font-size:1.7rem;font-weight:800;color:#fff;line-height:1;}
+.kpi-num span{color:var(--crimson);}
+.kpi-lbl{font-size:.68rem;color:rgba(255,255,255,.4);font-weight:500;margin-top:2px;}
+
+/* ─── HOW IT WORKS ─── */
+#how{background:var(--white);padding:6rem 0;}
+.section-head{text-align:center;margin-bottom:3.5rem;}
+.section-head h2{
+  font-family:'Syne',sans-serif;
+  font-size:var(--fs-h2);font-weight:800;
+  color:var(--coal);letter-spacing:-.025em;line-height:1.1;margin-bottom:10px;
+}
+.section-head p{font-size:.925rem;color:var(--coal-ll);max-width:420px;margin:0 auto;}
+.three-grid{
+  max-width:1200px;margin:0 auto;padding:0 24px;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:20px;
+}
+.step-card{
+  padding:2rem;position:relative;
+  background:var(--white);border:1px solid var(--bone-dd);border-radius:var(--r-lg);
+  transition:transform .3s cubic-bezier(.34,1.4,.64,1),box-shadow .3s,border-color .3s;
+}
+.step-card:hover{
+  transform:translateY(-6px);
+  box-shadow:0 28px 60px rgba(37,36,34,0.1);
+  border-color:rgba(120,0,0,.2);
+}
+.step-num{
+  position:absolute;top:18px;right:20px;
+  font-family:'Syne',sans-serif;font-size:3.8rem;font-weight:800;
+  color:var(--bone-d);line-height:1;user-select:none;
+}
+.step-foot{
+  margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid var(--bone-d);
+  display:flex;align-items:center;gap:8px;
+  font-size:.75rem;color:#15803d;font-weight:600;
+}
+
+/* ─── FEATURES ─── */
+#features{background:var(--bone);padding:6rem 0;}
+.six-grid{
+  max-width:1200px;margin:0 auto;padding:0 24px;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:16px;
+}
+.feat-card{padding:1.75rem;}
+.feat-card h3{font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;color:var(--coal);margin-bottom:6px;margin-top:14px;}
+.feat-card p{font-size:.82rem;color:var(--coal-ll);line-height:1.65;}
+
+/* ─── RISK MATRIX ─── */
+#matrix{background:var(--white);padding:6rem 0;}
+.two-col{
+  max-width:1200px;margin:0 auto;padding:0 24px;
+  display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;
+}
+.check-row{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;}
+.check-circle{
+  width:22px;height:22px;border-radius:50%;background:rgba(120,0,0,.08);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;
+  font-size:.65rem;color:var(--crimson);
+}
+.check-row p{font-size:.85rem;color:var(--coal-ll);}
+/* Risk table */
+.rtable{background:var(--white);border:1px solid var(--bone-dd);border-radius:20px;overflow:hidden;box-shadow:var(--shadow-lg);}
+.rtable-head{
+  background:var(--coal);padding:14px 20px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.rtable-head-l{display:flex;align-items:center;gap:9px;font-size:.75rem;font-weight:700;color:#fff;}
+.rtable-head-r{display:flex;align-items:center;gap:5px;font-size:.62rem;color:rgba(255,255,255,.4);}
+.rrow{padding:14px 20px;border-bottom:1px solid var(--bone-d);transition:background .18s;cursor:default;}
+.rrow:last-child{border-bottom:none;}
+.rrow:hover{background:var(--bone);}
+.rrow-top{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+.r-av{
+  width:38px;height:38px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:.72rem;flex-shrink:0;
+}
+.r-name{font-family:'Syne',sans-serif;font-weight:700;font-size:.83rem;color:var(--coal);}
+.r-acct{font-size:.67rem;color:#9ca3af;margin-top:1px;}
+.r-score{text-align:right;flex-shrink:0;}
+.chip{
+  font-size:.65rem;font-weight:700;padding:3px 9px;border-radius:6px;border:1px solid;
+}
+.chip-red{background:rgba(120,0,0,.06);color:var(--crimson);border-color:rgba(120,0,0,.15);}
+.chip-amber{background:#fef3c7;color:#92400e;border-color:rgba(146,64,14,.15);}
+.chip-ash{background:var(--bone-d);color:var(--coal-ll);border-color:rgba(37,36,34,.12);}
+.r-lbl{font-size:.6rem;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-top:3px;}
+.r-foot{padding:10px 20px;background:var(--bone);display:flex;align-items:center;justify-content:space-between;}
+
+/* ─── CARD SECTION ─── */
+#cards{background:var(--coal);padding:6rem 0;position:relative;overflow:hidden;}
+#cards::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 700px 600px at 80% 50%,rgba(120,0,0,.15) 0%,transparent 70%);
+}
+.cards-grid{max-width:1200px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;position:relative;}
+/* MASTERCARD stack */
+.mc-stack{position:relative;width:320px;height:210px;margin:0 auto;}
+.mc-card{
+  position:absolute;
+  width:290px;height:175px;border-radius:16px;
+  overflow:hidden;
+}
+.mc-back{
+  top:30px;left:22px;
+  transform:rotate(-7deg);
+  background:linear-gradient(135deg,var(--crimson-d) 0%,var(--crimson) 60%,#a51c1c 100%);
+  border:1px solid rgba(255,255,255,.07);
+  opacity:.55;
+}
+.mc-mid{
+  top:16px;left:12px;
+  transform:rotate(-3deg);
+  background:linear-gradient(135deg,#3a3835 0%,var(--coal-l) 100%);
+  border:1px solid rgba(255,255,255,.06);
+  opacity:.75;
+}
+.mc-front{
+  top:0;left:0;
+  background:linear-gradient(135deg,#2f2d2a 0%,#1a1917 40%,#2a2826 100%);
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 24px 56px rgba(0,0,0,.45);
+}
+/* Front card elements */
+.mc-chip{
+  position:absolute;top:22px;left:22px;
+  width:36px;height:27px;border-radius:5px;
+  background:linear-gradient(135deg,var(--gold-l),var(--gold));
+  display:flex;align-items:center;justify-content:center;
+  font-size:.45rem;color:rgba(255,255,255,.5);
+  border:1px solid var(--gold);
+}
+.mc-chip::after{
+  content:'';position:absolute;inset:0;
+  background:
+    linear-gradient(90deg,rgba(0,0,0,.1) 50%,transparent 50%),
+    linear-gradient(rgba(0,0,0,.1) 50%,transparent 50%);
+  background-size:8px 100%,100% 9px;
+  border-radius:4px;
+}
+.mc-logo{
+  position:absolute;top:18px;right:18px;
+  display:flex;align-items:center;
+}
+.mc-circle{width:28px;height:28px;border-radius:50%;}
+.mc-c1{background:rgba(235,0,0,.85);}
+.mc-c2{background:rgba(255,160,0,.85);margin-left:-10px;}
+.mc-number{
+  position:absolute;bottom:46px;left:22px;right:22px;
+  font-family:monospace;font-size:.82rem;
+  letter-spacing:.2em;color:rgba(255,255,255,.75);
+  font-weight:400;
+}
+.mc-holder{position:absolute;bottom:22px;left:22px;}
+.mc-holder-lbl{font-size:.5rem;color:rgba(255,255,255,.35);letter-spacing:.1em;text-transform:uppercase;font-weight:500;}
+.mc-holder-name{font-size:.72rem;color:rgba(255,255,255,.8);font-weight:600;margin-top:2px;letter-spacing:.05em;}
+.mc-exp{position:absolute;bottom:22px;right:18px;text-align:right;}
+.mc-network{
+  position:absolute;bottom:18px;right:18px;
+  font-size:.65rem;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.08em;text-transform:uppercase;
+}
+.mc-band{
+  position:absolute;top:28px;left:0;right:0;height:36px;
+  background:rgba(0,0,0,.7);
+}
+/* shimmer */
+.mc-front::after{
+  content:'';position:absolute;top:-50%;left:-50%;width:40%;height:200%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.04),transparent);
+  transform:rotate(15deg);
+  animation:shimmer 4s ease-in-out infinite;
+}
+@keyframes shimmer{0%,100%{left:-50%;}50%{left:110%;}}
+
+.badge-wrap{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px;}
+.wbadge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+  border-radius:999px;padding:5px 13px;
+  font-size:.7rem;font-weight:500;color:rgba(255,255,255,.55);
+}
+.wbadge i{font-size:.65rem;}
+
+/* ─── TESTIMONIALS ─── */
+#testi{background:var(--bone);padding:6rem 0;}
+.testi-grid{max-width:1200px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.testi-card{padding:1.75rem;}
+.testi-stars{display:flex;gap:3px;margin-bottom:14px;}
+.testi-stars i{font-size:.7rem;color:var(--crimson);}
+.testi-q{font-size:.855rem;color:var(--coal-ll);line-height:1.72;font-weight:400;margin-bottom:1.25rem;font-style:italic;}
+.testi-q strong{color:var(--coal);font-style:normal;font-weight:600;}
+.testi-foot{padding-top:1rem;border-top:1px solid var(--bone-dd);display:flex;align-items:center;gap:10px;}
+.testi-av{
+  width:36px;height:36px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:.65rem;color:#fff;flex-shrink:0;
+}
+.testi-name{font-family:'Syne',sans-serif;font-weight:700;font-size:.83rem;color:var(--coal);}
+.testi-role{font-size:.68rem;color:#9ca3af;margin-top:1px;}
+
+/* ─── SECURITY ─── */
+#security{background:var(--coal);padding:6rem 0;position:relative;overflow:hidden;}
+#security::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 600px 600px at 20% 50%,rgba(120,0,0,.1) 0%,transparent 70%);
+}
+#security::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,1) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,1) 1px,transparent 1px);
+  background-size:56px 56px;opacity:.025;
+}
+.sec-grid{max-width:1200px;margin:0 auto;padding:0 24px;position:relative;}
+.sec-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px;}
+.sec-card{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:var(--r-lg);padding:1.75rem;
+  transition:background .25s,border-color .25s,transform .25s;
+}
+.sec-card:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.15);transform:translateY(-4px);}
+.sec-icon{
+  width:48px;height:48px;border-radius:12px;
+  background:rgba(120,0,0,.2);border:1px solid rgba(120,0,0,.3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;color:var(--crimson);margin-bottom:1.25rem;
+}
+.sec-card h3{font-family:'Syne',sans-serif;font-size:.9375rem;font-weight:700;color:#fff;margin-bottom:8px;}
+.sec-card p{font-size:.8rem;color:rgba(255,255,255,.42);line-height:1.65;}
+.cert-row{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;}
+.cert{
+  display:inline-flex;align-items:center;gap:7px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+  border-radius:999px;padding:6px 14px;
+  font-size:.7rem;font-weight:600;color:rgba(255,255,255,.55);
+}
+.cert i{color:#4ade80;font-size:.7rem;}
+
+/* ─── CTA ─── */
+#cta{background:var(--coal);padding:6rem 0;position:relative;overflow:hidden;border-top:1px solid rgba(255,255,255,.05);}
+#cta::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 800px 700px at 30% 60%,rgba(120,0,0,.18) 0%,transparent 65%);
+  pointer-events:none;
+}
+.cta-inner{max-width:680px;margin:0 auto;padding:0 24px;text-align:center;position:relative;}
+.cta-badge{
+  display:inline-flex;align-items:center;gap:10px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+  border-radius:999px;padding:7px 16px;margin-bottom:28px;
+  font-size:.65rem;font-weight:700;color:rgba(255,255,255,.55);letter-spacing:.1em;text-transform:uppercase;
+}
+.cta-h2{
+  font-family:'Syne',sans-serif;
+  font-size:var(--fs-hero);font-weight:800;
+  color:#fff;line-height:1.07;letter-spacing:-.03em;margin-bottom:18px;
+}
+.cta-h2 em{color:var(--crimson);font-style:normal;}
+.cta-p{font-size:.9rem;color:rgba(255,255,255,.45);line-height:1.7;margin-bottom:32px;}
+.cta-btns{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:14px;}
+.cta-fine{font-size:.72rem;color:rgba(255,255,255,.25);margin-bottom:28px;}
+.cta-certs{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;}
+
+/* ─── FOOTER ─── */
+footer{background:#141312;border-top:1px solid rgba(255,255,255,.05);}
+.footer-top{max-width:1200px;margin:0 auto;padding:60px 24px 40px;display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:32px;}
+.footer-brand p{font-size:.78rem;color:rgba(255,255,255,.3);line-height:1.7;max-width:185px;margin:14px 0 18px;}
+.social-row{display:flex;gap:7px;}
+.soc{
+  width:34px;height:34px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+  border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-size:.75rem;color:rgba(255,255,255,.4);text-decoration:none;
+  transition:background .2s,color .2s;
+}
+.soc:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.8);}
+.footer-col h4{
+  font-family:'Syne',sans-serif;font-size:.65rem;font-weight:700;
+  color:rgba(255,255,255,.27);text-transform:uppercase;letter-spacing:.12em;margin-bottom:14px;
+}
+.fl{display:block;padding:4px 0;font-size:.82rem;color:rgba(255,255,255,.38);text-decoration:none;transition:color .2s;}
+.fl:hover{color:rgba(255,255,255,.8);}
+.footer-bot{border-top:1px solid rgba(255,255,255,.05);}
+.footer-bot-inner{
+  max-width:1200px;margin:0 auto;padding:16px 24px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+}
+.footer-bot p{font-size:.72rem;color:rgba(255,255,255,.2);}
+.status-pill{
+  display:flex;align-items:center;gap:7px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
+  border-radius:999px;padding:4px 13px;
+}
+.green-dot{width:6px;height:6px;border-radius:50%;background:#22c55e;animation:pulse-anim 2s ease-in-out infinite;}
+.status-pill span{font-size:.68rem;color:rgba(255,255,255,.3);font-weight:500;}
+.status-pill strong{color:#22c55e;font-weight:700;}
+
+/* ─── MODAL ─── */
+#modal{
+  display:none;position:fixed;inset:0;z-index:200;
+  background:rgba(20,19,18,0.82);backdrop-filter:blur(16px);
+  align-items:center;justify-content:center;padding:16px;
+}
+.modal-box{
+  background:var(--white);border-radius:22px;width:100%;max-width:420px;padding:2rem;
+  position:relative;transform:scale(.92);opacity:0;
+  transition:transform .28s cubic-bezier(.34,1.4,.64,1),opacity .25s;
+  box-shadow:0 40px 100px rgba(0,0,0,.35);
+}
+.modal-close{
+  position:absolute;top:14px;right:14px;width:30px;height:30px;
+  background:var(--bone);border:none;border-radius:8px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--coal-ll);
+  transition:background .18s;
+}
+.modal-close:hover{background:var(--bone-dd);}
+.modal-thumb{
+  background:var(--coal);border-radius:12px;aspect-ratio:16/9;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;margin-bottom:1.25rem;cursor:pointer;
+}
+.play-btn{
+  width:56px;height:56px;background:rgba(255,255,255,.12);border-radius:50%;
+  border:2px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;color:#fff;transition:background .2s;
+}
+.modal-thumb:hover .play-btn{background:rgba(255,255,255,.22);}
+
+/* ─── SCROLL REVEAL ─── */
+.sr{opacity:0;transform:translateY(22px);transition:opacity .6s ease,transform .6s ease;}
+.sr.sl{transform:translateX(-22px);}
+.sr.sr2{transform:translateX(22px);}
+.sr.in{opacity:1;transform:translate(0,0);}
+.d1{transition-delay:.07s;}.d2{transition-delay:.14s;}.d3{transition-delay:.21s;}
+.d4{transition-delay:.28s;}.d5{transition-delay:.35s;}
+
+/* ─── MOBILE NAV ─── */
+#mnav{max-height:0;overflow:hidden;opacity:0;transition:max-height .36s cubic-bezier(.4,0,.2,1),opacity .28s;border-top:1px solid var(--bone-dd);}
+#mnav.open{max-height:400px;opacity:1;}
+.mnav-inner{max-width:1200px;margin:0 auto;padding:18px 24px;display:flex;flex-direction:column;gap:2px;}
+.mnav-inner a{display:block;padding:10px 0;font-size:.9rem;font-weight:500;color:var(--coal-ll);text-decoration:none;}
+.mnav-btns{display:flex;gap:10px;padding-top:14px;border-top:1px solid var(--bone-dd);margin-top:6px;}
+.mnav-btns .btn{flex:1;justify-content:center;}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:900px){
+  .hero-grid{grid-template-columns:1fr;gap:40px;padding:60px 24px;}
+  .hero-right{display:none;}
+  .three-grid,.six-grid,.testi-grid,.sec-cards{grid-template-columns:1fr 1fr;}
+  .kpi-grid{grid-template-columns:1fr 1fr;}
+  .two-col{grid-template-columns:1fr;gap:40px;}
+  .cards-grid{grid-template-columns:1fr;gap:40px;}
+  .footer-top{grid-template-columns:1fr 1fr;gap:28px;}
+}
+@media(max-width:600px){
+  .three-grid,.six-grid,.testi-grid,.sec-cards{grid-template-columns:1fr;}
+  .kpi-grid{grid-template-columns:1fr 1fr;}
+  .nav-links,.nav-ctas{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     NAVBAR
+══════════════════════════════════════════ -->
+<nav id="nav">
+  <div class="nav-inner">
+    <a href="#" class="logo">
+      <div class="logo-icon"><i class="fa-solid fa-shield-halved"></i></div>
+      <span class="logo-text">Vigil<span>Pay</span></span>
+    </a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#how">How It Works</a>
+      <a href="#matrix">Risk Matrix</a>
+      <a href="#security">Security</a>
+    </div>
+    <div class="nav-ctas">
+      <a href="#" class="btn btn-outline btn-nav"><i class="fa-solid fa-right-to-bracket"></i> Login</a>
+      <a href="#cta" class="btn btn-primary btn-nav">Get Started <i class="fa-solid fa-arrow-right"></i></a>
+    </div>
+    <button id="hbtn" onclick="toggleNav()" style="display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:6px;" aria-label="Menu">
+      <span id="hb1" style="display:block;width:20px;height:2px;background:var(--coal);border-radius:2px;transition:all .3s;transform-origin:center;"></span>
+      <span id="hb2" style="display:block;width:20px;height:2px;background:var(--coal);border-radius:2px;transition:opacity .2s;"></span>
+      <span id="hb3" style="display:block;width:20px;height:2px;background:var(--coal);border-radius:2px;transition:all .3s;transform-origin:center;"></span>
+    </button>
+  </div>
+  <div id="mnav">
+    <div class="mnav-inner">
+      <a href="#features" onclick="closeNav()">Features</a>
+      <a href="#how" onclick="closeNav()">How It Works</a>
+      <a href="#matrix" onclick="closeNav()">Risk Matrix</a>
+      <a href="#security" onclick="closeNav()">Security</a>
+      <div class="mnav-btns">
+        <a href="#" class="btn btn-outline">Login</a>
+        <a href="#cta" onclick="closeNav()" class="btn btn-primary">Get Started <i class="fa-solid fa-arrow-right"></i></a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════
+     HERO
+══════════════════════════════════════════ -->
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="dot-grid"></div>
+  <div class="hero-grid">
+    <!-- LEFT -->
+    <div>
+      <div class="sr d1 hero-badge">
+        <span class="pulse"></span>
+        AI Churn Intelligence — Live
+      </div>
+      <h1 class="sr d2 hero-h1">
+        Predict the Exit<br/><em>Before</em> It Happens.
+      </h1>
+      <p class="sr d3 hero-lead">
+        ML-powered churn detection that alerts your retention team <strong>30 days early</strong> — before customers walk out the door.
+      </p>
+      <div class="sr d4 hero-ctas">
+        <a href="#cta" class="btn btn-primary btn-lg">Get Started <i class="fa-solid fa-arrow-right"></i></a>
+        <a href="#demo" class="btn btn-outline btn-lg"><i class="fa-solid fa-circle-play"></i> Watch Demo</a>
+      </div>
+      <div class="sr d5 social-proof">
+        <div class="avatars">
+          <div class="av" style="background:var(--coal);">NK</div>
+          <div class="av" style="background:var(--crimson);">JO</div>
+          <div class="av" style="background:#52504d;">CW</div>
+          <div class="av" style="background:#6b7280;">AM</div>
+        </div>
+        <div>
+          <div class="stars">
+            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+            <i class="fa-solid fa-star"></i>
+          </div>
+          <p class="proof-text">Trusted by <strong>40+ banks</strong></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Dashboard -->
+    <div class="hero-right sr sr2">
+      <div class="mockup-wrap">
+        <!-- Alert chip -->
+        <div class="chip-float cf1">
+          <div class="chip-icon" style="background:rgba(120,0,0,.08);color:var(--crimson);font-size:.9rem;">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <div>
+            <p style="font-size:.73rem;font-weight:700;color:var(--coal);font-family:'Syne',sans-serif;">High-Risk Alert</p>
+            <p style="font-size:.67rem;color:#9ca3af;margin-top:1px;">John Doe — 91% Risk</p>
+          </div>
+        </div>
+        <!-- Revenue chip -->
+        <div class="chip-float cf2">
+          <div class="chip-icon" style="background:#ecfdf5;color:#059669;font-size:.9rem;">
+            <i class="fa-solid fa-arrow-trend-up"></i>
+          </div>
+          <div>
+            <p style="font-size:.67rem;color:#9ca3af;font-weight:500;">Revenue Saved</p>
+            <p style="font-size:1.05rem;font-weight:800;color:var(--coal);font-family:'Syne',sans-serif;">$2.4M</p>
+          </div>
+        </div>
+        <!-- Mockup -->
+        <div class="mockup">
+          <div class="mock-bar">
+            <div class="mdot" style="background:#ff5f57;"></div>
+            <div class="mdot" style="background:#febc2e;"></div>
+            <div class="mdot" style="background:#28c840;"></div>
+            <span style="margin-left:10px;font-size:.65rem;color:rgba(255,255,255,.35);font-family:'DM Sans',sans-serif;">VigilPay — Risk Console</span>
+            <div style="margin-left:auto;display:flex;align-items:center;gap:5px;">
+              <span style="width:5px;height:5px;background:#28c840;border-radius:50%;"></span>
+              <span style="font-size:.6rem;color:rgba(255,255,255,.35);">Live</span>
+            </div>
+          </div>
+          <div class="mock-body">
+            <div class="stat-grid">
+              <div class="stat-cell"><div class="stat-num" style="color:var(--crimson);">247</div><div class="stat-lbl">At Risk</div></div>
+              <div class="stat-cell"><div class="stat-num" style="color:#059669;">183</div><div class="stat-lbl">Saved</div></div>
+              <div class="stat-cell"><div class="stat-num" style="color:#d97706;">64</div><div class="stat-lbl">Pending</div></div>
+            </div>
+            <div class="risk-card">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <p style="font-size:.6rem;color:#999;font-weight:700;text-transform:uppercase;letter-spacing:.06em;">Churn Risk — John Doe</p>
+                <span class="chip chip-red">HIGH RISK</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:14px;">
+                <div class="arc-wrap">
+                  <svg viewBox="0 0 100 100" width="84" height="84" style="transform:rotate(-90deg);">
+                    <circle cx="50" cy="50" r="35" class="arc-track"/>
+                    <circle cx="50" cy="50" r="35" id="arc-fill" class="arc-fill"/>
+                  </svg>
+                  <div class="arc-pct">88%</div>
+                </div>
+                <div style="flex:1;">
+                  <div style="margin-bottom:8px;">
+                    <div style="display:flex;justify-content:space-between;font-size:.6rem;color:#999;font-weight:600;margin-bottom:3px;"><span>Low Activity</span><span>76%</span></div>
+                    <div class="bar-t"><div class="bar-f" data-w="76" style="background:var(--crimson);"></div></div>
+                  </div>
+                  <div>
+                    <div style="display:flex;justify-content:space-between;font-size:.6rem;color:#999;font-weight:600;margin-bottom:3px;"><span>Decreasing Balance</span><span>62%</span></div>
+                    <div class="bar-t"><div class="bar-f" data-w="62" style="background:#d97706;"></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div style="background:var(--white);border:1px solid var(--bone-dd);border-radius:13px;padding:13px;">
+              <p style="font-size:.6rem;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">7-Day Alert Volume</p>
+              <div class="mini-bars">
+                <div class="mini-bar" style="height:30%;background:rgba(120,0,0,.12);"></div>
+                <div class="mini-bar" style="height:50%;background:rgba(120,0,0,.22);"></div>
+                <div class="mini-bar" style="height:40%;background:rgba(120,0,0,.32);"></div>
+                <div class="mini-bar" style="height:68%;background:rgba(120,0,0,.46);"></div>
+                <div class="mini-bar" style="height:56%;background:rgba(120,0,0,.6);"></div>
+                <div class="mini-bar" style="height:82%;background:rgba(120,0,0,.75);"></div>
+                <div class="mini-bar" style="height:100%;background:var(--crimson);"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:.55rem;color:var(--bone-dd);font-weight:600;margin-top:4px;">
+                <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     KPI RIBBON
+══════════════════════════════════════════ -->
+<section id="kpi">
+  <div class="kpi-grid">
+    <div class="sr kpi-item">
+      <div class="kpi-icon"><i class="fa-solid fa-bullseye"></i></div>
+      <div>
+        <div class="kpi-num">92<span>%</span></div>
+        <div class="kpi-lbl">Prediction Accuracy</div>
+      </div>
+    </div>
+    <div class="sr d1 kpi-item">
+      <div class="kpi-icon"><i class="fa-solid fa-shield-halved"></i></div>
+      <div>
+        <div class="kpi-num">$2.4M</div>
+        <div class="kpi-lbl">Revenue Protected</div>
+      </div>
+    </div>
+    <div class="sr d2 kpi-item">
+      <div class="kpi-icon"><i class="fa-solid fa-bell"></i></div>
+      <div>
+        <div class="kpi-num">15k<span>+</span></div>
+        <div class="kpi-lbl">Alerts Sent</div>
+      </div>
+    </div>
+    <div class="sr d3 kpi-item">
+      <div class="kpi-icon"><i class="fa-solid fa-clock"></i></div>
+      <div>
+        <div class="kpi-num">30<span style="font-size:1rem;"> days</span></div>
+        <div class="kpi-lbl">Early Warning</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     HOW IT WORKS
+══════════════════════════════════════════ -->
+<section id="how">
+  <div class="section-head sr" style="max-width:1200px;margin:0 auto;padding:0 24px 0;">
+    <div class="label" style="justify-content:center;">The Engine</div>
+    <h2>Three Steps to Zero<br/>Churn Surprises.</h2>
+    <p>Raw data in. Actionable alerts out.</p>
+  </div>
+  <div class="three-grid" style="margin-top:0;">
+    <div class="sr d1 step-card">
+      <div class="step-num">01</div>
+      <div class="ibox" style="margin-bottom:16px;"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+      <h3 class="syne" style="font-size:1rem;font-weight:700;color:var(--coal);margin-bottom:8px;">Data Ingestion</h3>
+      <p style="font-size:.83rem;color:var(--coal-ll);line-height:1.65;">Upload transaction logs via API, SFTP, or direct core banking integration. CSV, JSON, ISO 8583 supported.</p>
+      <div class="step-foot">
+        <i class="fa-solid fa-circle-check" style="color:#15803d;"></i>
+        TLS 1.3 encrypted
+      </div>
+    </div>
+    <div class="sr d2 step-card">
+      <div class="step-num">02</div>
+      <div class="ibox" style="margin-bottom:16px;"><i class="fa-solid fa-microchip"></i></div>
+      <h3 class="syne" style="font-size:1rem;font-weight:700;color:var(--coal);margin-bottom:8px;">ML Analysis</h3>
+      <p style="font-size:.83rem;color:var(--coal-ll);line-height:1.65;">Random Forest model scans 40+ behavioral signals — activity, balances, channel usage — updated daily.</p>
+      <div class="step-foot">
+        <i class="fa-solid fa-circle-check" style="color:#15803d;"></i>
+        92% accuracy
+      </div>
+    </div>
+    <div class="sr d3 step-card">
+      <div class="step-num">03</div>
+      <div class="ibox" style="margin-bottom:16px;"><i class="fa-solid fa-chart-column"></i></div>
+      <h3 class="syne" style="font-size:1rem;font-weight:700;color:var(--coal);margin-bottom:8px;">Actionable Insights</h3>
+      <p style="font-size:.83rem;color:var(--coal-ll);line-height:1.65;">Prioritized retention queue with AI-generated intervention scripts ranked by customer lifetime value.</p>
+      <div class="step-foot">
+        <i class="fa-solid fa-circle-check" style="color:#15803d;"></i>
+        30-day early warning
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     FEATURES
+══════════════════════════════════════════ -->
+<section id="features">
+  <div class="section-head sr" style="max-width:1200px;margin:0 auto;padding:0 24px;">
+    <div class="label" style="justify-content:center;">Platform</div>
+    <h2>Built for Retention Teams.</h2>
+  </div>
+  <div class="six-grid">
+    <div class="sr d1 card feat-card">
+      <div class="ibox"><i class="fa-solid fa-siren-on"></i></div>
+      <h3>Early Warning</h3>
+      <p>Alerts arrive 30 days before departure. Act early. Save more.</p>
+    </div>
+    <div class="sr d2 card feat-card">
+      <div class="ibox"><i class="fa-solid fa-wave-pulse"></i></div>
+      <h3>Real-Time Monitoring</h3>
+      <p>Scores refresh daily. Sudden behavioural shifts flagged instantly.</p>
+    </div>
+    <div class="sr d3 card feat-card">
+      <div class="ibox"><i class="fa-solid fa-users-between-lines"></i></div>
+      <h3>Smart Prioritization</h3>
+      <p>Focus agents on highest LTV accounts first. No wasted calls.</p>
+    </div>
+    <div class="sr d1 card feat-card">
+      <div class="ibox"><i class="fa-solid fa-eye"></i></div>
+      <h3>Explainable AI</h3>
+      <p>Every flag explained in plain English. No black boxes.</p>
+    </div>
+    <div class="sr d2 card feat-card">
+      <div class="ibox"><i class="fa-solid fa-chart-pie"></i></div>
+      <h3>Executive Analytics</h3>
+      <p>Board-ready dashboards on churn trends and revenue impact.</p>
+    </div>
+    <div class="sr d3 card feat-card">
+      <div class="ibox"><i class="fa-solid fa-plug-circle-bolt"></i></div>
+      <h3>API-First</h3>
+      <p>Plug into your CRM or core banking in hours, not months.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     RISK MATRIX
+══════════════════════════════════════════ -->
+<section id="matrix">
+  <div class="two-col">
+    <!-- Left -->
+    <div>
+      <div class="sr label">The Value</div>
+      <h2 class="sr d1 syne" style="font-size:var(--fs-h2);font-weight:800;color:var(--coal);letter-spacing:-.025em;line-height:1.1;margin-bottom:14px;">
+        Not Just <span style="color:var(--crimson);">"Who."</span><br/>We Say <span style="color:var(--crimson);">"Why."</span>
+      </h2>
+      <p class="sr d2" style="font-size:.875rem;color:var(--coal-ll);line-height:1.7;margin-bottom:24px;">The Risk Matrix pinpoints the exact behavioral trigger — then tells your agent the right move.</p>
+      <div class="sr d3">
+        <div class="check-row">
+          <div class="check-circle"><i class="fa-solid fa-check" style="font-size:.55rem;"></i></div>
+          <p>Primary churn driver identified — inactivity, rate shopping, service failure</p>
+        </div>
+        <div class="check-row">
+          <div class="check-circle"><i class="fa-solid fa-check" style="font-size:.55rem;"></i></div>
+          <p>Behavioral signals ranked by recency and weight</p>
+        </div>
+        <div class="check-row">
+          <div class="check-circle"><i class="fa-solid fa-check" style="font-size:.55rem;"></i></div>
+          <p>AI retention scripts tailored to each customer</p>
+        </div>
+      </div>
+      <div class="sr d4" style="margin-top:28px;">
+        <a href="#cta" class="btn btn-primary btn-lg">See Full Demo <i class="fa-solid fa-arrow-right"></i></a>
+      </div>
+    </div>
+    <!-- Right: Risk table -->
+    <div class="sr sr2">
+      <div class="rtable">
+        <div class="rtable-head">
+          <div class="rtable-head-l">
+            <i class="fa-solid fa-list-ul" style="color:rgba(255,255,255,.45);font-size:.75rem;"></i>
+            Customer Risk Queue
+          </div>
+          <div class="rtable-head-r">
+            <span style="width:6px;height:6px;background:#28c840;border-radius:50%;display:block;"></span>
+            Live — 3 of 247
+          </div>
+        </div>
+        <!-- Row 1 -->
+        <div class="rrow">
+          <div class="rrow-top">
+            <div class="r-av" style="background:rgba(120,0,0,.08);color:var(--crimson);">JD</div>
+            <div style="flex:1;min-width:0;">
+              <div class="r-name">John Doe</div>
+              <div class="r-acct"><i class="fa-solid fa-credit-card" style="font-size:.6rem;margin-right:3px;"></i>•••• 4821 — Premium Savings</div>
+            </div>
+            <div class="r-score">
+              <span class="chip chip-red">88%</span>
+              <div class="r-lbl">HIGH</div>
+            </div>
+          </div>
+          <div style="margin-left:48px;">
+            <div class="bar-t" style="margin-bottom:6px;"><div class="bar-f" data-w="88" style="background:var(--crimson);"></div></div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;">
+              <span class="chip chip-red"><i class="fa-solid fa-moon" style="font-size:.55rem;"></i> Low Activity</span>
+              <span class="chip chip-red"><i class="fa-solid fa-arrow-down" style="font-size:.55rem;"></i> Decreasing Balance</span>
+            </div>
+          </div>
+        </div>
+        <!-- Row 2 -->
+        <div class="rrow">
+          <div class="rrow-top">
+            <div class="r-av" style="background:#fef3c7;color:#92400e;">AM</div>
+            <div style="flex:1;min-width:0;">
+              <div class="r-name">Amara Mwangi</div>
+              <div class="r-acct"><i class="fa-solid fa-credit-card" style="font-size:.6rem;margin-right:3px;"></i>•••• 7703 — Business Checking</div>
+            </div>
+            <div class="r-score">
+              <span class="chip chip-amber">64%</span>
+              <div class="r-lbl">MEDIUM</div>
+            </div>
+          </div>
+          <div style="margin-left:48px;">
+            <div class="bar-t" style="margin-bottom:6px;"><div class="bar-f" data-w="64" style="background:#d97706;"></div></div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;">
+              <span class="chip chip-amber"><i class="fa-solid fa-magnifying-glass-dollar" style="font-size:.55rem;"></i> Rate Shopping</span>
+              <span class="chip chip-amber"><i class="fa-solid fa-minus" style="font-size:.55rem;"></i> Reduced Deposits</span>
+            </div>
+          </div>
+        </div>
+        <!-- Row 3 -->
+        <div class="rrow">
+          <div class="rrow-top">
+            <div class="r-av" style="background:var(--bone-d);color:var(--coal-ll);">SO</div>
+            <div style="flex:1;min-width:0;">
+              <div class="r-name">Sarah Ochieng</div>
+              <div class="r-acct"><i class="fa-solid fa-credit-card" style="font-size:.6rem;margin-right:3px;"></i>•••• 2290 — Youth Account</div>
+            </div>
+            <div class="r-score">
+              <span class="chip chip-ash">38%</span>
+              <div class="r-lbl">WATCH</div>
+            </div>
+          </div>
+          <div style="margin-left:48px;">
+            <div class="bar-t" style="margin-bottom:6px;"><div class="bar-f" data-w="38" style="background:var(--coal-ll);"></div></div>
+            <div style="display:flex;gap:5px;">
+              <span class="chip chip-ash"><i class="fa-solid fa-arrow-right-to-bracket" style="font-size:.55rem;"></i> Login Drop</span>
+            </div>
+          </div>
+        </div>
+        <div class="r-foot">
+          <span style="font-size:.68rem;color:#9ca3af;">Showing 3 of 247</span>
+          <a href="#cta" style="font-size:.68rem;font-weight:700;color:var(--crimson);text-decoration:none;display:flex;align-items:center;gap:4px;">
+            View All <i class="fa-solid fa-arrow-right" style="font-size:.6rem;"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     MASTERCARD SECTION
+══════════════════════════════════════════ -->
+<section id="cards">
+  <div class="cards-grid">
+    <!-- Card Stack -->
+    <div class="sr sl" style="display:flex;justify-content:center;align-items:center;padding:20px 0;">
+      <div class="mc-stack">
+        <div class="mc-card mc-back"></div>
+        <div class="mc-card mc-mid"></div>
+        <div class="mc-card mc-front">
+          <!-- Chip -->
+          <div class="mc-chip"></div>
+          <!-- MC Circles -->
+          <div class="mc-logo">
+            <div class="mc-circle mc-c1"></div>
+            <div class="mc-circle mc-c2"></div>
+          </div>
+          <!-- NFC -->
+          <div style="position:absolute;top:24px;left:68px;color:rgba(255,255,255,.3);font-size:.85rem;">
+            <i class="fa-solid fa-wifi" style="transform:rotate(90deg);display:block;"></i>
+          </div>
+          <div class="mc-number">•••• &nbsp;•••• &nbsp;•••• &nbsp;4821</div>
+          <div class="mc-holder">
+            <div class="mc-holder-lbl">Card Holder</div>
+            <div class="mc-holder-name">JOHN DOE</div>
+          </div>
+          <div class="mc-exp">
+            <div class="mc-holder-lbl">Expires</div>
+            <div class="mc-holder-name" style="font-size:.65rem;">09/28</div>
+          </div>
+          <div style="position:absolute;bottom:20px;right:18px;">
+            <div style="font-size:.5rem;font-weight:800;color:rgba(255,255,255,.5);letter-spacing:.12em;text-transform:uppercase;text-align:right;margin-bottom:1px;">mastercard</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Copy -->
+    <div>
+      <div class="sr label" style="color:rgba(255,255,255,.35);">Banking Intelligence</div>
+      <h2 class="sr d1 syne" style="font-size:var(--fs-h2);font-weight:800;color:#fff;line-height:1.1;letter-spacing:-.025em;margin-bottom:14px;">
+        Every Card Holder<br/>Tells a Story.<br/><em style="color:var(--crimson);font-style:normal;">We Read It.</em>
+      </h2>
+      <p class="sr d2" style="font-size:.875rem;color:rgba(255,255,255,.45);line-height:1.7;margin-bottom:24px;">Spending patterns, channel activity, balance trends — analyzed across every account, every day, at scale.</p>
+      <div class="sr d3 badge-wrap">
+        <div class="wbadge"><i class="fa-solid fa-credit-card"></i> Card Spending</div>
+        <div class="wbadge"><i class="fa-solid fa-mobile-screen"></i> Digital Channels</div>
+        <div class="wbadge"><i class="fa-solid fa-code-branch"></i> Cross-Product</div>
+        <div class="wbadge"><i class="fa-solid fa-sack-dollar"></i> Balance Patterns</div>
+      </div>
+      <div class="sr d4">
+        <a href="#cta" class="btn btn-primary btn-lg">Request Demo <i class="fa-solid fa-arrow-right"></i></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     TESTIMONIALS
+══════════════════════════════════════════ -->
+<section id="testi">
+  <div class="section-head sr" style="max-width:1200px;margin:0 auto;padding:0 24px;">
+    <div class="label" style="justify-content:center;">Client Stories</div>
+    <h2>Results That Speak.</h2>
+  </div>
+  <div class="testi-grid">
+    <div class="sr d1 card testi-card">
+      <div class="testi-stars">
+        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+      </div>
+      <p class="testi-q">"We protected <strong>$780K in deposits</strong> in the first quarter. The 30-day window changed everything for our retention team."</p>
+      <div class="testi-foot">
+        <div class="testi-av" style="background:var(--coal);">NK</div>
+        <div>
+          <div class="testi-name">Nadia Kamau</div>
+          <div class="testi-role">Head of Retail Banking, Crest Bank</div>
+        </div>
+      </div>
+    </div>
+    <div class="sr d2 card testi-card" style="border-color:rgba(120,0,0,.2);">
+      <div class="testi-stars">
+        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+      </div>
+      <p class="testi-q">"Agents know <strong>exactly what to say</strong>. Retention jumped <strong>23% in 6 months</strong>. The explainability is the differentiator."</p>
+      <div class="testi-foot">
+        <div class="testi-av" style="background:var(--crimson);">JO</div>
+        <div>
+          <div class="testi-name">James Odhiambo</div>
+          <div class="testi-role">Director of Analytics, Apex Finance</div>
+        </div>
+      </div>
+    </div>
+    <div class="sr d3 card testi-card">
+      <div class="testi-stars">
+        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+      </div>
+      <p class="testi-q">"Passed our internal security audit with <strong>zero findings</strong>. GDPR compliance was thorough. Our auditors were impressed."</p>
+      <div class="testi-foot">
+        <div class="testi-av" style="background:var(--coal-ll);">CW</div>
+        <div>
+          <div class="testi-name">Caroline Wanjiku</div>
+          <div class="testi-role">CISO, Heritage Savings & Loan</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     SECURITY
+══════════════════════════════════════════ -->
+<section id="security">
+  <div class="sec-grid">
+    <div class="section-head sr" style="padding-bottom:0;">
+      <div class="label" style="justify-content:center;color:rgba(255,255,255,.35);">The Fintech Essential</div>
+      <h2 style="color:#fff;">Security You Can Audit.</h2>
+      <p style="color:rgba(255,255,255,.42);">Every component certified. Every action logged. Every regulator satisfied.</p>
+    </div>
+    <div class="sec-cards" style="margin-top:3.5rem;">
+      <div class="sr d1 sec-card">
+        <div class="sec-icon"><i class="fa-solid fa-lock"></i></div>
+        <h3>AES-256 Encryption</h3>
+        <p>At-rest and in-transit encryption. Keys rotated every 90 days. TLS 1.3 only.</p>
+      </div>
+      <div class="sr d2 sec-card">
+        <div class="sec-icon"><i class="fa-solid fa-shield-halved"></i></div>
+        <h3>GDPR Compliant</h3>
+        <p>Full GDPR, CCPA & PDPA compliance. Regional data residency. DPA on request.</p>
+      </div>
+      <div class="sr d3 sec-card">
+        <div class="sec-icon"><i class="fa-solid fa-file-shield"></i></div>
+        <h3>Immutable Audit Logs</h3>
+        <p>Every action timestamped and locked. Regulatory export in minutes.</p>
+      </div>
+    </div>
+    <div class="sr cert-row">
+      <div class="cert"><i class="fa-solid fa-circle-check"></i> SOC 2 Type II</div>
+      <div class="cert"><i class="fa-solid fa-circle-check"></i> ISO 27001</div>
+      <div class="cert"><i class="fa-solid fa-circle-check"></i> PCI DSS L1</div>
+      <div class="cert"><i class="fa-solid fa-circle-check"></i> 99.9% SLA</div>
+      <div class="cert"><i class="fa-solid fa-circle-check"></i> Annual Pen Test</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     CTA
+══════════════════════════════════════════ -->
+<section id="cta">
+  <div class="cta-inner">
+    <div class="sr cta-badge">
+      <span class="pulse"></span>
+      Setup in 48 hours
+    </div>
+    <h2 class="sr d1 cta-h2">
+      Stop Losing Customers<br/><em>You Could Have Kept.</em>
+    </h2>
+    <p class="sr d2 cta-p">Join 40+ banks protecting revenue with VigilPay. No long onboarding. No surprises.</p>
+    <div class="sr d3 cta-btns">
+      <a href="#" class="btn btn-primary btn-lg">Request a Demo <i class="fa-solid fa-arrow-right"></i></a>
+      <a href="mailto:sales@vigilpay.io" class="btn btn-ghost btn-lg"><i class="fa-solid fa-phone"></i> Talk to Sales</a>
+    </div>
+    <p class="sr d4 cta-fine">No credit card required. 30-day pilot for qualifying institutions.</p>
+    <div class="sr d5 cta-certs">
+      <div class="cert"><i class="fa-solid fa-shield-halved"></i> SOC 2</div>
+      <div class="cert"><i class="fa-solid fa-lock"></i> AES-256</div>
+      <div class="cert"><i class="fa-solid fa-globe"></i> GDPR</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     FOOTER
+══════════════════════════════════════════ -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <a href="#" class="logo" style="margin-bottom:0;">
+        <div class="logo-icon"><i class="fa-solid fa-shield-halved"></i></div>
+        <span class="logo-text">Vigil<span>Pay</span></span>
+      </a>
+      <p>AI-powered churn prediction built for modern banks.</p>
+      <div class="social-row">
+        <a href="#" class="soc" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+        <a href="#" class="soc" aria-label="X"><i class="fa-brands fa-x-twitter"></i></a>
+        <a href="#" class="soc" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Product</h4>
+      <a href="#features" class="fl">Features</a>
+      <a href="#how" class="fl">How It Works</a>
+      <a href="#matrix" class="fl">Risk Matrix</a>
+      <a href="#security" class="fl">Security</a>
+      <a href="#" class="fl">API Docs</a>
+    </div>
+    <div class="footer-col">
+      <h4>Company</h4>
+      <a href="#" class="fl">About</a>
+      <a href="#" class="fl">Blog</a>
+      <a href="#" class="fl">Careers</a>
+      <a href="#" class="fl">Contact</a>
+    </div>
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <a href="#" class="fl">Privacy Policy</a>
+      <a href="#" class="fl">Terms of Service</a>
+      <a href="#" class="fl">Security Policy</a>
+      <a href="#" class="fl">DPA Agreement</a>
+    </div>
+  </div>
+  <div class="footer-bot">
+    <div class="footer-bot-inner">
+      <p>© 2025 VigilPay Technologies Ltd. All rights reserved.</p>
+      <div class="status-pill">
+        <span class="green-dot"></span>
+        <span>System Status: <strong>Healthy</strong></span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- ══════════════════════════════════════════
+     DEMO MODAL
+══════════════════════════════════════════ -->
+<div id="modal">
+  <div class="modal-box" id="mbox">
+    <button class="modal-close" onclick="closeDemo()"><i class="fa-solid fa-xmark"></i></button>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+      <div class="logo-icon"><i class="fa-solid fa-shield-halved"></i></div>
+      <span class="logo-text">Vigil<span>Pay</span></span>
+    </div>
+    <h3 class="syne" style="font-size:1.6rem;font-weight:800;color:var(--coal);margin-bottom:6px;letter-spacing:-.02em;">Watch the Demo</h3>
+    <p style="font-size:.83rem;color:var(--coal-ll);margin-bottom:18px;">See churn prediction in action — 4 minutes.</p>
+    <div class="modal-thumb">
+      <div class="play-btn"><i class="fa-solid fa-play" style="margin-left:3px;"></i></div>
+      <p style="position:absolute;bottom:10px;font-size:.65rem;color:rgba(255,255,255,.35);">Product walkthrough — 4:32</p>
+    </div>
+    <a href="#cta" onclick="closeDemo()" class="btn btn-primary" style="width:100%;justify-content:center;padding:.85rem;">
+      Request Full Access <i class="fa-solid fa-arrow-right"></i>
+    </a>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCRIPTS
+══════════════════════════════════════════ -->
+<script>
+// ── Navbar scroll ──
+const navEl = document.getElementById('nav');
+window.addEventListener('scroll', () => navEl.classList.toggle('sc', scrollY > 20), {passive:true});
+
+// ── Mobile ──
+let navOpen = false;
+function toggleNav() {
+  navOpen = !navOpen;
+  document.getElementById('mnav').classList.toggle('open', navOpen);
+  const [h1,h2,h3] = ['hb1','hb2','hb3'].map(id => document.getElementById(id));
+  h1.style.transform = navOpen ? 'rotate(45deg) translate(4px,4px)' : '';
+  h2.style.opacity   = navOpen ? '0' : '';
+  h3.style.transform = navOpen ? 'rotate(-45deg) translate(4px,-4px)' : '';
+}
+function closeNav() {
+  navOpen = false;
+  document.getElementById('mnav').classList.remove('open');
+  ['hb1','hb2','hb3'].forEach(id => {
+    const el = document.getElementById(id);
+    el.style.transform = ''; el.style.opacity = '';
+  });
+}
+// Show hamburger on mobile
+(function() {
+  const hbtn = document.getElementById('hbtn');
+  function check() { hbtn.style.display = window.innerWidth <= 600 ? 'flex' : 'none'; }
+  check(); window.addEventListener('resize', check);
+})();
+
+// ── Demo modal ──
+function openDemo() {
+  const m = document.getElementById('modal'), b = document.getElementById('mbox');
+  m.style.display = 'flex'; document.body.style.overflow = 'hidden';
+  requestAnimationFrame(() => requestAnimationFrame(() => { b.style.transform='scale(1)'; b.style.opacity='1'; }));
+}
+function closeDemo() {
+  const m = document.getElementById('modal'), b = document.getElementById('mbox');
+  b.style.transform='scale(.92)'; b.style.opacity='0';
+  setTimeout(() => { m.style.display='none'; document.body.style.overflow=''; }, 280);
+}
+document.getElementById('modal').addEventListener('click', e => { if(e.target===e.currentTarget) closeDemo(); });
+document.querySelectorAll('[href="#demo"]').forEach(el => el.addEventListener('click', e => { e.preventDefault(); openDemo(); }));
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeDemo(); });
+
+// ── Scroll reveal ──
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+}, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
+document.querySelectorAll('.sr').forEach(el => io.observe(el));
+
+// ── Arc animation ──
+const arc = document.getElementById('arc-fill');
+if(arc) {
+  new IntersectionObserver(entries => {
+    entries.forEach(e => { if(e.isIntersecting) { arc.classList.add('go'); } });
+  }, {threshold:.3}).observe(arc);
+}
+
+// ── Bar fill ──
+document.querySelectorAll('.bar-f[data-w]').forEach(bar => {
+  new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if(e.isIntersecting) {
+        setTimeout(() => { bar.style.width = bar.dataset.w + '%'; }, 100);
+      }
+    });
+  }, {threshold:.5}).observe(bar.closest('.bar-t') || bar);
+});
+
+// ── Smooth anchor scroll ──
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', function(e) {
+    const id = this.getAttribute('href');
+    if(id==='#'||id==='#demo') return;
+    const t = document.querySelector(id);
+    if(t) { e.preventDefault(); t.scrollIntoView({behavior:'smooth',block:'start'}); }
+  });
+});
+</script>
+</body>
+</html>
