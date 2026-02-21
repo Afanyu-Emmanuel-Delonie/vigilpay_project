@@ -138,12 +138,15 @@
 
           <!-- Actions -->
           <div class="hidden lg:flex items-center gap-2.5">
+            <a href="#" class="btn-nav">
+              <svg data-feather="log-in" width="13" height="13"></svg>Login
+            </a>
             <a
-              href="{% url 'login_page' %}"
+              href="#cta"
               class="btn-red"
               style="padding: 0.5rem 1.2rem; font-size: 0.78rem"
             >
-              Login
+              Get Started
               <svg data-feather="arrow-right" width="13" height="13"></svg>
             </a>
           </div>
@@ -258,9 +261,11 @@
               margin-top: 6px;
             "
           >
-
+            <a href="#" class="btn-nav" style="flex: 1; justify-content: center"
+              >Login</a
+            >
             <a
-              href="{% url 'login_page' %}"
+              href="#cta"
               onclick="closeNav()"
               class="btn-red"
               style="flex: 1; justify-content: center; font-size: 0.78rem"
@@ -323,7 +328,7 @@
 
         <h1>
           Predict the Exit Before It
-          <span class="text-[#E8C97A]">Happens.</span>
+          <span class="text-[#f0a1a1]">Happens.</span>
         </h1>
 
         <p class="hero-desc">
@@ -1439,8 +1444,10 @@
                 margin-bottom: 1rem;
               "
             >
-              Every Card Holder<br />Tells a Story,
-              <span style="color: #E8C97A">We Read It.</span>
+              Every Card Holder<br />Tells a Story, <span
+                style="color: #d87979"
+                >We Read It.</span
+              >
             </h2>
             <p
               class="sr d2"
@@ -1893,7 +1900,7 @@
         <h2
           class="sr d1"
           style="
-            font-size: clamp(2rem, 2vw, 3.5rem);
+            font-size: clamp(2rem, 5vw, 3.5rem);
             font-weight: 900;
             color: #fff;
             line-height: 1.07;
@@ -1901,8 +1908,9 @@
             margin-bottom: 1rem;
           "
         >
-          Stop Losing Customers You Could
-          <span style="color: #E8C97A">Have Kept.</span>
+          Stop Losing Customers<br /><span style="color: var(--red)"
+            >You Could Have Kept.</span
+          >
         </h2>
         <p
           class="sr d2"
@@ -2049,7 +2057,7 @@
               <span
                 style="
                   font-weight: 800;
-                  font-size: 1.1rem;
+                  font-size: 0.95rem;
                   color: #fff;
                   letter-spacing: -0.02em;
                 "

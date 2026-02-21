@@ -180,9 +180,7 @@
     .nav-item a:hover .nav-icon  { opacity: 0.75; }
     .nav-item a.active .nav-icon { opacity: 1; }
 
-    .nav-item a .nav-text {
-      transition: width 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease;
-    }
+    /* ─── Tooltip (collapsed mode) ── */
     .tooltip {
       position: absolute;
       left: calc(100% + 14px); top: 50%;
@@ -219,48 +217,10 @@
       transition: opacity 0.2s ease;
     }
 
-    /* ── Collapsed state ── */
-
-    /* Nav link: center icon, remove gap */
-    #sidebar.is-collapsed .nav-item a {
-      justify-content: center;
-      padding: 10px;
-      gap: 0;
-    }
-
-    /* Nav text spans: collapse to zero width so icon truly centers */
-    #sidebar.is-collapsed .nav-item a .nav-text {
-      width: 0;
-      overflow: hidden;
-      opacity: 0;
-      pointer-events: none;
-      flex-shrink: 0;
-      white-space: nowrap;
-    }
-
-    /* Section labels: fully hidden */
-    #sidebar.is-collapsed .sidebar-section-label {
-      opacity: 0;
-      pointer-events: none;
-      height: 0;
-      margin: 0;
-      overflow: hidden;
-    }
-
-    /* Footer: center avatar, collapse text + logout */
-    #sidebar.is-collapsed #sidebarFooterText,
-    #sidebar.is-collapsed #sidebarFooterLogout {
-      width: 0;
-      overflow: hidden;
-      opacity: 0;
-      pointer-events: none;
-      flex-shrink: 0;
-    }
-
-    /* Icon stays full size and centered */
-    #sidebar.is-collapsed .nav-icon {
-      flex-shrink: 0;
-    }
+    /* Hide labels + text when collapsed */
+    #sidebar.is-collapsed .nav-text,
+    #sidebar.is-collapsed .sidebar-section-label { opacity: 0; pointer-events: none; }
+    #sidebar.is-collapsed .nav-item a { justify-content: center; padding: 10px; }
 
     /* ─── Toggle btn ── */
     .toggle-btn {
@@ -510,17 +470,17 @@
 
     <!-- User footer -->
     <div class="flex-shrink-0 border-t border-white/[0.07] px-3 py-4">
-      <div class="flex items-center gap-3" style="min-width:0">
+      <div class="flex items-center gap-3 min-w-0">
         <div style="width:34px;height:34px;background:linear-gradient(135deg,var(--red) 0%,var(--red-dark) 100%);border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.72rem;color:#fff;flex-shrink:0">
           {% if user.is_authenticated %}{{ user.first_name.0|default:user.username.0|upper }}{% else %}G{% endif %}
         </div>
-        <div id="sidebarFooterText" style="min-width:0;flex:1;overflow:hidden;white-space:nowrap;transition:width 0.3s,opacity 0.2s">
-          <p style="font-size:0.78rem;font-weight:700;color:rgba(255,255,255,0.85);overflow:hidden;text-overflow:ellipsis">
+        <div class="nav-text min-w-0 flex-1 overflow-hidden" style="transition:opacity 0.2s">
+          <p style="font-size:0.78rem;font-weight:700;color:rgba(255,255,255,0.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
             {% if user.is_authenticated %}{{ user.get_full_name|default:user.username }}{% else %}Guest{% endif %}
           </p>
-          <p style="font-size:0.65rem;color:rgba(255,255,255,0.35)">Administrator</p>
+          <p style="font-size:0.65rem;color:rgba(255,255,255,0.35);white-space:nowrap">Administrator</p>
         </div>
-        <a id="sidebarFooterLogout" href="{% url 'landing' %}" class="toggle-btn flex-shrink-0" title="Logout" style="color:rgba(255,255,255,0.4);transition:width 0.3s,opacity 0.2s">
+        <a href="{% url 'landing' %}" class="nav-text toggle-btn flex-shrink-0" title="Logout" style="color:rgba(255,255,255,0.4);transition:opacity 0.2s">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke="currentColor"/></svg>
         </a>
       </div>
