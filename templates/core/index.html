@@ -2433,6 +2433,57 @@
          SCRIPTS
     ═══════════════════════════════════════════ -->
     <script src="{% static 'scripts/app.js' %}"></script>
+    <script>
+      (function () {
+        function setHamburger(open) {
+          var h1 = document.getElementById("hb1");
+          var h2 = document.getElementById("hb2");
+          var h3 = document.getElementById("hb3");
+          if (!h1 || !h2 || !h3) return;
+          if (open) {
+            h1.style.transform = "rotate(45deg) translate(4px,4px)";
+            h2.style.opacity = "0";
+            h3.style.transform = "rotate(-45deg) translate(4px,-4px)";
+          } else {
+            h1.style.transform = "";
+            h2.style.opacity = "";
+            h3.style.transform = "";
+          }
+        }
+
+        if (typeof window.toggleNav !== "function") {
+          window.toggleNav = function () {
+            var mobileNav = document.getElementById("mobile-nav");
+            if (!mobileNav) return;
+            var open = !mobileNav.classList.contains("open");
+            mobileNav.classList.toggle("open", open);
+            setHamburger(open);
+          };
+        }
+
+        if (typeof window.closeNav !== "function") {
+          window.closeNav = function () {
+            var mobileNav = document.getElementById("mobile-nav");
+            if (!mobileNav) return;
+            mobileNav.classList.remove("open");
+            setHamburger(false);
+          };
+        }
+
+        if (typeof window.closeDemo !== "function") {
+          window.closeDemo = function () {
+            var m = document.getElementById("demo-modal");
+            var b = document.getElementById("demo-box");
+            if (!m || !b) return;
+            b.style.transform = "scale(0.93)";
+            b.style.opacity = "0";
+            setTimeout(function () {
+              m.style.display = "none";
+              document.body.style.overflow = "";
+            }, 280);
+          };
+        }
+      })();
+    </script>
   </body>
 </html>
-

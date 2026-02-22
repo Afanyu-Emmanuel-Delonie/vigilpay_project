@@ -626,8 +626,10 @@ runSim();
 (function () {
   if (!document.getElementById('navbar')) return;
 
-      // Feather icons
-      feather.replace({ "stroke-width": 1.75 });
+      // Feather icons (guarded so nav init still runs if CDN script is unavailable)
+      if (typeof feather !== "undefined") {
+        feather.replace({ "stroke-width": 1.75 });
+      }
 
       // Navbar scroll effect
       const nav = document.getElementById("navbar");
@@ -668,6 +670,8 @@ runSim();
           el.style.opacity = "";
         });
       }
+      window.toggleNav = toggleNav;
+      window.closeNav = closeNav;
 
       // Demo modal
       function openDemo() {
@@ -692,6 +696,7 @@ runSim();
           document.body.style.overflow = "";
         }, 280);
       }
+      window.closeDemo = closeDemo;
       document.getElementById("demo-modal").addEventListener("click", (e) => {
         if (e.target === e.currentTarget) closeDemo();
       });
