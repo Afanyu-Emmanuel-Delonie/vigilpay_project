@@ -3,8 +3,8 @@ services:
     name: vigilpay
     env: python
     plan: free
-    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --no-input && python manage.py migrate"
-    startCommand: "gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
+    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --no-input"
+    startCommand: "python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.7
@@ -16,3 +16,10 @@ services:
         generateValue: true
       - key: ALLOWED_HOSTS
         value: ".onrender.com"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: vigilpay-db
+          property: connectionString
+
+databases:
+  - name: vigilpay-db

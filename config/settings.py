@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import importlib.util
 import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -95,6 +96,10 @@ if os.getenv("DATABASE_URL"):
         conn_max_age=600,
         ssl_require=True,
     )
+
+
+if not DEBUG and not os.getenv("DATABASE_URL"):
+    raise ImproperlyConfigured("DATABASE_URL is required in production.")
 
 
 AUTH_PASSWORD_VALIDATORS = [
