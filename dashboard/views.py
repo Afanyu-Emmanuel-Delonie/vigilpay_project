@@ -310,16 +310,18 @@ def data_management_page(request):
     return render(
         request,
         "dashboard/data_management.html",
-        {
-            "upload_history": upload_history,
-            "can_manage_dataset": request.user.is_staff,
-        },
+        {"upload_history": upload_history},
     )
 
 
 @login_required(login_url="login_page")
 def model_insight_page(request):
     customers = list(Customer.objects.all())
+    latest_processed_upload = (
+        UploadHistory.objects.filter(processed=True).order_by("-uploaded_at").first()
+    )
+    has_uploaded_dataset = latest_processed_upload is not None
+    has_customer_rows = len(customers) > 0
 
     scored = []
     high_points = []
@@ -367,11 +369,13 @@ def model_insight_page(request):
             if raw_float is not None and raw_float in (0.0, 1.0):
                 truth_pairs.append((int(raw_float), 1 if model_score >= 50 else 0))
 
-    # Feature importance
-    try:
-        fi = get_feature_importance()
-    except Exception:
-        fi = []
+    # Feature importance should only appear when we have uploaded dataset rows.
+    fi = []
+    if has_uploaded_dataset and has_customer_rows:
+        try:
+            fi = get_feature_importance()
+        except Exception:
+            fi = []
 
     feature_rows = []
     for item in fi[:8]:
@@ -429,7 +433,11 @@ def model_insight_page(request):
         "recall": recall,
         "metrics_available": metrics_available,
         "labeled_count": len(truth_pairs),
-        "training_last_text": "Today",
+        "training_last_text": (
+            latest_processed_upload.uploaded_at.strftime("%b %d, %Y")
+            if latest_processed_upload
+            else "No dataset uploaded"
+        ),
         "insight_data": dashboard_data,
     }
     return render(request, "dashboard/model_insight.html", context)
@@ -438,29 +446,19 @@ def model_insight_page(request):
 @login_required(login_url="login_page")
 def settings_page(request):
     User = get_user_model()
-    can_view_all_users = request.user.is_staff
-    if can_view_all_users:
-        members = User.objects.all().order_by("-created_at")
-    else:
-        members = User.objects.filter(pk=request.user.pk)
+    members = User.objects.all().order_by("-created_at")
     return render(
         request,
         "dashboard/settings.html",
         {
             "members": members,
             "member_count": members.count(),
-            "can_manage_dataset": request.user.is_staff,
-            "can_view_all_users": can_view_all_users,
         },
     )
 
 
 @login_required(login_url="login_page")
 def clear_dataset(request):
-    if not request.user.is_staff:
-        messages.error(request, "Only admin users can clear datasets.")
-        return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/dashboard/profile/"))
-
     if request.method == "POST":
         customer_count = Customer.objects.count()
         uploads = list(UploadHistory.objects.all())

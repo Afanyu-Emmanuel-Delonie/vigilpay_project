@@ -32,9 +32,9 @@
           <div class="perm-title">Role Permissions</div>
           <div class="perm-list">
             <div class="perm-row"><div class="perm-icon">A</div>Access to PII Data <span class="perm-status">Granted</span></div>
-            <div class="perm-row"><div class="perm-icon">U</div>Dataset Upload Rights <span class="perm-status">{% if can_manage_dataset %}Granted{% else %}Restricted{% endif %}</span></div>
+            <div class="perm-row"><div class="perm-icon">U</div>Dataset Upload Rights <span class="perm-status">Granted</span></div>
             <div class="perm-row"><div class="perm-icon">M</div>Model Retraining Control <span class="perm-status">Granted</span></div>
-            <div class="perm-row"><div class="perm-icon">T</div>Team Management <span class="perm-status">{% if can_view_all_users %}Granted{% else %}Restricted{% endif %}</span></div>
+            <div class="perm-row"><div class="perm-icon">T</div>Team Management <span class="perm-status">Granted</span></div>
             <div class="perm-row"><div class="perm-icon">L</div>Full Audit Log Access <span class="perm-status">Granted</span></div>
           </div>
           <button class="btn-edit" type="button">Edit Profile</button>
@@ -76,9 +76,9 @@
       <div class="card-header">
         <div>
           <div class="card-title">Registered Members</div>
-          <div class="card-sub">{% if can_view_all_users %}All users registered on VigilPay{% else %}Only your account is visible for non-admin users{% endif %}</div>
+          <div class="card-sub">All users registered on VigilPay</div>
         </div>
-        <span style="font-size:0.7rem;font-weight:700;color:#aaa">{{ member_count }} member{% if member_count != 1 %}s{% endif %}</span>
+        <span style="font-size:0.7rem;font-weight:700;color:#aaa">{{ member_count }} members</span>
       </div>
       <div style="overflow-x:auto">
         <table class="team-table">
@@ -135,18 +135,13 @@
             <div class="danger-row-title">Clear Dataset</div>
             <div class="danger-row-desc">Delete all customer and upload records from database.</div>
           </div>
-          {% if can_manage_dataset %}
-            <button class="btn-danger-outline" type="button" onclick="openClearModal()">Clear Dataset</button>
-          {% else %}
-            <button class="btn-danger-outline" type="button" disabled style="opacity:0.55;cursor:not-allowed">Admin Only</button>
-          {% endif %}
+          <button class="btn-danger-outline" type="button" onclick="openClearModal()">Clear Dataset</button>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-{% if can_manage_dataset %}
 <div class="modal-backdrop" id="clearModal" onclick="closeIfBackdrop(event,'clearModal')">
   <div class="modal">
     <div class="modal-top">
@@ -174,7 +169,6 @@
 <form id="clearDatasetForm" method="post" action="{% url 'clear_dataset' %}" style="display:none">
   {% csrf_token %}
 </form>
-{% endif %}
 {% endblock %}
 
 {% block extra_js %}

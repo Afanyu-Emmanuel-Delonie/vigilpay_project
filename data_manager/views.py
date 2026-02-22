@@ -23,9 +23,6 @@ class UploadDataView(LoginRequiredMixin, View):
     """
 
     def post(self, request, *args, **kwargs):
-        if not request.user.is_staff:
-            return JsonResponse({"error": "admin role required"}, status=403)
-
         # grab uploaded file from request
         csv_file = request.FILES.get('file')
         if not csv_file:
