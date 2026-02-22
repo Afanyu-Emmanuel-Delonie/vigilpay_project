@@ -100,9 +100,10 @@ if os.getenv("DATABASE_URL"):
 
 import sys
 
-# Render runs collectstatic during build; DB is not required for that command.
-is_collectstatic = len(sys.argv) > 1 and sys.argv[1] == "collectstatic"
-if not DEBUG and not os.getenv("DATABASE_URL") and not is_collectstatic:
+# Allow build-time management commands without a database URL.
+management_command = sys.argv[1].lower() if len(sys.argv) > 1 else ""
+commands_without_db = {"collectstatic", "check", "makemigrations", "showmigrations"}
+if not DEBUG and not os.getenv("DATABASE_URL") and management_command not in commands_without_db:
     raise ImproperlyConfigured("DATABASE_URL is required in production.")
 
 
