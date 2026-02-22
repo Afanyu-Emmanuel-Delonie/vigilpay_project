@@ -98,7 +98,11 @@ if os.getenv("DATABASE_URL"):
     )
 
 
-if not DEBUG and not os.getenv("DATABASE_URL"):
+import sys
+
+# Render runs collectstatic during build; DB is not required for that command.
+is_collectstatic = len(sys.argv) > 1 and sys.argv[1] == "collectstatic"
+if not DEBUG and not os.getenv("DATABASE_URL") and not is_collectstatic:
     raise ImproperlyConfigured("DATABASE_URL is required in production.")
 
 
