@@ -7,7 +7,39 @@ from typing import Tuple
 class DataProcessor:
     """Utility class for loading, validating and cleaning churn CSVs."""
 
-    REQUIRED_COLUMNS = ['CreditScore', 'Age', 'Tenure', 'Balance', 'NumOfProducts']
+    REQUIRED_COLUMNS = ["CreditScore", "Age", "Tenure", "Balance", "NumOfProducts"]
+    CANONICAL_ALIASES = {
+        "CustomerId": ["CustomerId", "customer_id", "customerid"],
+        "Surname": ["Surname", "surname", "last_name", "lastname", "name"],
+        "CreditScore": ["CreditScore", "credit_score", "creditscore"],
+        "Geography": ["Geography", "geography", "country", "region"],
+        "Gender": ["Gender", "gender", "sex"],
+        "Age": ["Age", "age"],
+        "Tenure": ["Tenure", "tenure"],
+        "Balance": ["Balance", "balance"],
+        "NumOfProducts": ["NumOfProducts", "num_of_products", "numofproducts", "products"],
+        "HasCrCard": ["HasCrCard", "has_cr_card", "hascrcard", "credit_card"],
+        "IsActiveMember": ["IsActiveMember", "is_active_member", "isactivemember", "active_member"],
+        "ChurnRiskScore": ["ChurnRiskScore", "churn_risk_score", "churn", "target"],
+    }
+
+    @staticmethod
+    def _norm_col(name: str) -> str:
+        return "".join(ch for ch in str(name).lower() if ch.isalnum())
+
+    @classmethod
+    def _normalize_columns(cls, df: pd.DataFrame) -> pd.DataFrame:
+        normalized_map = {}
+        existing_norm = {cls._norm_col(c): c for c in df.columns}
+
+        for canonical, aliases in cls.CANONICAL_ALIASES.items():
+            for alias in aliases:
+                match = existing_norm.get(cls._norm_col(alias))
+                if match:
+                    normalized_map[match] = canonical
+                    break
+
+        return df.rename(columns=normalized_map)
 
     @staticmethod
     def validate_and_clean(file_path: str) -> Tuple[pd.DataFrame, str]:
@@ -27,22 +59,44 @@ class DataProcessor:
         except Exception as exc:  # e.g. parsing error or file not found
             return pd.DataFrame(), f"failed to read csv: {exc}"
 
+        df = DataProcessor._normalize_columns(df)
+
         # check required columns exist
         missing = [c for c in DataProcessor.REQUIRED_COLUMNS if c not in df.columns]
         if missing:
             return pd.DataFrame(), f"missing required columns: {', '.join(missing)}"
 
-        # fill numeric fields
-        for col in df.columns:
-            if pd.api.types.is_numeric_dtype(df[col]):
-                median = df[col].median()
-                df[col].fillna(median, inplace=True)
+        numeric_like = [
+            "CustomerId",
+            "CreditScore",
+            "Age",
+            "Tenure",
+            "Balance",
+            "NumOfProducts",
+            "HasCrCard",
+            "IsActiveMember",
+            "ChurnRiskScore",
+        ]
+        for col in numeric_like:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors="coerce")
 
-        # encode fields
-        if 'Gender' in df.columns:
-            df['Gender'] = df['Gender'].map({'Male': 1, 'Female': 0}).fillna(0).astype(int)
-        if 'Geography' in df.columns:
-            # simple label encoding; pandas will assign 0,1,2,...
-            df['Geography'] = df['Geography'].astype('category').cat.codes
+        numeric_cols = [c for c in numeric_like if c in df.columns]
+        if numeric_cols:
+            df[numeric_cols] = df[numeric_cols].fillna(df[numeric_cols].median(numeric_only=True))
 
-        return df, 'success'
+        if "Gender" in df.columns:
+            df["Gender"] = (
+                df["Gender"]
+                .astype(str)
+                .str.strip()
+                .str.lower()
+                .replace({"m": "male", "f": "female"})
+                .str.title()
+            )
+        if "Geography" in df.columns:
+            df["Geography"] = df["Geography"].astype(str).str.strip().str.title()
+        if "Surname" in df.columns:
+            df["Surname"] = df["Surname"].fillna("").astype(str).str.strip()
+
+        return df, "success"

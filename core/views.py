@@ -1,160 +1,70 @@
-# core/views.py
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.shortcuts import redirect, render
+from django.views.decorators.http import require_POST
 
-from rest_framework import status, generics, permissions
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.views import TokenRefreshView
-from django.contrib.auth import get_user_model
-from .serializers import (
-    UserRegistrationSerializer, UserLoginSerializer, UserProfileSerializer,
-    PasswordChangeSerializer
-)
-
-User = get_user_model()
+from core.models import User
 
 
-class RegisterView(generics.CreateAPIView):
-    """User registration view"""
-    
-    queryset = User.objects.all()
-    serializer_class = UserRegistrationSerializer
-    permission_classes = [permissions.AllowAny]
-    
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        
-        # Generate JWT tokens
-        refresh = RefreshToken.for_user(user)
-        
-        return Response({
-            'user': UserProfileSerializer(user).data,
-            'access': str(refresh.access_token),
-            'refresh': str(refresh),
-            'message': 'Registration successful.'
-        }, status=status.HTTP_201_CREATED)
-
-
-class LoginView(APIView):
-    """User login view"""
-    
-    permission_classes = [permissions.AllowAny]
-    
-    def post(self, request):
-        serializer = UserLoginSerializer(data=request.data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        
-        user = serializer.validated_data['user']
-        refresh = RefreshToken.for_user(user)
-        
-        # Add custom claims to token
-        refresh['email'] = user.email
-        refresh['full_name'] = user.get_full_name()
-        
-        return Response({
-            'user': UserProfileSerializer(user).data,
-            'access': str(refresh.access_token),
-            'refresh': str(refresh),
-        })
-
-
-class LogoutView(APIView):
-    """User logout view - blacklists the refresh token"""
-    
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def post(self, request):
-        try:
-            refresh_token = request.data.get('refresh')
-            if refresh_token:
-                token = RefreshToken(refresh_token)
-                token.blacklist()
-                
-            return Response({"message": "Successfully logged out"}, status=status.HTTP_205_RESET_CONTENT)
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-
-class UserProfileView(generics.RetrieveUpdateAPIView):
-    """Get and update current user profile"""
-    
-    serializer_class = UserProfileSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def get_object(self):
-        return self.request.user
-
-
-class PasswordChangeView(APIView):
-    """Change user password"""
-    
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def post(self, request):
-        serializer = PasswordChangeSerializer(data=request.data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        
-        user = request.user
-        user.set_password(serializer.validated_data['new_password'])
-        user.save()
-        
-        # Blacklist all existing tokens
-        RefreshToken.for_user(user).blacklist()
-        
-        return Response({"message": "Password changed successfully. Please login again."})
-
-
-class TokenRefreshViewCustom(TokenRefreshView):
-    """Custom token refresh view"""
-    
-    def post(self, request, *args, **kwargs):
-        response = super().post(request, *args, **kwargs)
-        if response.status_code == 200:
-            response.data['message'] = 'Token refreshed successfully'
-        return response
 def landing_page(request):
-    return render(request, 'core/index.html')
+    return render(request, "core/index.html")
 
 
 def login_page(request):
-    return render(request, 'core/login.html')
+    if request.method == "POST":
+        email = request.POST.get("email", "").strip().lower()
+        password = request.POST.get("password", "")
+        user = authenticate(request, username=email, password=password)
+
+        if user is not None:
+            login(request, user)
+            return redirect("dashboard_page")
+
+        messages.error(request, "Invalid email or password.")
+
+    return render(request, "core/login.html")
 
 
-def dashboard_page(request):
-    context = {
-        "metrics": [
-            {"label": "At-Risk Accounts", "value": "248", "trend": "+12.4%"},
-            {"label": "Retention Saved", "value": "$84,200", "trend": "+8.1%"},
-            {"label": "Prediction Accuracy", "value": "94.6%", "trend": "+1.2%"},
-            {"label": "Active Monitors", "value": "12,840", "trend": "+3.7%"},
-        ],
-        "alerts": [
-            {
-                "bank": "First Trust Bank",
-                "segment": "SME Loans",
-                "risk_score": "87%",
-                "status": "High",
-            },
-            {
-                "bank": "Northline Credit",
-                "segment": "Retail Savings",
-                "risk_score": "74%",
-                "status": "Medium",
-            },
-            {
-                "bank": "Metro Capital",
-                "segment": "Payroll Accounts",
-                "risk_score": "61%",
-                "status": "Medium",
-            },
-            {
-                "bank": "Union Ledger",
-                "segment": "Student Accounts",
-                "risk_score": "42%",
-                "status": "Low",
-            },
-        ],
-    }
-    return render(request, 'core/dashboard.html', context)
+def register_page(request):
+    if request.method == "POST":
+        first_name = request.POST.get("first_name", "").strip()
+        last_name = request.POST.get("last_name", "").strip()
+        username = request.POST.get("username", "").strip()
+        email = request.POST.get("email", "").strip().lower()
+        password = request.POST.get("password", "")
+        confirm_password = request.POST.get("confirm_password", "")
+
+        if not all([first_name, last_name, username, email, password, confirm_password]):
+            messages.error(request, "All fields are required.")
+            return render(request, "core/register.html")
+
+        if password != confirm_password:
+            messages.error(request, "Passwords do not match.")
+            return render(request, "core/register.html")
+
+        if User.objects.filter(email=email).exists():
+            messages.error(request, "Email already exists.")
+            return render(request, "core/register.html")
+
+        if User.objects.filter(username=username).exists():
+            messages.error(request, "Username already exists.")
+            return render(request, "core/register.html")
+
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            password=password,
+        )
+        login(request, user)
+        return redirect("dashboard_page")
+
+    return render(request, "core/register.html")
+
+
+@require_POST
+def logout_page(request):
+    logout(request)
+    messages.success(request, "You have been logged out.")
+    return redirect("landing")

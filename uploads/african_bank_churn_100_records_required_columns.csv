@@ -1,0 +1,101 @@
+CreditScore,Geography,Gender,Age,Tenure,Balance,NumOfProducts,HasCrCard,IsActiveMember,Churn
+721,Algeria,Male,45,9,34002.69,1,1,1,1
+730,Nigeria,Male,24,7,169607.99,4,1,1,1
+550,Botswana,Female,78,0,101805.6,2,0,1,0
+707,Namibia,Male,20,0,24900.89,3,1,1,1
+509,Senegal,Male,35,1,175356.91,4,1,1,0
+354,Botswana,Male,33,2,122320.45,4,1,0,0
+659,Zambia,Male,58,3,136238.98,3,1,0,1
+673,Tanzania,Male,76,8,102297.92,4,0,1,1
+633,Tanzania,Female,70,0,161354.06,2,0,0,0
+840,Egypt,Female,19,3,119141.08,1,0,0,1
+733,Botswana,Female,27,8,122635.37,2,1,0,0
+372,Botswana,Male,50,1,75490.51,1,1,1,0
+589,Morocco,Female,69,2,78303.29,3,1,0,0
+828,Kenya,Female,59,2,149466.59,3,0,0,1
+369,Ivory Coast,Male,60,10,124945.98,2,0,1,0
+396,Cameroon,Male,57,3,130206.37,2,0,0,1
+661,Rwanda,Female,55,8,9891.56,2,1,0,0
+681,Zambia,Male,51,4,90541.25,4,0,0,1
+444,Algeria,Female,57,4,167382.79,4,1,0,1
+368,Tunisia,Male,27,9,64198.03,1,1,1,1
+639,Nigeria,Male,65,10,174568.16,3,1,0,0
+662,Tunisia,Female,79,4,97739.99,1,0,1,1
+760,Namibia,Female,42,4,27150.38,1,1,0,1
+731,Tanzania,Female,31,7,156670.65,4,0,0,1
+702,Ghana,Female,38,7,150354.44,2,1,0,0
+827,Zimbabwe,Female,19,7,11633.92,4,0,1,0
+378,Tanzania,Female,28,3,153318.01,2,1,1,1
+818,Ghana,Male,36,1,124988.64,1,1,1,1
+367,Ghana,Male,61,8,4019.08,1,1,0,1
+800,Senegal,Female,31,9,78256.96,2,0,0,0
+350,Zimbabwe,Male,50,10,75230.83,4,0,1,0
+510,Zambia,Male,51,7,188951.54,4,1,1,1
+747,Senegal,Male,31,8,29540.48,1,0,0,0
+612,Cameroon,Female,27,4,182432.74,4,0,1,1
+565,Namibia,Male,67,3,161646.56,3,0,0,1
+522,Zimbabwe,Male,31,7,166662.62,4,1,0,1
+551,Egypt,Female,61,5,184878.46,2,1,0,0
+786,Algeria,Male,78,5,171564.36,1,0,1,1
+555,Ethiopia,Female,73,10,168230.54,2,1,0,0
+642,Senegal,Male,72,10,118214.78,3,0,0,0
+418,Cameroon,Male,68,3,106118.35,1,0,1,0
+761,Algeria,Female,30,10,141391.69,4,1,1,0
+786,Rwanda,Female,67,9,147611.29,3,1,1,0
+657,Ivory Coast,Male,45,3,109848.8,1,0,0,1
+433,Cameroon,Male,68,8,37997.67,4,1,1,1
+793,Morocco,Male,56,1,117687.86,1,1,0,0
+392,Rwanda,Female,78,6,107161.95,2,1,1,1
+695,Angola,Male,74,7,173009.5,3,1,1,0
+622,Morocco,Female,49,7,153065.52,1,0,1,1
+440,Angola,Male,62,9,177730.46,3,1,0,0
+629,Senegal,Female,78,9,120197.43,1,1,1,0
+542,Kenya,Female,28,10,174223.3,2,1,1,1
+650,South Africa,Male,65,6,129706.83,3,1,0,0
+682,Algeria,Male,18,3,125066.21,2,0,0,0
+675,Morocco,Female,51,1,55344.08,2,1,0,0
+797,Senegal,Male,75,7,44594.46,2,0,0,0
+572,Zambia,Female,27,10,24868.11,4,1,0,0
+734,Senegal,Male,67,10,123013.5,4,0,0,1
+383,Ivory Coast,Female,54,0,133966.44,4,0,0,1
+670,Botswana,Male,42,1,179410.78,1,0,1,0
+561,Kenya,Female,59,6,151679.83,4,1,0,1
+575,Uganda,Male,44,5,43281.45,3,1,1,0
+538,Botswana,Female,73,5,90615.02,4,1,1,0
+623,Egypt,Male,45,7,35517.79,1,1,1,0
+566,Morocco,Female,51,5,175472.72,3,1,1,1
+671,Egypt,Male,26,9,149368.75,1,1,0,0
+682,Algeria,Male,70,2,161305.69,3,0,0,1
+684,Egypt,Female,77,3,113386.47,2,1,0,0
+670,Ivory Coast,Female,52,0,144568.38,3,1,1,1
+351,Morocco,Female,54,5,136599.23,4,1,0,0
+434,Angola,Male,25,5,54665.03,3,1,0,0
+641,Ghana,Male,30,9,145391.1,1,1,0,0
+438,Zimbabwe,Female,73,5,142346.23,2,1,1,1
+656,Tanzania,Female,38,0,22353.67,1,1,0,1
+725,Botswana,Male,78,2,59318.08,2,1,1,0
+619,Ivory Coast,Male,44,0,35080.48,1,1,0,1
+829,Cameroon,Female,54,8,95496.72,2,0,1,1
+788,Ghana,Female,46,9,133490.73,4,0,1,0
+591,Botswana,Female,57,5,156479.19,1,0,1,1
+571,Zimbabwe,Female,30,8,8936.6,3,1,1,0
+358,Kenya,Female,72,7,150365.61,2,0,1,0
+805,Senegal,Male,53,10,163269.98,1,1,0,0
+495,Senegal,Female,43,1,11510.52,2,1,0,0
+371,Ivory Coast,Female,58,0,41191.87,3,1,0,0
+756,Tunisia,Female,69,6,80646.67,2,1,0,1
+591,Zimbabwe,Female,30,3,170700.63,3,1,1,0
+777,Nigeria,Male,61,10,9076.61,3,1,0,1
+700,Egypt,Male,19,1,8678.43,4,1,1,1
+354,Ivory Coast,Female,77,6,103022.33,2,0,1,0
+535,Egypt,Female,45,0,146961.73,1,0,0,0
+680,Ivory Coast,Female,76,4,170890.52,2,1,1,1
+817,Ghana,Male,26,3,198824.67,3,0,0,0
+835,Ghana,Female,68,1,187698.86,2,1,1,1
+560,Senegal,Male,69,2,195776.48,2,0,1,1
+778,Uganda,Female,65,9,60375.27,1,1,0,1
+430,Cameroon,Male,34,4,46861.12,4,0,0,0
+462,Algeria,Female,49,0,58805.87,2,1,1,1
+841,Algeria,Female,44,0,19180.77,1,0,1,0
+604,Ghana,Male,20,6,114396.13,2,1,0,0
+697,Uganda,Female,25,2,19785.02,3,1,1,0

@@ -44,13 +44,17 @@ class UploadDataView(LoginRequiredMixin, View):
 
         # upsert each row into Customer; assume CSV contains a customer id column
         count = 0
+        next_customer_id = (Customer.objects.order_by("-customer_id").values_list("customer_id", flat=True).first() or 0) + 1
         for _, row in df.iterrows():
-            # CSV column names may differ; try common variants
-            customer_id = row.get('CustomerId') or row.get('customer_id')
+            customer_id = row.get('CustomerId')
             if customer_id is None:
-                continue
+                customer_id = next_customer_id
+                next_customer_id += 1
+            else:
+                customer_id = int(customer_id)
+
             defaults = {
-                'surname': row.get('Surname', ''),
+                'surname': row.get('Surname') or f'Customer {customer_id}',
                 'credit_score': row.get('CreditScore'),
                 'geography': row.get('Geography'),
                 'gender': row.get('Gender'),
