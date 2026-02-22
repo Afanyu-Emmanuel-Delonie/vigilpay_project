@@ -310,7 +310,10 @@ def data_management_page(request):
     return render(
         request,
         "dashboard/data_management.html",
-        {"upload_history": upload_history},
+        {
+            "upload_history": upload_history,
+            "can_manage_dataset": request.user.is_staff,
+        },
     )
 
 
@@ -446,19 +449,29 @@ def model_insight_page(request):
 @login_required(login_url="login_page")
 def settings_page(request):
     User = get_user_model()
-    members = User.objects.all().order_by("-created_at")
+    can_view_all_users = request.user.is_staff
+    if can_view_all_users:
+        members = User.objects.all().order_by("-created_at")
+    else:
+        members = User.objects.filter(pk=request.user.pk)
     return render(
         request,
         "dashboard/settings.html",
         {
             "members": members,
             "member_count": members.count(),
+            "can_manage_dataset": request.user.is_staff,
+            "can_view_all_users": can_view_all_users,
         },
     )
 
 
 @login_required(login_url="login_page")
 def clear_dataset(request):
+    if not request.user.is_staff:
+        messages.error(request, "Only admin users can clear datasets.")
+        return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/dashboard/profile/"))
+
     if request.method == "POST":
         customer_count = Customer.objects.count()
         uploads = list(UploadHistory.objects.all())
