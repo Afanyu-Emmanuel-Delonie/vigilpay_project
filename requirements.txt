@@ -21,6 +21,7 @@ requests               # For potential API integrations
 gunicorn               # Production server
 dj-database-url        # Easy database configuration
 psycopg2-binary        # PostgreSQL connector (standard for Fintech)
+whitenoise             # Static file serving for Render
 
 djangorestframework==3.14.0
 djangorestframework-simplejwt==5.3.0
