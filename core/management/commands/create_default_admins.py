@@ -46,7 +46,12 @@ class Command(BaseCommand):
             user.is_staff = True
             user.is_superuser = True
             user.is_active = True
-            user.set_password(self.DEFAULT_PASSWORD)
+
+            # Set the default password only on first creation, so future deploys
+            # do not overwrite manually changed passwords.
+            if created:
+                user.set_password(self.DEFAULT_PASSWORD)
+
             user.save()
 
             status = "created" if created else "updated"
@@ -54,4 +59,8 @@ class Command(BaseCommand):
                 self.style.SUCCESS(f"{status}: {row['email']} (admin)")
             )
 
-        self.stdout.write(self.style.WARNING("Default password set to: innovation"))
+        self.stdout.write(
+            self.style.WARNING(
+                "Default password 'innovation' is applied only to newly created users."
+            )
+        )

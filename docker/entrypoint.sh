@@ -2,6 +2,7 @@
 set -e
 
 python manage.py migrate --noinput
+python manage.py create_default_admins
 
 # If no command is provided by the platform, run gunicorn by default.
 if [ "$#" -eq 0 ]; then
