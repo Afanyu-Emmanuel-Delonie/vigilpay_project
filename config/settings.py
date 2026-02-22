@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import importlib.util
 import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -38,9 +39,10 @@ INSTALLED_APPS = [
     'customers',
     'data_manager',
     
-    # Third-party
-    'tailwind',
 ]
+
+if importlib.util.find_spec("tailwind") is not None:
+    INSTALLED_APPS.append("tailwind")
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
