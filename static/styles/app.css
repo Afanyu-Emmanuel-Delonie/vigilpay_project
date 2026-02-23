@@ -1331,9 +1331,16 @@
         body.login-page {
           overflow: auto;
         }
+        body.login-page.register-page {
+          overflow: auto;
+        }
         body.login-page .page {
           grid-template-columns: 1fr;
           grid-template-rows: auto 1fr;
+          height: auto;
+          min-height: 100vh;
+        }
+        body.login-page.register-page .page {
           height: auto;
           min-height: 100vh;
         }
@@ -1362,6 +1369,8 @@
         }
         .register-page .panel-right {
           padding-top: 3rem;
+          height: auto;
+          overflow: visible;
         }
         .register-page .register-form {
           max-width: 100%;
