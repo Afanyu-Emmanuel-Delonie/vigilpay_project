@@ -78,8 +78,8 @@
         <div class="left-hero">
           <div class="left-tag">Secure Banking Intelligence</div>
           <h2 class="left-title">
-            Welcome<br />
-            Join Vigil<em>Pay</em> Today<br />
+            Join<br />
+            Vigil<em>Pay</em><br />
           </h2>
           <p class="left-desc">
             Create your account to start monitoring customer churn risk and make
@@ -136,26 +136,14 @@
           </div>
 
           {% if messages %}
-          <div
-            style="
-              margin-bottom: 1rem;
-              color: #8c1515;
-              font-size: 0.78rem;
-              font-weight: 600;
-            "
-          >
+          <div style="margin-bottom: 1rem; color: #8c1515; font-size: 0.78rem; font-weight: 600;">
             {% for message in messages %}
             <p>{{ message }}</p>
             {% endfor %}
           </div>
           {% endif %}
 
-          <form
-            class="form-body register-form"
-            action="{% url 'register_page' %}"
-            method="post"
-            novalidate
-          >
+          <form class="form-body register-form" action="{% url 'register_page' %}" method="post" novalidate>
             {% csrf_token %}
 
             <div class="form-row two-col">
@@ -164,29 +152,11 @@
                 <div class="field-input-wrap">
                   <span class="field-icon">
                     <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
-                      <circle
-                        cx="10"
-                        cy="6.5"
-                        r="3"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                      />
-                      <path
-                        d="M4 17c.6-2.4 2.8-4 6-4s5.4 1.6 6 4"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                      />
+                      <circle cx="10" cy="6.5" r="3" stroke="currentColor" stroke-width="1.5" />
+                      <path d="M4 17c.6-2.4 2.8-4 6-4s5.4 1.6 6 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
                     </svg>
                   </span>
-                  <input
-                    type="text"
-                    id="first_name"
-                    name="first_name"
-                    placeholder="Emmanuel"
-                    autocomplete="given-name"
-                    required
-                  />
+                  <input type="text" id="first_name" name="first_name" placeholder="Emmanuel" autocomplete="given-name" required />
                 </div>
               </div>
               <div class="field" id="field-last-name">
@@ -194,29 +164,11 @@
                 <div class="field-input-wrap">
                   <span class="field-icon">
                     <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
-                      <circle
-                        cx="10"
-                        cy="6.5"
-                        r="3"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                      />
-                      <path
-                        d="M4 17c.6-2.4 2.8-4 6-4s5.4 1.6 6 4"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                      />
+                      <circle cx="10" cy="6.5" r="3" stroke="currentColor" stroke-width="1.5" />
+                      <path d="M4 17c.6-2.4 2.8-4 6-4s5.4 1.6 6 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
                     </svg>
                   </span>
-                  <input
-                    type="text"
-                    id="last_name"
-                    name="last_name"
-                    placeholder="Afanyu"
-                    autocomplete="family-name"
-                    required
-                  />
+                  <input type="text" id="last_name" name="last_name" placeholder="Afanyu" autocomplete="family-name" required />
                 </div>
               </div>
             </div>
@@ -226,27 +178,11 @@
               <div class="field-input-wrap">
                 <span class="field-icon">
                   <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
-                    <path
-                      d="M3 5.5a2 2 0 012-2h10a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-9z"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                    />
-                    <path
-                      d="M7 9h6M7 12h4"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                      stroke-linecap="round"
-                    />
+                    <path d="M3 5.5a2 2 0 012-2h10a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-9z" stroke="currentColor" stroke-width="1.5" />
+                    <path d="M7 9h6M7 12h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
                   </svg>
                 </span>
-                <input
-                  type="text"
-                  id="username"
-                  name="username"
-                  placeholder="afanyuemma"
-                  autocomplete="username"
-                  required
-                />
+                <input type="text" id="username" name="username" placeholder="afanyuemma" autocomplete="username" required />
               </div>
             </div>
 
@@ -255,27 +191,11 @@
               <div class="field-input-wrap">
                 <span class="field-icon">
                   <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
-                    <path
-                      d="M3 5h14a1 1 0 011 1v9a1 1 0 01-1 1H3a1 1 0 01-1-1V6a1 1 0 011-1z"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                    />
-                    <path
-                      d="M2 6l8 6 8-6"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                      stroke-linecap="round"
-                    />
+                    <path d="M3 5h14a1 1 0 011 1v9a1 1 0 01-1 1H3a1 1 0 01-1-1V6a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5" />
+                    <path d="M2 6l8 6 8-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
                   </svg>
                 </span>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  placeholder="you@example.com"
-                  autocomplete="email"
-                  required
-                />
+                <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" required />
               </div>
             </div>
 
@@ -285,31 +205,11 @@
                 <div class="field-input-wrap">
                   <span class="field-icon">
                     <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
-                      <rect
-                        x="4"
-                        y="9"
-                        width="12"
-                        height="9"
-                        rx="1.5"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                      />
-                      <path
-                        d="M7 9V6a3 3 0 016 0v3"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                      />
+                      <rect x="4" y="9" width="12" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5" />
+                      <path d="M7 9V6a3 3 0 016 0v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
                     </svg>
                   </span>
-                  <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    placeholder="Create a password"
-                    autocomplete="new-password"
-                    required
-                  />
+                  <input type="password" id="password" name="password" placeholder="Create a password" autocomplete="new-password" required />
                 </div>
               </div>
               <div class="field" id="field-confirm-password">
@@ -317,31 +217,11 @@
                 <div class="field-input-wrap">
                   <span class="field-icon">
                     <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
-                      <rect
-                        x="4"
-                        y="9"
-                        width="12"
-                        height="9"
-                        rx="1.5"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                      />
-                      <path
-                        d="M7 9V6a3 3 0 016 0v3"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                      />
+                      <rect x="4" y="9" width="12" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5" />
+                      <path d="M7 9V6a3 3 0 016 0v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
                     </svg>
                   </span>
-                  <input
-                    type="password"
-                    id="confirm_password"
-                    name="confirm_password"
-                    placeholder="Repeat password"
-                    autocomplete="new-password"
-                    required
-                  />
+                  <input type="password" id="confirm_password" name="confirm_password" placeholder="Repeat password" autocomplete="new-password" required />
                 </div>
               </div>
             </div>

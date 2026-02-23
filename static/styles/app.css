@@ -1042,19 +1042,20 @@
       .register-page .panel-right {
         align-items: flex-start;
         padding-top: 4.5rem;
+        height: 100vh;
         overflow-y: auto;
+        overflow-x: hidden;
       }
       .register-page .form-wrap {
         max-width: 560px;
         margin: 0.5rem auto 2rem;
       }
       body.login-page.register-page {
-        overflow-y: auto;
-        overflow-x: hidden;
+        overflow: hidden;
       }
       body.login-page.register-page .page {
         min-height: 100vh;
-        height: auto;
+        height: 100vh;
       }
       .register-page .register-form {
         width: 100%;

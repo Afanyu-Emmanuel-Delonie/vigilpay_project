@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 
@@ -8,6 +9,10 @@ from core.models import User
 
 def landing_page(request):
     return render(request, "core/index.html")
+
+
+def health_check(request):
+    return JsonResponse({"status": "ok"})
 
 
 def login_page(request):
