@@ -14,15 +14,8 @@ urlpatterns = [
     path("", include("core.urls")),
     path("healthz/", health, name="healthz"),
     path("admin/", admin.site.urls),
+    # CHANGE: Include API routes directly to fail fast on import issues.
+    path("api/", include("core.api_urls")),
+    # CHANGE: Include dashboard routes directly to avoid hidden runtime failures.
+    path("dashboard/", include("dashboard.urls")),
 ]
-
-# Best-effort route wiring so project can start even if optional apps are absent.
-try:
-    urlpatterns.append(path("api/", include("core.api_urls")))
-except Exception:
-    pass
-
-try:
-    urlpatterns.append(path("dashboard/", include("dashboard.urls")))
-except Exception:
-    pass

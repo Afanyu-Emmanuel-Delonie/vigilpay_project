@@ -1,5 +1,6 @@
 import uuid
 
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.db import models
 from django.utils import timezone
@@ -56,3 +57,171 @@ class User(AbstractUser):
     class Meta:
         db_table = "users"
 
+
+# CHANGE: Restored missing domain models referenced by API/views to prevent import/runtime failures.
+class UserOTP(models.Model):
+    PURPOSE_REGISTRATION = "registration"
+    PURPOSE_PASSWORD_RESET = "password_reset"
+    PURPOSE_CHOICES = (
+        (PURPOSE_REGISTRATION, "Registration"),
+        (PURPOSE_PASSWORD_RESET, "Password Reset"),
+    )
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="otps")
+    purpose = models.CharField(max_length=32, choices=PURPOSE_CHOICES)
+    code = models.CharField(max_length=6)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "user_otps"
+
+
+# CHANGE: Restored missing domain models referenced by API/views to prevent import/runtime failures.
+class Complaint(models.Model):
+    CATEGORY_BILLING = "billing"
+    CATEGORY_SUPPORT = "support"
+    CATEGORY_TECHNICAL = "technical"
+    CATEGORY_SERVICE = "service"
+    CATEGORY_CHOICES = (
+        (CATEGORY_BILLING, "Billing"),
+        (CATEGORY_SUPPORT, "Support"),
+        (CATEGORY_TECHNICAL, "Technical"),
+        (CATEGORY_SERVICE, "Service"),
+    )
+
+    STATUS_OPEN = "open"
+    STATUS_RESOLVED = "resolved"
+    STATUS_CHOICES = (
+        (STATUS_OPEN, "Open"),
+        (STATUS_RESOLVED, "Resolved"),
+    )
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="complaints")
+    text = models.TextField()
+    sentiment_score = models.FloatField(default=0.0)
+    category = models.CharField(max_length=32, choices=CATEGORY_CHOICES, default=CATEGORY_SUPPORT)
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=STATUS_OPEN)
+    resolution_note = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "complaints"
+        ordering = ["-created_at"]
+
+
+# CHANGE: Restored missing domain models referenced by API/views to prevent import/runtime failures.
+class Product(models.Model):
+    TYPE_LOAN = "loan"
+    TYPE_CARD = "card"
+    TYPE_BONUS = "bonus"
+    TYPE_RESOLUTION = "resolution"
+    TYPE_CHOICES = (
+        (TYPE_LOAN, "Loan"),
+        (TYPE_CARD, "Card"),
+        (TYPE_BONUS, "Bonus"),
+        (TYPE_RESOLUTION, "Resolution"),
+    )
+
+    name = models.CharField(max_length=120, unique=True)
+    type = models.CharField(max_length=16, choices=TYPE_CHOICES)
+    min_score_required = models.FloatField(default=0.0)
+    min_balance_required = models.FloatField(default=0.0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "products"
+        ordering = ["name"]
+
+
+# CHANGE: Restored missing domain models referenced by API/views to prevent import/runtime failures.
+class SurveyResponse(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="survey_responses")
+    rating = models.IntegerField(default=3)
+    feedback = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "survey_responses"
+        ordering = ["-created_at"]
+
+
+# CHANGE: Restored missing domain models referenced by API/views to prevent import/runtime failures.
+class UserGoal(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="goals")
+    title = models.CharField(max_length=150)
+    target_amount = models.FloatField(default=0.0)
+    current_amount = models.FloatField(default=0.0)
+    is_completed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "user_goals"
+        ordering = ["-created_at"]
+
+
+# CHANGE: Restored missing domain models referenced by API/views to prevent import/runtime failures.
+class AppNotification(models.Model):
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_notifications",
+    )
+    target_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="notifications",
+    )
+    title = models.CharField(max_length=150)
+    message = models.TextField()
+    is_reviewed = models.BooleanField(default=False)
+    is_confirmed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "app_notifications"
+        ordering = ["-created_at"]
+
+
+# CHANGE: Restored missing domain models referenced by API/views to prevent import/runtime failures.
+class InteractionLog(models.Model):
+    EVENT_PRODUCT_ACCEPTED = "product_accepted"
+    EVENT_PRODUCT_REJECTED = "product_rejected"
+    EVENT_RESOLUTION_SENT = "resolution_sent"
+    EVENT_RESOLUTION_SUCCESS = "resolution_success"
+    EVENT_TYPE_CHOICES = (
+        (EVENT_PRODUCT_ACCEPTED, "Product Accepted"),
+        (EVENT_PRODUCT_REJECTED, "Product Rejected"),
+        (EVENT_RESOLUTION_SENT, "Resolution Sent"),
+        (EVENT_RESOLUTION_SUCCESS, "Resolution Success"),
+    )
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="interactions")
+    complaint = models.ForeignKey(
+        "core.Complaint",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="interactions",
+    )
+    product = models.ForeignKey(
+        "core.Product",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="interactions",
+    )
+    event_type = models.CharField(max_length=32, choices=EVENT_TYPE_CHOICES)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "interaction_logs"
+        ordering = ["-created_at"]
