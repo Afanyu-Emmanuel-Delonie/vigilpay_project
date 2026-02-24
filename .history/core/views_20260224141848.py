@@ -41,12 +41,11 @@ def login_page(request):
                 matched_user = get_user_model().objects.filter(email__iexact=identifier).first()
                 if matched_user is not None:
                     user = authenticate(request, username=matched_user.username, password=password)
-        except Exception as e:
+        except Exception:
             # CHANGE: Prevent hard 500s when auth backend/database throws unexpectedly.
             # messages.error(request, "Authentication failed due to a server error.")
             # return render(request, "core/login.html")
-            print("AUTH EXCEPTION:", repr(e))
-            raise
+            print(AUTH)
         # if user is not None:
         #     login(request, user)
         #     try:
