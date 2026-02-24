@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from django.db import DatabaseError
+from functools import wraps
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import CharField, Q
 from django.db.models.functions import Cast
@@ -16,6 +17,47 @@ from customers.ml_service import (
     predict_churn,
 )
 from customers.models import Customer
+
+
+def _safe_dashboard_context():
+    return {
+        "total_customers": 0,
+        "total_customers_compact": "0",
+        "churn_rate": 0.0,
+        "high_risk_count": 0,
+        "at_risk_balance": 0.0,
+        "at_risk_balance_compact": "$0",
+        "active_members": 0,
+        "active_members_compact": "0",
+        "avg_score": 0.0,
+        "top_customers": [],
+        "highest_geo": "N/A",
+        "highest_geo_count": 0,
+        "inactive_low_balance": 0,
+        "multi_product_stable": 0,
+        "feature_importance": [],
+        "dashboard_data": {
+            "bar": {"labels": ["Low Risk", "Medium Risk", "High Risk"], "values": [0, 0, 0]},
+            "donut": {"labels": [], "values": []},
+            "scatter": {"high": [], "low": []},
+            "line": {"labels": [f"{i}Y" for i in range(0, 11)], "values": [0] * 11},
+        },
+    }
+
+
+def no_500_dashboard(view_func):
+    @wraps(view_func)
+    def _wrapped(request, *args, **kwargs):
+        try:
+            return view_func(request, *args, **kwargs)
+        except Exception:
+            messages.error(
+                request,
+                "Dashboard data is temporarily unavailable. The page loaded in safe mode.",
+            )
+            return render(request, "core/dashboard.html", _safe_dashboard_context())
+
+    return _wrapped
 
 
 def _normalize_score(raw_score):
@@ -93,6 +135,7 @@ def _compact_number(value, currency=False):
 
 
 @login_required(login_url="login_page")
+@no_500_dashboard
 def dashboard_page(request):
     try:
         customers = list(Customer.objects.all())
