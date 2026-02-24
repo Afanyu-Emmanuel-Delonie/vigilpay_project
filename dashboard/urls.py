@@ -1,5 +1,6 @@
 from django.urls import path
 
+from core.http_views import engagement_hub_page
 from data_manager.views import UploadDataView
 from dashboard.views import (
     clear_dataset,
@@ -13,6 +14,7 @@ from dashboard.views import (
 
 urlpatterns = [
     path("", dashboard_page, name="dashboard_page"),
+    path("engagement-hub/", engagement_hub_page, name="engagement_hub_page"),
     path("risk-level/", risk_level_page, name="risk_level_page"),
     path("data-management/", data_management_page, name="data_management_page"),
     path("model-insight/", model_insight_page, name="model_insight_page"),

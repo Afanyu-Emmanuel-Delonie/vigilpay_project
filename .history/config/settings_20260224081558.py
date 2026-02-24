@@ -30,10 +30,6 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "core",
-    "customers",
-    "data_manager",
-    "dashboard",
 ]
 
 MIDDLEWARE = [
@@ -98,12 +94,16 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+# during development, also look in the collected staticfiles folder
 STATICFILES_DIRS = []
 if (BASE_DIR / "static").exists():
     STATICFILES_DIRS.append(BASE_DIR / "static")
+if (BASE_DIR / "staticfiles").exists():
+    # `staticfiles` is normally the output of collectstatic; include it so
+    # running `runserver` can serve assets that have already been built there.
+    STATICFILES_DIRS.append(BASE_DIR / "staticfiles")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-AUTH_USER_MODEL = "core.User"
 
 # Security hardening for hosted environments (Render/proxied HTTPS).
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
+from django.core.validators import RegexValidator
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -9,10 +10,14 @@ from core.models import AppNotification, Complaint, InteractionLog, Product, Sur
 from core.retention_engine import assign_random_onboarding_profile
 
 User = get_user_model()
+USERNAME_REGEX = RegexValidator(
+    regex=r"^[A-Za-z0-9_]+$",
+    message="Username can only contain letters, numbers, and underscores.",
+)
 
 
 class RegisterSerializer(serializers.Serializer):
-    username = serializers.CharField(max_length=150)
+    username = serializers.CharField(max_length=150, validators=[USERNAME_REGEX])
     email = serializers.EmailField(max_length=254)
     password = serializers.CharField(write_only=True)
     first_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
@@ -26,11 +31,17 @@ class RegisterSerializer(serializers.Serializer):
 
     def validate_username(self, value):
         username = value.strip()
+        if len(username) < 3:
+            raise serializers.ValidationError("Username must be at least 3 characters long.")
+        if " " in username:
+            raise serializers.ValidationError("Username cannot contain spaces.")
         if User.objects.filter(username__iexact=username).exists():
             raise serializers.ValidationError("Username already exists.")
         return username
 
     def validate_password(self, value):
+        if not value or not value.strip():
+            raise serializers.ValidationError("Password is required.")
         validate_password(value)
         return value
 
