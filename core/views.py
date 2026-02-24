@@ -1,4 +1,5 @@
 import re
+import logging
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -8,6 +9,8 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.urls import reverse
 from django.shortcuts import redirect, render
+
+logger = logging.getLogger(__name__)
 
 
 def landing_page(request):
@@ -41,12 +44,11 @@ def login_page(request):
                 matched_user = get_user_model().objects.filter(email__iexact=identifier).first()
                 if matched_user is not None:
                     user = authenticate(request, username=matched_user.username, password=password)
-        except Exception as e:
-            # CHANGE: Prevent hard 500s when auth backend/database throws unexpectedly.
-            # messages.error(request, "Authentication failed due to a server error.")
-            # return render(request, "core/login.html")
-            print("AUTH EXCEPTION:", repr(e))
-            raise
+        except Exception:
+            # CHANGE: Log root cause for deployed debugging, but do not crash the login page.
+            logger.exception("Authentication backend failure during login.")
+            messages.error(request, "Authentication failed due to a server error.")
+            return render(request, "core/login.html")
         # if user is not None:
         #     login(request, user)
         #     try:

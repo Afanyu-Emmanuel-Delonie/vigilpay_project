@@ -20,4 +20,4 @@ RUN if [ -f manage.py ]; then python manage.py collectstatic --noinput; fi
 
 EXPOSE 10000
 
-CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-10000}"]
+CMD ["sh", "-c", "python manage.py migrate --noinput --run-syncdb && gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-10000}"]
