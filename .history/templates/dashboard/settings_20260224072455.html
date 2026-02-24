@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Profile - VigilPay{% endblock %}
+{% block page_title %}Profile{% endblock %}
+
+{% block extra_head %}
+<meta name="active-nav" content="profile">
+<link rel="stylesheet" href="{% static 'styles/dashboard_settings.css' %}" />
+{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div>
+    <div class="section-label">Account</div>
+    <div class="top-grid">
+      <div class="card">
+        <div class="profile-header">
+          <div class="profile-header-inner">
+            <div class="profile-avatar-wrap">
+              <div class="profile-avatar">{{ user.first_name.0|default:user.username.0|upper }}{{ user.last_name.0|upper }}</div>
+              <div class="profile-online"></div>
+            </div>
+            <div class="profile-name">{{ user.get_full_name|default:user.username }}</div>
+            <div class="profile-email">{{ user.email }}</div>
+            <span class="role-badge">
+              <span class="role-dot"></span>
+              {% if user.is_superuser %}System Administrator{% elif user.is_staff %}Staff Member{% else %}Member{% endif %}
+            </span>
+          </div>
+        </div>
+        <div class="profile-body">
+          <div class="perm-title">Role Permissions</div>
+          <div class="perm-list">
+            <div class="perm-row"><div class="perm-icon">A</div>Access to PII Data <span class="perm-status">Granted</span></div>
+            <div class="perm-row"><div class="perm-icon">U</div>Dataset Upload Rights <span class="perm-status">{% if can_manage_dataset %}Granted{% else %}Restricted{% endif %}</span></div>
+            <div class="perm-row"><div class="perm-icon">M</div>Model Retraining Control <span class="perm-status">Granted</span></div>
+            <div class="perm-row"><div class="perm-icon">T</div>Team Management <span class="perm-status">{% if can_view_all_users %}Granted{% else %}Restricted{% endif %}</span></div>
+            <div class="perm-row"><div class="perm-icon">L</div>Full Audit Log Access <span class="perm-status">Granted</span></div>
+          </div>
+          <button class="btn-edit" type="button">Edit Profile</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Account Preferences</div>
+            <div class="card-sub">Notifications, display and session settings</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="pref-section">
+            <div class="pref-section-title">Notifications</div>
+            <div class="pref-row"><div><div class="pref-label">High-Risk Alerts</div><div class="pref-desc">Email notification when a customer crosses the 70% risk threshold</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+            <div class="pref-row"><div><div class="pref-label">Upload Completion</div><div class="pref-desc">Notify when a dataset finishes processing</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+            <div class="pref-row"><div><div class="pref-label">Model Retrain Complete</div><div class="pref-desc">Alert when the ML pipeline finishes training</div></div><label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+          </div>
+          <div class="pref-section">
+            <div class="pref-section-title">Display</div>
+            <div class="pref-row"><div><div class="pref-label">Default Risk View</div><div class="pref-desc">Risk page default filter</div></div><select class="pref-select"><option>All Levels</option><option selected>High Risk Only</option><option>Medium Risk</option></select></div>
+            <div class="pref-row"><div><div class="pref-label">Rows per Page</div><div class="pref-desc">Number of records shown in tables</div></div><select class="pref-select"><option>10</option><option selected>20</option><option>50</option></select></div>
+          </div>
+          <div class="pref-section">
+            <div class="pref-section-title">Security</div>
+            <div class="pref-row"><div><div class="pref-label">Session Timeout</div><div class="pref-desc">Automatically log out after inactivity</div></div><select class="pref-select"><option>30 minutes</option><option selected>1 hour</option><option>4 hours</option></select></div>
+            <div class="pref-row"><div><div class="pref-label">Two-Factor Authentication</div><div class="pref-desc">Require verification code on login</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="section-label">Team</div>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Registered Members</div>
+          <div class="card-sub">{% if can_view_all_users %}All users registered on VigilPay{% else %}Only your account is visible for non-admin users{% endif %}</div>
+        </div>
+        <span style="font-size:0.7rem;font-weight:700;color:#aaa">{{ member_count }} member{% if member_count != 1 %}s{% endif %}</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="team-table">
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Username</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Last Active</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in members %}
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div class="team-av" style="background:var(--red)">{{ m.first_name|default:m.email|slice:":1"|upper }}{{ m.last_name|slice:":1"|upper }}</div>
+                  <div>
+                    <div class="team-name">{{ m.get_full_name|default:m.email }}</div>
+                    <div class="team-email">{{ m.email }}</div>
+                  </div>
+                </div>
+              </td>
+              <td style="font-size:0.72rem;color:#666">{{ m.username }}</td>
+              <td><span class="team-role-badge">{% if m.is_superuser %}Super Admin{% elif m.is_staff %}Staff{% else %}Member{% endif %}</span></td>
+              <td><div class="status-indicator"><div class="status-dot {% if m.is_active %}online{% else %}offline{% endif %}"></div><span style="color:{% if m.is_active %}#059669{% else %}#aaa{% endif %}">{% if m.is_active %}Active{% else %}Inactive{% endif %}</span></div></td>
+              <td style="font-size:0.72rem;color:#aaa">{{ m.last_activity|date:"M d, Y H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" style="padding:16px;color:#777">No members found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="section-label">System</div>
+    <div class="danger-card">
+      <div class="danger-header">
+        <div class="danger-icon">
+          <svg width="16" height="16" fill="none" stroke="var(--red)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+        </div>
+        <div>
+          <div class="danger-title">System Maintenance - Danger Zone</div>
+          <div class="danger-sub">These actions are irreversible. Confirm before execution.</div>
+        </div>
+      </div>
+      <div class="danger-body">
+        <div class="danger-row">
+          <div class="danger-row-info">
+            <div class="danger-row-title">Clear Dataset</div>
+            <div class="danger-row-desc">Delete all customer and upload records from database.</div>
+          </div>
+          {% if can_manage_dataset %}
+            <button class="btn-danger-outline" type="button" onclick="openClearModal()">Clear Dataset</button>
+          {% else %}
+            <button class="btn-danger-outline" type="button" disabled style="opacity:0.55;cursor:not-allowed">Admin Only</button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if can_manage_dataset %}
+<div class="modal-backdrop" id="clearModal" onclick="closeIfBackdrop(event,'clearModal')">
+  <div class="modal">
+    <div class="modal-top">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div class="modal-icon-wrap red">
+          <svg width="20" height="20" fill="none" stroke="var(--red)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7"/></svg>
+        </div>
+        <div>
+          <div class="modal-title-text red">Confirm Dataset Deletion</div>
+          <div class="modal-subtitle">Type DELETE to continue</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeModal('clearModal')">X</button>
+    </div>
+    <div class="modal-body">
+      <div class="confirm-label">To confirm, type <strong>DELETE</strong></div>
+      <input type="text" class="confirm-input" id="clearConfirmInput" placeholder="Type DELETE to confirm" oninput="checkClearConfirm()">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-sec" onclick="closeModal('clearModal')">Cancel</button>
+      <button class="btn-modal-confirm" id="clearConfirmBtn" disabled type="submit" form="clearDatasetForm">Confirm Delete</button>
+    </div>
+  </div>
+</div>
+<form id="clearDatasetForm" method="post" action="{% url 'clear_dataset' %}" style="display:none">
+  {% csrf_token %}
+</form>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'scripts/dashboard_settings.js' %}"></script>
+{% endblock %}

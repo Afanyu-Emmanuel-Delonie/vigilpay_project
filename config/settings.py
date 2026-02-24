@@ -8,7 +8,13 @@ SECRET_KEY = os.getenv(
     "django-insecure-change-me-in-production",
 )
 
-DEBUG = os.getenv("DEBUG", "False").lower() in {"1", "true", "yes", "on"}
+ON_RENDER = bool(os.getenv("RENDER"))
+DEBUG = os.getenv("DEBUG", "False" if ON_RENDER else "True").lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
 
 _env_hosts = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "").split(",") if h.strip()]
 _default_hosts = ["127.0.0.1", "localhost"]
@@ -95,25 +101,25 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Security hardening for hosted environments (Render/proxied HTTPS).
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "True").lower() in {
+SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", str(not DEBUG)).lower() in {
     "1",
     "true",
     "yes",
     "on",
 }
-SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "True").lower() in {
+SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", str(not DEBUG)).lower() in {
     "1",
     "true",
     "yes",
     "on",
 }
-CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", "True").lower() in {
+CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", str(not DEBUG)).lower() in {
     "1",
     "true",
     "yes",
     "on",
 }
-SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "31536000"))
+SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "0" if DEBUG else "31536000"))
 SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv(
     "SECURE_HSTS_INCLUDE_SUBDOMAINS", "True"
 ).lower() in {"1", "true", "yes", "on"}
