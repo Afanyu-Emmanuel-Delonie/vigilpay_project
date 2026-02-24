@@ -1,0 +1,461 @@
+{% extends 'base.html' %}
+{% block title %}Engagement Hub - VigilPay{% endblock %}
+{% block page_title %}Engagement Hub{% endblock %}
+
+{% block extra_head %}
+<meta name="active-nav" content="engagement">
+<style>
+  .page { display: flex; flex-direction: column; gap: 1.5rem; }
+
+  .section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 0.85rem;
+  }
+  .section-label::before {
+    content: "";
+    width: 14px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--red);
+  }
+
+  .card {
+    background: var(--white);
+    border: 1px solid var(--stone-mid);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding: 1.05rem 1.35rem 0.95rem;
+    border-bottom: 1px solid var(--stone-mid);
+  }
+  .card-title { font-size: 0.9rem; font-weight: 800; color: var(--navy); }
+  .card-sub { font-size: 0.7rem; color: #aaa; margin-top: 2px; }
+  .card-body { padding: 1.3rem 1.35rem; }
+
+  .intake-banner {
+    background: linear-gradient(160deg, #252422 0%, #1a1917 55%, #1e100f 100%);
+    color: rgba(255, 255, 255, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 1.2rem 1.3rem;
+    line-height: 1.65;
+    font-size: 0.77rem;
+  }
+  .intake-banner strong { color: #fff; }
+
+  .risk-pill {
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .risk-pill.high { background: rgba(140, 21, 21, 0.12); color: var(--red); }
+  .risk-pill.medium { background: #fffbeb; color: #b45309; }
+  .risk-pill.low { background: #ecfdf5; color: #059669; }
+
+  .snapshot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
+  }
+  .snapshot-item {
+    background: #fff;
+    border: 1px solid var(--stone-mid);
+    border-radius: 10px;
+    padding: 0.85rem 0.95rem;
+  }
+  .snapshot-label {
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #b4b4b4;
+    margin-bottom: 0.4rem;
+  }
+  .snapshot-value {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--navy);
+    line-height: 1.45;
+  }
+
+  .chip-wrap { display: flex; flex-wrap: wrap; gap: 5px; }
+  .chip {
+    font-size: 0.64rem;
+    font-weight: 700;
+    color: #555;
+    border: 1px solid var(--stone-mid);
+    border-radius: 999px;
+    padding: 2px 8px;
+    background: #fff;
+  }
+  .chip.empty { color: #bdbdbd; }
+
+  .notif-form, .resolve-form, .actions-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+  .hub-input {
+    border: 1.5px solid var(--stone-mid);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 0.75rem;
+    font-family: inherit;
+    outline: none;
+    color: var(--navy);
+    min-width: 130px;
+  }
+  .hub-input:focus {
+    border-color: var(--red);
+    box-shadow: 0 0 0 3px rgba(140, 21, 21, 0.08);
+  }
+  .hub-input.wide { min-width: 220px; }
+
+  .btn-primary, .btn-secondary {
+    border-radius: 8px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 7px 11px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.16s;
+    white-space: nowrap;
+  }
+  .btn-primary {
+    border: none;
+    color: #fff;
+    background: var(--red);
+  }
+  .btn-primary:hover { background: var(--red-dark); }
+  .btn-secondary {
+    border: 1px solid var(--stone-mid);
+    color: #444;
+    background: var(--stone);
+  }
+  .btn-secondary:hover { border-color: #bbb; }
+
+  .team-table { width: 100%; border-collapse: collapse; }
+  .team-table th {
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #aaa;
+    text-align: left;
+    padding: 0.72rem 1.1rem;
+    border-bottom: 1px solid var(--stone-mid);
+    background: var(--stone);
+  }
+  .team-table td {
+    font-size: 0.76rem;
+    color: #4c4c4c;
+    padding: 0.78rem 1.1rem;
+    border-bottom: 1px solid var(--stone-mid);
+    vertical-align: middle;
+  }
+  .team-table tr:last-child td { border-bottom: none; }
+  .team-table tr:hover td { background: #fcfbfa; }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 3px 9px;
+    font-size: 0.62rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .status-badge.open {
+    background: #fff7ed;
+    color: #c2410c;
+    border: 1px solid #fed7aa;
+  }
+  .status-badge.resolved {
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+  }
+  .status-badge.yes {
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+  }
+  .status-badge.no {
+    background: #f3f4f6;
+    color: #9ca3af;
+    border: 1px solid #e5e7eb;
+  }
+
+  .empty-cell {
+    text-align: center;
+    color: #b5b5b5;
+    padding: 1.1rem;
+  }
+
+  @media (max-width: 900px) {
+    .notif-form, .resolve-form, .actions-row { align-items: stretch; }
+    .hub-input, .hub-input.wide { min-width: 100%; width: 100%; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div>
+    <div class="section-label">Admin Intake</div>
+    <div class="intake-banner">
+      <strong>This hub is admin-only.</strong> Complaints, surveys, and goals are submitted by users in the mobile app/API.
+      This view is for review, resolution, offer confirmation, and response monitoring.
+    </div>
+  </div>
+
+  <div>
+    <div class="section-label">Retention Snapshot</div>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">{{ retention_payload.user_info.username }}</div>
+          <div class="card-sub">{{ retention_payload.user_info.type }} - unified risk and action plan</div>
+        </div>
+        <span class="risk-pill {% if retention_payload.risk_analysis.probability >= 70 %}high{% elif retention_payload.risk_analysis.probability >= 40 %}medium{% else %}low{% endif %}">
+          {{ retention_payload.risk_analysis.probability }}% {{ retention_payload.risk_analysis.tier }}
+        </span>
+      </div>
+      <div class="card-body">
+        <div class="snapshot-grid">
+          <div class="snapshot-item">
+            <div class="snapshot-label">Loyalty Score</div>
+            <div class="snapshot-value">{{ retention_payload.user_info.loyalty_score }}</div>
+          </div>
+          <div class="snapshot-item">
+            <div class="snapshot-label">Risk Factors</div>
+            <div class="chip-wrap">
+              {% for f in retention_payload.risk_analysis.factors %}
+              <span class="chip">{{ f }}</span>
+              {% empty %}
+              <span class="chip empty">None identified</span>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="snapshot-item">
+            <div class="snapshot-label">Active Resolutions</div>
+            <div class="chip-wrap">
+              {% for r in retention_payload.actionable_items.active_resolutions %}
+              <span class="chip">{{ r }}</span>
+              {% empty %}
+              <span class="chip empty">None</span>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="snapshot-item">
+            <div class="snapshot-label">Suggested Products</div>
+            <div class="chip-wrap">
+              {% for p in retention_payload.actionable_items.suggested_products %}
+              <span class="chip">{{ p }}</span>
+              {% empty %}
+              <span class="chip empty">None</span>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="section-label">Complaints</div>
+    <div class="card">
+      <div style="overflow-x:auto">
+        <table class="team-table">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Issue</th>
+              <th>Category</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in complaints %}
+            <tr>
+              <td>{{ c.user.username }}</td>
+              <td>{{ c.text|truncatechars:80 }}</td>
+              <td>{{ c.get_category_display }}</td>
+              <td><span class="status-badge {{ c.status }}">{{ c.get_status_display }}</span></td>
+              <td>
+                {% if c.status == 'open' %}
+                <form method="post" class="resolve-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="resolve_complaint" />
+                  <input type="hidden" name="complaint_id" value="{{ c.id }}" />
+                  <input class="hub-input" type="text" name="resolution_note" placeholder="Resolution note" />
+                  <button class="btn-primary" type="submit">Resolve</button>
+                </form>
+                {% else %}
+                Resolved
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="empty-cell">No complaints submitted yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="section-label">Notifications</div>
+    <div class="card">
+      <div class="card-body">
+        <form method="post" class="notif-form">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="create_notification" />
+          <input class="hub-input" type="text" name="notification_title" placeholder="Notification title" />
+          <input class="hub-input wide" type="text" name="notification_message" placeholder="Message body" />
+          <button class="btn-primary" type="submit">Create</button>
+        </form>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="team-table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Message</th>
+              <th>Reviewed</th>
+              <th>Confirmed</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for n in notifications %}
+            <tr>
+              <td>{{ n.title }}</td>
+              <td>{{ n.message|truncatechars:80 }}</td>
+              <td><span class="status-badge {% if n.is_reviewed %}yes{% else %}no{% endif %}">{{ n.is_reviewed|yesno:"Yes,No" }}</span></td>
+              <td><span class="status-badge {% if n.is_confirmed %}yes{% else %}no{% endif %}">{{ n.is_confirmed|yesno:"Yes,No" }}</span></td>
+              <td>
+                <div class="actions-row">
+                  <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="review_notification" />
+                    <input type="hidden" name="notification_id" value="{{ n.id }}" />
+                    <button class="btn-secondary" type="submit">Review</button>
+                  </form>
+                  <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="confirm_notification" />
+                    <input type="hidden" name="notification_id" value="{{ n.id }}" />
+                    <button class="btn-secondary" type="submit">Confirm</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="empty-cell">No notifications created yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="section-label">Survey Feedback</div>
+    <div class="card">
+      <div style="overflow-x:auto">
+        <table class="team-table">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Rating</th>
+              <th>Feedback</th>
+              <th>Date</th>
+              <th>Segment</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in surveys %}
+            <tr>
+              <td>{{ s.user.username }}</td>
+              <td>{{ s.rating }}/5</td>
+              <td>{{ s.feedback|default:"-"|truncatechars:90 }}</td>
+              <td>{{ s.created_at|date:"M d, Y" }}</td>
+              <td>
+                {% if s.rating >= 4 %}
+                <span class="status-badge yes">Promoter</span>
+                {% elif s.rating == 3 %}
+                <span class="status-badge no">Passive</span>
+                {% else %}
+                <span class="status-badge open">Detractor</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="empty-cell">No survey responses submitted yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="section-label">Goals</div>
+    <div class="card">
+      <div style="overflow-x:auto">
+        <table class="team-table">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Goal</th>
+              <th>Target</th>
+              <th>Current</th>
+              <th>Progress</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for g in goals %}
+            <tr>
+              <td>{{ g.user.username }}</td>
+              <td>{{ g.title }}</td>
+              <td>{{ g.target_amount|floatformat:2 }}</td>
+              <td>{{ g.current_amount|floatformat:2 }}</td>
+              <td>
+                {% if g.target_amount > 0 %}
+                  {% widthratio g.current_amount g.target_amount 100 %}%
+                {% else %}
+                  0%
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="empty-cell">No goals defined yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

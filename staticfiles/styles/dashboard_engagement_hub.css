@@ -1,0 +1,158 @@
+:root {
+  --hub-red: #8c1515;
+  --hub-red-dark: #6a0f0f;
+  --hub-stone: #f6f4f1;
+  --hub-stone-mid: #e8e3dc;
+}
+
+.hub-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.section-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #a0a0a0;
+}
+
+.snapshot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+}
+
+.snapshot-item {
+  border: 1px solid var(--hub-stone-mid);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: #fff;
+}
+
+.snapshot-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #aaaaaa;
+  margin-bottom: 6px;
+}
+
+.snapshot-value {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #1f1f1f;
+}
+
+.chip-wrap {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  font-size: 0.66rem;
+  font-weight: 700;
+  border: 1px solid var(--hub-stone-mid);
+  border-radius: 999px;
+  padding: 2px 8px;
+  color: #4f4f4f;
+}
+
+.chip.muted {
+  color: #b5b5b5;
+}
+
+.risk-pill {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.risk-pill.high {
+  background: #fff1f1;
+  color: var(--hub-red);
+}
+
+.risk-pill.medium {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.risk-pill.low {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.status-badge {
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+
+.status-badge.open {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.status-badge.resolved {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.hub-input {
+  border: 1px solid var(--hub-stone-mid);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.76rem;
+}
+
+.hub-input.wide {
+  min-width: 280px;
+}
+
+.notif-form,
+.resolve-row,
+.actions-cell {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.btn-primary,
+.btn-secondary {
+  border: none;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 7px 11px;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--hub-red);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--hub-red-dark);
+}
+
+.btn-secondary {
+  background: var(--hub-stone);
+  color: #444;
+  border: 1px solid var(--hub-stone-mid);
+}
+
+.empty-cell {
+  color: #ababab;
+  text-align: center;
+  padding: 18px;
+}

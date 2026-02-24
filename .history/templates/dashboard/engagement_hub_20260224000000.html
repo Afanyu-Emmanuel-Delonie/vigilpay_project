@@ -1,0 +1,652 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Engagement Hub - VigilPay{% endblock %}
+{% block page_title %}Engagement Hub{% endblock %}
+
+{% block extra_head %}
+<meta name="active-nav" content="engagement">
+<style>
+  /* ─── Intake Banner (dark style matching sim-card) ─── */
+  .intake-card {
+    background: linear-gradient(160deg, #252422 0%, #1a1917 55%, #1e100f 100%);
+    border-radius: 14px; overflow: hidden; position: relative;
+  }
+  .intake-card::before {
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background:
+      radial-gradient(ellipse 340px 240px at 110% 0%, rgba(140,21,21,0.28) 0%, transparent 60%),
+      radial-gradient(ellipse 200px 160px at -10% 100%, rgba(201,168,76,0.05) 0%, transparent 55%);
+  }
+  .intake-card::after {
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  }
+  .intake-inner {
+    position: relative; z-index: 2;
+    display: flex; align-items: flex-start; gap: 16px;
+    padding: 1.4rem 1.6rem;
+  }
+  .intake-icon {
+    width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+    background: rgba(140,21,21,0.3); border: 1px solid rgba(140,21,21,0.4);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .intake-text { font-size: 0.77rem; color: rgba(255,255,255,0.5); line-height: 1.65; }
+  .intake-text strong { color: rgba(255,255,255,0.9); font-weight: 700; }
+
+  /* ─── Snapshot grid ─── */
+  .snapshot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+    gap: 10px;
+  }
+  .snapshot-item {
+    background: var(--stone);
+    border: 1px solid var(--stone-mid);
+    border-radius: 10px;
+    padding: 14px 16px;
+    transition: border-color 0.18s, background 0.18s;
+  }
+  .snapshot-item:hover { background: #fff; border-color: rgba(140,21,21,0.2); }
+  .snapshot-label {
+    font-size: 0.6rem; font-weight: 800; letter-spacing: 0.1em;
+    text-transform: uppercase; color: #bbb; margin-bottom: 7px;
+  }
+  .snapshot-value { font-size: 0.82rem; font-weight: 700; color: var(--navy); line-height: 1.4; }
+
+  /* ─── Risk pill ─── */
+  .risk-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 13px; border-radius: 999px;
+    font-size: 0.67rem; font-weight: 800; letter-spacing: 0.05em; flex-shrink: 0;
+  }
+  .risk-pill-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .risk-pill.high   { background: rgba(140,21,21,0.1); color: var(--red); border: 1px solid rgba(140,21,21,0.2); }
+  .risk-pill.medium { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+  .risk-pill.low    { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+
+  /* ─── Tag chips ─── */
+  .tag-list { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+  .tag {
+    padding: 3px 9px; background: var(--white); border: 1px solid var(--stone-mid);
+    border-radius: 6px; font-size: 0.63rem; font-weight: 700; color: #555;
+  }
+  .tag.none { color: #bbb; font-style: italic; border-color: transparent; background: transparent; }
+
+  /* ─── Status badges ─── */
+  .status-badge {
+    display: inline-block; padding: 3px 9px; border-radius: 6px;
+    font-size: 0.63rem; font-weight: 800; letter-spacing: 0.04em; text-transform: capitalize;
+  }
+  .status-badge.open     { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+  .status-badge.resolved { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+  .status-badge.yes      { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+  .status-badge.no       { background: var(--stone); color: #aaa; border: 1px solid var(--stone-mid); }
+
+  /* ─── Notification create bar ─── */
+  .notif-bar {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    padding: 1.2rem 1.5rem;
+    background: var(--stone); border-bottom: 1px solid var(--stone-mid);
+  }
+  .hub-input, .hub-textarea {
+    padding: 9px 12px;
+    border: 1.5px solid var(--stone-mid);
+    border-radius: 9px;
+    font-size: 0.78rem;
+    font-family: 'Poppins', sans-serif;
+    color: var(--navy);
+    background: var(--white);
+    transition: border-color 0.18s, box-shadow 0.18s;
+    outline: none;
+    box-sizing: border-box;
+    resize: vertical;
+    flex: 1;
+    min-width: 130px;
+  }
+  .hub-input.wide { flex: 2; min-width: 200px; }
+  .hub-input:focus, .hub-textarea:focus {
+    border-color: var(--red);
+    box-shadow: 0 0 0 3px rgba(140,21,21,0.08);
+    background: var(--white);
+  }
+  .hub-input::placeholder, .hub-textarea::placeholder { color: #bbb; }
+
+  /* ─── Primary button ─── */
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 9px 16px; border-radius: 9px;
+    background: var(--red); color: #fff;
+    font-size: 0.75rem; font-weight: 800; letter-spacing: 0.04em;
+    border: none; cursor: pointer; font-family: 'Poppins', sans-serif;
+    white-space: nowrap; flex-shrink: 0;
+    transition: background 0.16s, box-shadow 0.16s, transform 0.12s;
+    box-shadow: 0 3px 12px rgba(140,21,21,0.25);
+  }
+  .btn-primary:hover { background: var(--red-dark); transform: translateY(-1px); box-shadow: 0 6px 18px rgba(140,21,21,0.32); }
+  .btn-primary:active { transform: translateY(0); }
+
+  /* ─── Inline resolve ─── */
+  .resolve-wrap { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; }
+  .resolve-wrap .hub-input { min-width: 140px; }
+  .btn-resolve {
+    padding: 7px 13px; border-radius: 8px;
+    background: var(--red-muted); color: var(--red);
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.04em;
+    border: 1px solid rgba(140,21,21,0.18); cursor: pointer;
+    font-family: 'Poppins', sans-serif; white-space: nowrap; flex-shrink: 0;
+    transition: background 0.14s, border-color 0.14s;
+  }
+  .btn-resolve:hover { background: rgba(140,21,21,0.15); border-color: rgba(140,21,21,0.3); }
+
+  /* ─── Kebab menu ─── */
+  .action-cell { position: relative; }
+  .kebab-btn {
+    display: flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; border-radius: 7px;
+    border: 1.5px solid var(--stone-mid); background: var(--white);
+    cursor: pointer; color: #777;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .kebab-btn:hover { background: var(--stone); border-color: #ccc; }
+  .kebab-btn svg { pointer-events: none; }
+  .kebab-menu {
+    position: absolute; right: 0; top: calc(100% + 6px);
+    min-width: 175px;
+    background: var(--white); border: 1px solid var(--stone-mid);
+    border-radius: 11px; box-shadow: 0 12px 32px rgba(0,0,0,0.1);
+    z-index: 999; overflow: hidden;
+    opacity: 0; visibility: hidden;
+    transform: translateY(-6px) scale(0.97);
+    transform-origin: top right;
+    transition: opacity 0.15s, transform 0.15s, visibility 0.15s;
+  }
+  .kebab-menu.open { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
+  .kebab-item {
+    display: flex; align-items: center; gap: 9px;
+    width: 100%; padding: 9px 14px;
+    font-size: 0.72rem; font-weight: 700; color: var(--navy);
+    background: none; border: none; cursor: pointer; text-align: left;
+    font-family: 'Poppins', sans-serif; transition: background 0.12s;
+  }
+  .kebab-item:hover { background: var(--stone); }
+  .kebab-item svg { opacity: 0.55; flex-shrink: 0; }
+  .kebab-item.danger { color: var(--red); }
+  .kebab-item.danger svg { opacity: 0.7; }
+  .kebab-divider { height: 1px; background: var(--stone-mid); margin: 3px 0; }
+
+  /* ─── Survey cards ─── */
+  .survey-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+  .survey-card {
+    border: 1px solid var(--stone-mid);
+    border-radius: 12px; padding: 1.2rem 1.3rem;
+    background: var(--white); position: relative; overflow: hidden;
+    transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+  }
+  .survey-card:hover { border-color: rgba(140,21,21,0.2); box-shadow: 0 6px 24px rgba(140,21,21,0.07); transform: translateY(-2px); }
+  .survey-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--red), transparent);
+    border-radius: 12px 12px 0 0;
+  }
+  .survey-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+  .survey-user { display: flex; align-items: center; gap: 8px; }
+  .survey-av {
+    width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.65rem; font-weight: 800; color: #fff; background: var(--navy-mid);
+  }
+  .survey-username { font-size: 0.75rem; font-weight: 700; color: var(--navy); }
+  .survey-date { font-size: 0.63rem; color: #bbb; margin-top: 1px; }
+  .survey-stars { display: flex; gap: 2px; margin-bottom: 0.6rem; }
+  .star { font-size: 0.85rem; }
+  .star.filled { color: var(--gold); }
+  .star.empty  { color: var(--stone-mid); }
+  .survey-text { font-size: 0.73rem; color: #666; line-height: 1.6; }
+  .nps-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 999px;
+    font-size: 0.62rem; font-weight: 800; flex-shrink: 0;
+  }
+  .nps-pill.promoter  { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+  .nps-pill.passive   { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+  .nps-pill.detractor { background: var(--red-muted); color: var(--red); border: 1px solid rgba(140,21,21,0.2); }
+
+  /* ─── Goals dark card ─── */
+  .goals-dark {
+    background: linear-gradient(160deg, #252422 0%, #1a1917 55%, #1e100f 100%);
+    border-radius: 14px; overflow: hidden; position: relative;
+  }
+  .goals-dark::before {
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background:
+      radial-gradient(ellipse 300px 220px at 105% 0%, rgba(201,168,76,0.15) 0%, transparent 60%),
+      radial-gradient(ellipse 200px 160px at -5% 100%, rgba(140,21,21,0.15) 0%, transparent 55%);
+  }
+  .goals-dark::after {
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  }
+  .goals-inner { position: relative; z-index: 2; }
+  .goals-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.1rem 1.5rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.07);
+    flex-wrap: wrap; gap: 0.5rem;
+  }
+  .goals-title { font-weight: 800; font-size: 0.9rem; color: #fff; margin-bottom: 2px; }
+  .goals-sub   { font-size: 0.7rem; color: rgba(255,255,255,0.3); }
+  .goals-body  { padding: 1.4rem 1.5rem; }
+  .goals-tag {
+    font-size: 0.58rem; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 999px;
+    background: rgba(201,168,76,0.15); color: var(--gold);
+    border: 1px solid rgba(201,168,76,0.2); flex-shrink: 0;
+  }
+
+  .goal-list { display: flex; flex-direction: column; gap: 0.85rem; }
+  .goal-item {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px; padding: 0.9rem 1rem;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .goal-item:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.12); }
+  .goal-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
+  .goal-label { font-size: 0.77rem; font-weight: 700; color: rgba(255,255,255,0.85); }
+  .goal-progress-text { font-size: 0.68rem; font-weight: 800; color: var(--gold); flex-shrink: 0; }
+  .goal-track { height: 6px; background: rgba(255,255,255,0.08); border-radius: 99px; overflow: hidden; }
+  .goal-fill  {
+    height: 100%; border-radius: 99px; width: 0;
+    background: linear-gradient(90deg, var(--red-dark), var(--red), #c0392b);
+    transition: width 1s cubic-bezier(0.34,1.05,0.64,1);
+  }
+  .goal-fill.gold  { background: linear-gradient(90deg, #a0722a, var(--gold), var(--gold-light)); }
+  .goal-fill.green { background: linear-gradient(90deg, #047857, #059669, #10b981); }
+
+  /* ─── Responsive ─── */
+  @media (max-width: 768px) {
+    .notif-bar { flex-direction: column; align-items: stretch; }
+    .resolve-wrap { flex-direction: column; align-items: flex-start; }
+    .hub-input { min-width: 100%; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <!-- ══ ADMIN INTAKE ══ -->
+  <div>
+    <div class="section-label">Admin Intake</div>
+    <div class="intake-card">
+      <div class="intake-inner">
+        <div class="intake-icon">
+          <svg width="17" height="17" fill="none" stroke="#f87171" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <p class="intake-text">
+          <strong>This hub is admin-only.</strong> Complaints, surveys, and goals are submitted by users via the mobile app or API.
+          Use this page to review complaints, resolve issues, and review or confirm notifications and offers.
+          All actions are logged and auditable.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ RETENTION SNAPSHOT ══ -->
+  <div>
+    <div class="section-label">Retention Snapshot</div>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">{{ retention_payload.user_info.username }}</div>
+          <div class="card-sub">{{ retention_payload.user_info.type }} &mdash; Unified risk + action plan</div>
+        </div>
+        <span class="risk-pill {% if retention_payload.risk_analysis.probability >= 70 %}high{% elif retention_payload.risk_analysis.probability >= 40 %}medium{% else %}low{% endif %}">
+          <span class="risk-pill-dot"></span>
+          {{ retention_payload.risk_analysis.probability }}% &middot; {{ retention_payload.risk_analysis.tier }}
+        </span>
+      </div>
+      <div class="card-body">
+        <div class="snapshot-grid">
+          <div class="snapshot-item">
+            <div class="snapshot-label">Loyalty Score</div>
+            <div class="snapshot-value">{{ retention_payload.user_info.loyalty_score }}</div>
+          </div>
+          <div class="snapshot-item">
+            <div class="snapshot-label">Churn Risk</div>
+            <div class="snapshot-value" style="color:{% if retention_payload.risk_analysis.probability >= 70 %}var(--red){% elif retention_payload.risk_analysis.probability >= 40 %}#b45309{% else %}#059669{% endif %}">
+              {{ retention_payload.risk_analysis.probability }}%
+            </div>
+          </div>
+          <div class="snapshot-item">
+            <div class="snapshot-label">Risk Factors</div>
+            <div class="tag-list">
+              {% for f in retention_payload.risk_analysis.factors %}
+                <span class="tag">{{ f }}</span>
+              {% empty %}
+                <span class="tag none">None identified</span>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="snapshot-item">
+            <div class="snapshot-label">Active Resolutions</div>
+            <div class="tag-list">
+              {% for r in retention_payload.actionable_items.active_resolutions %}
+                <span class="tag">{{ r }}</span>
+              {% empty %}
+                <span class="tag none">None</span>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="snapshot-item">
+            <div class="snapshot-label">Suggested Products</div>
+            <div class="tag-list">
+              {% for p in retention_payload.actionable_items.suggested_products %}
+                <span class="tag">{{ p }}</span>
+              {% empty %}
+                <span class="tag none">None</span>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ COMPLAINTS ══ -->
+  <div>
+    <div class="section-label">Complaints</div>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Complaint Log</div>
+          <div class="card-sub">Review and resolve open customer complaints</div>
+        </div>
+        <div class="card-icon" style="background: rgba(140,21,21,0.08)">
+          <svg width="15" height="15" fill="none" stroke="var(--red)" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+          </svg>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="team-table">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Issue</th>
+              <th>Category</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in complaints %}
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:9px">
+                  <div class="team-av" style="background:var(--red)">{{ c.user.username|slice:":1"|upper }}</div>
+                  <div><div class="team-name">{{ c.user.username }}</div></div>
+                </div>
+              </td>
+              <td style="max-width:240px;color:#555;font-size:0.73rem">{{ c.text|truncatechars:70 }}</td>
+              <td><span class="pillar-tag">{{ c.get_category_display }}</span></td>
+              <td><span class="status-badge {{ c.status }}">{{ c.get_status_display }}</span></td>
+              <td class="action-cell">
+                {% if c.status == 'open' %}
+                <form method="post" class="resolve-wrap">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="resolve_complaint" />
+                  <input type="hidden" name="complaint_id" value="{{ c.id }}" />
+                  <input class="hub-input" type="text" name="resolution_note" placeholder="Add resolution note…" />
+                  <button class="btn-resolve" type="submit">Resolve</button>
+                </form>
+                {% else %}
+                  <span class="status-badge resolved">Resolved</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" style="padding:28px;text-align:center;color:#bbb;font-size:0.75rem">
+                No complaints submitted yet.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ NOTIFICATIONS ══ -->
+  <div>
+    <div class="section-label">Notifications</div>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Notification Centre</div>
+          <div class="card-sub">Create and manage system-wide alerts and announcements</div>
+        </div>
+        <div class="card-icon" style="background: #eff6ff">
+          <svg width="15" height="15" fill="none" stroke="#2563eb" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Create notification bar -->
+      <form method="post" class="notif-bar">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create_notification" />
+        <input class="hub-input" type="text" name="notification_title" placeholder="Notification title" />
+        <input class="hub-input wide" type="text" name="notification_message" placeholder="Message body…" />
+        <button class="btn-primary" type="submit">
+          <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+          </svg>
+          Create
+        </button>
+      </form>
+
+      <div style="overflow-x:auto">
+        <table class="team-table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Message</th>
+              <th>Reviewed</th>
+              <th>Confirmed</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for n in notifications %}
+            <tr>
+              <td><div class="team-name">{{ n.title }}</div></td>
+              <td style="font-size:0.72rem;color:#555;max-width:260px">{{ n.message|truncatechars:80 }}</td>
+              <td>
+                <span class="status-badge {% if n.is_reviewed %}yes{% else %}no{% endif %}">
+                  {{ n.is_reviewed|yesno:"Yes,No" }}
+                </span>
+              </td>
+              <td>
+                <span class="status-badge {% if n.is_confirmed %}yes{% else %}no{% endif %}">
+                  {{ n.is_confirmed|yesno:"Yes,No" }}
+                </span>
+              </td>
+              <td class="action-cell">
+                <button class="kebab-btn" type="button" aria-label="Notification actions" onclick="toggleKebab(event,'nkebab-{{ n.id }}')">
+                  <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor">
+                    <circle cx="10" cy="4"  r="1.5"/>
+                    <circle cx="10" cy="10" r="1.5"/>
+                    <circle cx="10" cy="16" r="1.5"/>
+                  </svg>
+                </button>
+                <div class="kebab-menu" id="nkebab-{{ n.id }}">
+                  <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="review_notification" />
+                    <input type="hidden" name="notification_id" value="{{ n.id }}" />
+                    <button class="kebab-item" type="submit">
+                      <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                      </svg>
+                      Mark Reviewed
+                    </button>
+                  </form>
+                  <div class="kebab-divider"></div>
+                  <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="confirm_notification" />
+                    <input type="hidden" name="notification_id" value="{{ n.id }}" />
+                    <button class="kebab-item" type="submit">
+                      <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
+                      Confirm
+                    </button>
+                  </form>
+                  <div class="kebab-divider"></div>
+                  <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete_notification" />
+                    <input type="hidden" name="notification_id" value="{{ n.id }}" />
+                    <button class="kebab-item danger" type="submit">
+                      <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                      Delete
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" style="padding:28px;text-align:center;color:#bbb;font-size:0.75rem">
+                No notifications have been created yet.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SURVEYS ══ -->
+  <div>
+    <div class="section-label">Customer Surveys</div>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Recent Feedback</div>
+          <div class="card-sub">NPS and satisfaction ratings submitted via mobile app</div>
+        </div>
+        <span class="card-tag">Read-only</span>
+      </div>
+      <div class="card-body">
+        <div class="survey-grid">
+          {% for s in surveys %}
+          <div class="survey-card">
+            <div class="survey-meta">
+              <div class="survey-user">
+                <div class="survey-av" style="background:var(--navy-mid)">{{ s.user.username|slice:":1"|upper }}</div>
+                <div>
+                  <div class="survey-username">{{ s.user.username }}</div>
+                  <div class="survey-date">{{ s.created_at|date:"M d, Y" }}</div>
+                </div>
+              </div>
+              <span class="nps-pill {% if s.nps_score >= 9 %}promoter{% elif s.nps_score >= 7 %}passive{% else %}detractor{% endif %}">
+                {% if s.nps_score >= 9 %}Promoter{% elif s.nps_score >= 7 %}Passive{% else %}Detractor{% endif %}
+                &middot; {{ s.nps_score }}
+              </span>
+            </div>
+            <div class="survey-stars">
+              {% for i in "12345" %}
+                <span class="star {% if forloop.counter <= s.rating %}filled{% else %}empty{% endif %}">★</span>
+              {% endfor %}
+            </div>
+            {% if s.comment %}
+            <div class="survey-text">"{{ s.comment|truncatechars:120 }}"</div>
+            {% endif %}
+          </div>
+          {% empty %}
+          <div style="font-size:0.75rem;color:#bbb;padding:0.5rem 0">No survey responses submitted yet.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ GOALS ══ -->
+  <div>
+    <div class="section-label">Retention Goals</div>
+    <div class="goals-dark">
+      <div class="goals-inner">
+        <div class="goals-header">
+          <div>
+            <div class="goals-title">Q1 {{ current_year }} Retention Targets</div>
+            <div class="goals-sub">Progress tracked from model predictions and resolved complaints</div>
+          </div>
+          <span class="goals-tag">Live</span>
+        </div>
+        <div class="goals-body">
+          <div class="goal-list">
+            {% for g in goals %}
+            <div class="goal-item">
+              <div class="goal-meta">
+                <span class="goal-label">{{ g.label }}</span>
+                <span class="goal-progress-text">{{ g.current }} / {{ g.target }}</span>
+              </div>
+              <div class="goal-track">
+                <div class="goal-fill {{ g.color_class }}" data-w="{{ g.pct|floatformat:0 }}"></div>
+              </div>
+            </div>
+            {% empty %}
+            <div style="font-size:0.77rem;color:rgba(255,255,255,0.3);text-align:center;padding:1rem 0">No retention goals defined yet.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  /* ── Kebab menus ── */
+  function toggleKebab(e, id) {
+    e.stopPropagation();
+    const menu = document.getElementById(id);
+    const isOpen = menu.classList.contains('open');
+    document.querySelectorAll('.kebab-menu.open').forEach(m => m.classList.remove('open'));
+    if (!isOpen) menu.classList.add('open');
+  }
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.kebab-menu.open').forEach(m => m.classList.remove('open'));
+  });
+  document.querySelectorAll('.kebab-menu').forEach(m => {
+    m.addEventListener('click', e => e.stopPropagation());
+  });
+
+  /* ── Animate goal bars on load ── */
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.goal-fill[data-w]').forEach(el => {
+      const w = el.dataset.w + '%';
+      el.style.width = '0';
+      requestAnimationFrame(() => {
+        setTimeout(() => { el.style.width = w; }, 200);
+      });
+    });
+  });
+</script>
+{% endblock %}

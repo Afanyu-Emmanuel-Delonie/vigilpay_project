@@ -1,0 +1,533 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Engagement Hub - VigilPay{% endblock %}
+{% block page_title %}Engagement Hub{% endblock %}
+
+{% block extra_head %}
+<meta name="active-nav" content="engagement">
+<style>
+  /* ── Snapshot strip ── */
+  .snapshot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 0;
+  }
+  .snapshot-item {
+    background: #fafafa;
+    border: 1px solid #f0f0f0;
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .snapshot-label {
+    font-size: 0.67rem;
+    font-weight: 700;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 5px;
+  }
+  .snapshot-value {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    line-height: 1.4;
+  }
+  .snapshot-value.risk-high { color: var(--red); }
+  .snapshot-value.risk-medium { color: #d97706; }
+  .snapshot-value.risk-low { color: #059669; }
+
+  .risk-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 0.68rem;
+    font-weight: 700;
+  }
+  .risk-pill.high { background: #fff1f0; color: var(--red); }
+  .risk-pill.medium { background: #fffbeb; color: #d97706; }
+  .risk-pill.low { background: #ecfdf5; color: #059669; }
+  .risk-pill-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  /* ── Section label (reuse from existing style if available) ── */
+  .section-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #aaa;
+    margin-bottom: 10px;
+    margin-top: 24px;
+  }
+  .section-label:first-child { margin-top: 0; }
+
+  /* ── Action cards grid ── */
+  .hub-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+  }
+
+  /* ── Form elements ── */
+  .hub-form-group { margin-bottom: 12px; }
+  .hub-form-group:last-child { margin-bottom: 0; }
+  .hub-label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 5px;
+  }
+  .hub-input,
+  .hub-textarea {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid #e8e8e8;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-family: inherit;
+    color: #1a1a1a;
+    background: #fdfdfd;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    box-sizing: border-box;
+    resize: vertical;
+  }
+  .hub-input:focus,
+  .hub-textarea:focus {
+    outline: none;
+    border-color: var(--red);
+    box-shadow: 0 0 0 3px rgba(140,21,21,0.07);
+    background: #fff;
+  }
+  .hub-input::placeholder,
+  .hub-textarea::placeholder { color: #bbb; }
+
+  /* ── Tag list ── */
+  .tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 2px;
+  }
+  .tag {
+    padding: 3px 9px;
+    background: #f3f3f3;
+    border-radius: 20px;
+    font-size: 0.67rem;
+    font-weight: 600;
+    color: #555;
+  }
+  .tag.none { color: #bbb; font-style: italic; }
+
+  /* ── Complaints & Notifications tables ── */
+  .status-badge {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 0.67rem;
+    font-weight: 700;
+    text-transform: capitalize;
+  }
+  .status-badge.open    { background: #fff7ed; color: #c2410c; }
+  .status-badge.resolved{ background: #ecfdf5; color: #059669; }
+  .status-badge.pending { background: #fefce8; color: #a16207; }
+  .status-badge.true    { background: #ecfdf5; color: #059669; }
+  .status-badge.false   { background: #f5f5f5; color: #aaa; }
+
+  /* inline resolve form */
+  .resolve-wrap {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .resolve-wrap .hub-input { min-width: 160px; margin: 0; }
+
+  /* notification create bar */
+  .notif-create-bar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 12px 0 16px;
+    border-bottom: 1px solid #f0f0f0;
+    margin-bottom: 14px;
+  }
+  .notif-create-bar .hub-input { flex: 1; min-width: 120px; }
+  .notif-create-bar .hub-input.wide { flex: 2; min-width: 200px; }
+
+  /* kebab for notification actions */
+  .action-cell { position: relative; }
+  .kebab-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1.5px solid #e5e5e5;
+    background: #fff;
+    cursor: pointer;
+    color: #555;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .kebab-btn:hover { background: #f5f5f5; border-color: #ccc; }
+  .kebab-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    min-width: 150px;
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    z-index: 999;
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px) scale(0.97);
+    transform-origin: top right;
+    transition: opacity 0.15s, transform 0.15s, visibility 0.15s;
+  }
+  .kebab-menu.open { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
+  .kebab-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    padding: 9px 14px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #333;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    transition: background 0.12s;
+  }
+  .kebab-item:hover { background: #f5f5f5; }
+  .kebab-item.danger { color: #c0392b; }
+  .kebab-item.danger:hover { background: #fff1f0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <!-- ══ RETENTION SNAPSHOT ══ -->
+  <div class="section-label">Retention Snapshot</div>
+  <div class="card" style="margin-bottom:0">
+    <div class="card-header">
+      <div>
+        <div class="card-title">{{ retention_payload.user_info.username }}</div>
+        <div class="card-sub">{{ retention_payload.user_info.type }} · Unified risk + action plan</div>
+      </div>
+      <span class="risk-pill {% if retention_payload.risk_analysis.probability >= 70 %}high{% elif retention_payload.risk_analysis.probability >= 40 %}medium{% else %}low{% endif %}">
+        <span class="risk-pill-dot"></span>
+        {{ retention_payload.risk_analysis.probability }}% · {{ retention_payload.risk_analysis.tier }}
+      </span>
+    </div>
+    <div class="card-body">
+      <div class="snapshot-grid">
+        <div class="snapshot-item">
+          <div class="snapshot-label">Loyalty Score</div>
+          <div class="snapshot-value">{{ retention_payload.user_info.loyalty_score }}</div>
+        </div>
+        <div class="snapshot-item">
+          <div class="snapshot-label">Churn Risk</div>
+          <div class="snapshot-value {% if retention_payload.risk_analysis.probability >= 70 %}risk-high{% elif retention_payload.risk_analysis.probability >= 40 %}risk-medium{% else %}risk-low{% endif %}">
+            {{ retention_payload.risk_analysis.probability }}%
+          </div>
+        </div>
+        <div class="snapshot-item">
+          <div class="snapshot-label">Risk Factors</div>
+          <div class="tag-list">
+            {% for f in retention_payload.risk_analysis.factors %}
+              <span class="tag">{{ f }}</span>
+            {% empty %}
+              <span class="tag none">None identified</span>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="snapshot-item">
+          <div class="snapshot-label">Active Resolutions</div>
+          <div class="tag-list">
+            {% for r in retention_payload.actionable_items.active_resolutions %}
+              <span class="tag">{{ r }}</span>
+            {% empty %}
+              <span class="tag none">None</span>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="snapshot-item">
+          <div class="snapshot-label">Suggested Products</div>
+          <div class="tag-list">
+            {% for p in retention_payload.actionable_items.suggested_products %}
+              <span class="tag">{{ p }}</span>
+            {% empty %}
+              <span class="tag none">None</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ACTION CARDS ══ -->
+  <div class="section-label">Actions</div>
+  <div class="hub-grid">
+
+    <!-- Submit Complaint -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Submit Complaint</div>
+          <div class="card-sub">Report an issue for review</div>
+        </div>
+        <div style="width:32px;height:32px;border-radius:8px;background:#fff1f0;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="15" height="15" fill="none" stroke="var(--red)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+        </div>
+      </div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="submit_complaint" />
+          <div class="hub-form-group">
+            <label class="hub-label" for="complaint_text">Describe your issue</label>
+            <textarea class="hub-textarea" id="complaint_text" name="complaint_text" rows="4" placeholder="What went wrong? Be as specific as possible…"></textarea>
+          </div>
+          <button class="btn-edit" type="submit" style="width:100%;justify-content:center">Send Complaint</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Quick Survey -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Quick Survey</div>
+          <div class="card-sub">Rate your experience</div>
+        </div>
+        <div style="width:32px;height:32px;border-radius:8px;background:#f0fdf4;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="15" height="15" fill="none" stroke="#059669" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+        </div>
+      </div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="submit_survey" />
+          <div class="hub-form-group">
+            <label class="hub-label" for="rating">Rating (1 – 5)</label>
+            <input class="hub-input" type="number" id="rating" name="rating" min="1" max="5" value="4" />
+          </div>
+          <div class="hub-form-group">
+            <label class="hub-label" for="feedback">Your feedback</label>
+            <textarea class="hub-textarea" id="feedback" name="feedback" rows="3" placeholder="What did you love or want improved?"></textarea>
+          </div>
+          <button class="btn-edit" type="submit" style="width:100%;justify-content:center">Submit Survey</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Savings Goal -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Savings Goal</div>
+          <div class="card-sub">Set a financial target</div>
+        </div>
+        <div style="width:32px;height:32px;border-radius:8px;background:#eff6ff;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="15" height="15" fill="none" stroke="#2563eb" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+      </div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="create_goal" />
+          <div class="hub-form-group">
+            <label class="hub-label" for="goal_title">Goal title</label>
+            <input class="hub-input" type="text" id="goal_title" name="goal_title" placeholder="e.g. Emergency Fund" />
+          </div>
+          <div class="hub-form-group">
+            <label class="hub-label" for="target_amount">Target amount</label>
+            <input class="hub-input" type="number" step="0.01" id="target_amount" name="target_amount" placeholder="0.00" />
+          </div>
+          <button class="btn-edit" type="submit" style="width:100%;justify-content:center">Create Goal</button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ COMPLAINTS TABLE ══ -->
+  <div class="section-label">Complaints</div>
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Complaint Log</div>
+        <div class="card-sub">All submitted complaints and their resolution status</div>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="team-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Issue</th>
+            <th>Category</th>
+            <th>Status</th>
+            {% if is_admin %}<th>Action</th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in complaints %}
+          <tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:9px">
+                <div class="team-av" style="background:var(--red)">{{ c.user.username|slice:":1"|upper }}</div>
+                <span style="font-size:0.75rem;font-weight:600;color:#333">{{ c.user.username }}</span>
+              </div>
+            </td>
+            <td style="font-size:0.73rem;color:#555;max-width:240px">{{ c.text|truncatechars:70 }}</td>
+            <td style="font-size:0.72rem;color:#777">{{ c.get_category_display }}</td>
+            <td>
+              <span class="status-badge {{ c.status }}">{{ c.get_status_display }}</span>
+            </td>
+            {% if is_admin %}
+            <td class="action-cell">
+              {% if c.status == 'open' %}
+              <form method="post" class="resolve-wrap">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="resolve_complaint" />
+                <input type="hidden" name="complaint_id" value="{{ c.id }}" />
+                <input class="hub-input" type="text" name="resolution_note" placeholder="Resolution note" />
+                <button class="btn-edit" type="submit" style="white-space:nowrap">Resolve</button>
+              </form>
+              {% else %}
+              <span class="status-badge resolved">Resolved</span>
+              {% endif %}
+            </td>
+            {% endif %}
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="{% if is_admin %}5{% else %}4{% endif %}" style="padding:20px;color:#bbb;text-align:center;font-size:0.75rem">
+              No complaints have been submitted yet.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ NOTIFICATIONS TABLE ══ -->
+  <div class="section-label">Notifications</div>
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Notification Centre</div>
+        <div class="card-sub">System-wide alerts and announcements</div>
+      </div>
+    </div>
+    <div class="card-body" style="padding-bottom:0">
+
+      {% if is_admin %}
+      <form method="post" class="notif-create-bar">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create_notification" />
+        <input class="hub-input" type="text" name="notification_title" placeholder="Notification title" />
+        <input class="hub-input wide" type="text" name="notification_message" placeholder="Message body…" />
+        <button class="btn-edit" type="submit" style="white-space:nowrap">
+          <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right:5px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          Create
+        </button>
+      </form>
+      {% endif %}
+
+    </div>
+    <div style="overflow-x:auto">
+      <table class="team-table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Message</th>
+            <th>Reviewed</th>
+            <th>Confirmed</th>
+            {% if is_admin %}<th>Actions</th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for n in notifications %}
+          <tr>
+            <td style="font-size:0.75rem;font-weight:600;color:#1a1a1a">{{ n.title }}</td>
+            <td style="font-size:0.72rem;color:#555;max-width:260px">{{ n.message|truncatechars:80 }}</td>
+            <td><span class="status-badge {{ n.is_reviewed|yesno:'true,false' }}">{{ n.is_reviewed|yesno:"Yes,No" }}</span></td>
+            <td><span class="status-badge {{ n.is_confirmed|yesno:'true,false' }}">{{ n.is_confirmed|yesno:"Yes,No" }}</span></td>
+            {% if is_admin %}
+            <td class="action-cell">
+              <button class="kebab-btn" type="button" aria-label="Notification actions" onclick="toggleKebab(event,'nkebab-{{ n.id }}')">
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor">
+                  <circle cx="10" cy="4"  r="1.5"/>
+                  <circle cx="10" cy="10" r="1.5"/>
+                  <circle cx="10" cy="16" r="1.5"/>
+                </svg>
+              </button>
+              <div class="kebab-menu" id="nkebab-{{ n.id }}">
+                <form method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="review_notification" />
+                  <input type="hidden" name="notification_id" value="{{ n.id }}" />
+                  <button class="kebab-item" type="submit">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    Mark Reviewed
+                  </button>
+                </form>
+                <form method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="confirm_notification" />
+                  <input type="hidden" name="notification_id" value="{{ n.id }}" />
+                  <button class="kebab-item" type="submit">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Confirm
+                  </button>
+                </form>
+              </div>
+            </td>
+            {% endif %}
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="{% if is_admin %}5{% else %}4{% endif %}" style="padding:20px;color:#bbb;text-align:center;font-size:0.75rem">
+              No notifications have been created yet.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function toggleKebab(e, id) {
+    e.stopPropagation();
+    const menu = document.getElementById(id);
+    const isOpen = menu.classList.contains('open');
+    document.querySelectorAll('.kebab-menu.open').forEach(m => m.classList.remove('open'));
+    if (!isOpen) menu.classList.add('open');
+  }
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.kebab-menu.open').forEach(m => m.classList.remove('open'));
+  });
+  document.querySelectorAll('.kebab-menu').forEach(m => {
+    m.addEventListener('click', e => e.stopPropagation());
+  });
+</script>
+{% endblock %}

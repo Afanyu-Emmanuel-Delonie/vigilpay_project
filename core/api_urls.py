@@ -1,0 +1,40 @@
+from django.urls import path
+
+from core.api_views import (
+    ComplaintListCreateView,
+    ComplaintResolveView,
+    ExportTrainingDataView,
+    GoalListCreateView,
+    InteractionLogListCreateView,
+    NotificationListCreateView,
+    NotificationReviewView,
+    ProductListView,
+    MobileLoginView,
+    MobileLogoutView,
+    MobileMeView,
+    PredictView,
+    ProfileView,
+    RegisterView,
+    SurveyListCreateView,
+    TokenRefreshView,
+)
+
+urlpatterns = [
+    path("auth/mobile/login/", MobileLoginView.as_view(), name="api_mobile_login"),
+    path("auth/mobile/refresh/", TokenRefreshView.as_view(), name="api_mobile_refresh"),
+    path("auth/mobile/logout/", MobileLogoutView.as_view(), name="api_mobile_logout"),
+    path("auth/mobile/me/", MobileMeView.as_view(), name="api_mobile_me"),
+    path("register/web/", RegisterView.as_view(), name="api_register_web"),
+    path("register/mobile/", RegisterView.as_view(), name="api_register_mobile"),
+    path("profile/", ProfileView.as_view(), name="api_profile"),
+    path("predict/", PredictView.as_view(), name="api_predict"),
+    path("products/", ProductListView.as_view(), name="api_products"),
+    path("complaints/", ComplaintListCreateView.as_view(), name="api_complaints"),
+    path("complaints/<int:complaint_id>/resolve/", ComplaintResolveView.as_view(), name="api_complaint_resolve"),
+    path("goals/", GoalListCreateView.as_view(), name="api_goals"),
+    path("surveys/", SurveyListCreateView.as_view(), name="api_surveys"),
+    path("notifications/", NotificationListCreateView.as_view(), name="api_notifications"),
+    path("notifications/<int:notification_id>/review/", NotificationReviewView.as_view(), name="api_notification_review"),
+    path("interactions/", InteractionLogListCreateView.as_view(), name="api_interactions"),
+    path("training-data/export/", ExportTrainingDataView.as_view(), name="api_training_data_export"),
+]
