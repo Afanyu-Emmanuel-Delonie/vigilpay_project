@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% block title %}Risk Level - VigilPay{% endblock %}
+{% block page_title %}Risk Level{% endblock %}
+
+{% block extra_head %}
+<meta name="active-nav" content="risk">
+{% endblock %}
+
+{% block content %}
+<div class="risk-page">
+  <div>
+    <div class="section-label">Risk Overview</div>
+    <div class="summary-row">
+      <div class="summary-card total">
+        <div class="summary-icon">
+          <svg width="16" height="16" fill="none" stroke="rgba(255,255,255,0.75)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        </div>
+        <div class="summary-value" id="cnt-total">{{ total_customers|default:0 }}</div>
+        <div class="summary-label">Total Filtered</div>
+        <div class="summary-sub">Across all risk levels</div>
+      </div>
+
+      <div class="summary-card high">
+        <div class="summary-icon">
+          <svg width="16" height="16" fill="none" stroke="#f87171" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+        </div>
+        <div class="summary-value" id="cnt-high">{{ high_risk_count|default:0 }}</div>
+        <div class="summary-label">High Alert</div>
+        <div class="summary-sub">Score > 70% - call now</div>
+      </div>
+
+      <div class="summary-card medium">
+        <div class="summary-icon">
+          <svg width="16" height="16" fill="none" stroke="#fbbf24" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 12a3 3 0 11-6 0 3 3 0 016 0M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+        </div>
+        <div class="summary-value" id="cnt-medium">{{ medium_risk_count|default:0 }}</div>
+        <div class="summary-label">Medium Risk</div>
+        <div class="summary-sub">Score 40-70% - monitor</div>
+      </div>
+
+      <div class="summary-card low">
+        <div class="summary-icon">
+          <svg width="16" height="16" fill="none" stroke="#34d399" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div class="summary-value" id="cnt-low">{{ low_risk_count|default:0 }}</div>
+        <div class="summary-label">Low Risk</div>
+        <div class="summary-sub">Score < 40% - stable</div>
+      </div>
+    </div>
+  </div>
+
+  <form method="GET" id="filterForm">
+    <div class="filter-bar">
+      <span class="filter-label">Filter</span>
+
+      <select name="risk_level" class="filter-select" onchange="this.form.submit()">
+        <option value="">All Risk Levels</option>
+        <option value="high" {% if request.GET.risk_level == 'high' %}selected{% endif %}>High Risk (>70%)</option>
+        <option value="medium" {% if request.GET.risk_level == 'medium' %}selected{% endif %}>Medium (40-70%)</option>
+        <option value="low" {% if request.GET.risk_level == 'low' %}selected{% endif %}>Low Risk (<40%)</option>
+      </select>
+
+      <select name="geography" class="filter-select" onchange="this.form.submit()">
+        <option value="">All Geographies</option>
+        {% for geo in geographies %}
+        <option value="{{ geo }}" {% if request.GET.geography == geo %}selected{% endif %}>{{ geo }}</option>
+        {% endfor %}
+      </select>
+
+      <select name="is_active" class="filter-select" onchange="this.form.submit()">
+        <option value="">All Members</option>
+        <option value="1" {% if request.GET.is_active == '1' %}selected{% endif %}>Active</option>
+        <option value="0" {% if request.GET.is_active == '0' %}selected{% endif %}>Inactive</option>
+      </select>
+
+      <div class="filter-divider"></div>
+
+      <div class="filter-search">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input type="text" name="q" placeholder="Search by name or ID..." value="{{ request.GET.q|default:'' }}">
+      </div>
+
+      {% if request.GET.risk_level or request.GET.geography or request.GET.is_active or request.GET.q %}
+      <a href="{% url 'risk_level_page' %}" class="btn-reset">
+        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        Clear
+      </a>
+      {% endif %}
+    </div>
+  </form>
+
+  <div class="table-card">
+    <div class="table-header">
+      <div>
+        <div class="table-title">At-Risk Customer Register</div>
+        <div class="table-sub">Ordered by churn score - highest risk first</div>
+      </div>
+      <div class="table-actions">
+        <button class="btn-export" type="button">
+          <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          Export CSV
+        </button>
+      </div>
+    </div>
+
+    <div style="overflow-x:auto">
+      <table class="risk-table" id="riskTable">
+        <thead>
+          <tr>
+            <th style="width:48px">#</th>
+            <th>Customer</th>
+            <th class="sortable sorted" data-col="risk">Risk Score <span class="sort-icon">↓</span></th>
+            <th>Top Churn Driver</th>
+            <th class="sortable" data-col="balance">Balance <span class="sort-icon">↕</span></th>
+            <th>Status</th>
+            <th style="width:140px">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          {% for c in customers %}
+          <tr>
+            <td><div class="rank-badge {% if forloop.counter0|add:page_obj.start_index <= 3 %}top3{% endif %}">{{ forloop.counter0|add:page_obj.start_index }}</div></td>
+            <td>
+              <div style="display:flex;align-items:center;gap:10px">
+                <div class="customer-av" style="background:var(--red)">{{ c.initials }}</div>
+                <div>
+                  <div style="font-weight:700;color:var(--navy)">{{ c.surname }}</div>
+                  <div class="cid">#{{ c.customer_id }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <span class="risk-badge {{ c.risk_class }}">{{ c.risk_score|floatformat:0 }}%</span>
+                <div class="risk-bar-wrap"><div class="risk-bar-fill" style="width:{{ c.risk_score }}%;background:{% if c.risk_class == 'high' %}var(--red){% elif c.risk_class == 'medium' %}var(--gold){% else %}#059669{% endif %}"></div></div>
+              </div>
+            </td>
+            <td><span class="driver-pill">{{ c.driver }}</span></td>
+            <td style="font-weight:700">${{ c.balance|floatformat:0 }}</td>
+            <td>
+              {% if c.is_active_member %}
+              <span style="font-size:0.65rem;font-weight:700;color:#059669;background:rgba(5,150,105,0.1);padding:3px 9px;border-radius:999px;">Active</span>
+              {% else %}
+              <span style="font-size:0.65rem;font-weight:700;color:#aaa;background:var(--stone);padding:3px 9px;border-radius:999px;">Inactive</span>
+              {% endif %}
+            </td>
+            <td>
+              <div style="display:flex;gap:5px">
+                <a href="#" class="btn-view">View</a>
+                <a href="#" class="btn-analyze">Analyze</a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="empty-state{% if not customers %} visible{% endif %}" id="emptyState">
+      <div class="empty-icon" aria-hidden="true">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </div>
+      <div class="empty-title">No customers match your filters</div>
+      <div class="empty-sub">Try adjusting the filters or clearing your search.</div>
+    </div>
+
+    <div class="pagination">
+      <div class="page-info">
+        Showing <strong>{{ page_obj.start_index }}-{{ page_obj.end_index }}</strong> of <strong>{{ total_customers }}</strong> customers
+      </div>
+      <div class="page-btns">
+        {% if page_obj.has_previous %}
+        <a class="page-btn" href="?{% if base_query %}{{ base_query }}&{% endif %}page={{ page_obj.previous_page_number }}">
+          <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </a>
+        {% else %}
+        <span class="page-btn disabled">
+          <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </span>
+        {% endif %}
+
+        {% for p in page_numbers %}
+        {% if p == '...' %}
+        <span style="display:flex;align-items:center;padding:0 4px;color:#bbb;font-size:0.75rem">...</span>
+        {% elif p == page_obj.number %}
+        <span class="page-btn active">{{ p }}</span>
+        {% else %}
+        <a class="page-btn" href="?{% if base_query %}{{ base_query }}&{% endif %}page={{ p }}">{{ p }}</a>
+        {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <a class="page-btn" href="?{% if base_query %}{{ base_query }}&{% endif %}page={{ page_obj.next_page_number }}">
+          <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </a>
+        {% else %}
+        <span class="page-btn disabled">
+          <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

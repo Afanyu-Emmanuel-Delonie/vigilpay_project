@@ -1,0 +1,686 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}VigilPay{% endblock %}</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            red:   { DEFAULT: "#8C1515", dark: "#6A0F0F", muted: "#F5E6E6" },
+            navy:  { DEFAULT: "#252422", dark: "#1a1917", mid: "#2e2b28" },
+            gold:  { DEFAULT: "#C9A84C", light: "#E8C97A" },
+            stone: { DEFAULT: "#F6F4F1", mid: "#E8E3DC", deep: "#C4BBB0" },
+          },
+          fontFamily: {
+            sans:    ["Poppins", "system-ui", "sans-serif"],
+            display: ["Playfair Display", "Georgia", "serif"],
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red:       #8C1515;
+      --red-dark:  #6A0F0F;
+      --red-muted: #F5E6E6;
+      --red-glow:  rgba(140,21,21,0.35);
+      --navy:      #252422;
+      --navy-dark: #1a1917;
+      --navy-mid:  #2e2b28;
+      --gold:      #C9A84C;
+      --gold-light:#E8C97A;
+      --stone:     #F6F4F1;
+      --stone-mid: #E8E3DC;
+      --white:     #ffffff;
+    }
+
+    body {
+      font-family: "Poppins", system-ui, sans-serif;
+      background: var(--stone);
+      color: var(--navy);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ── Scrollbar ─────────────────────────── */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(140,21,21,0.3); border-radius: 99px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(140,21,21,0.5); }
+
+    /* ═══════════════════════════════════════
+       SIDEBAR
+    ═══════════════════════════════════════ */
+    #sidebar {
+      background: linear-gradient(180deg, #252422 0%, #1a1917 55%, #1e100f 100%);
+      position: relative;
+    }
+
+    /* Red glow + noise grain */
+    #sidebar::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 260px 400px at 100% 20%, rgba(140,21,21,0.28) 0%, transparent 60%),
+        radial-gradient(ellipse 200px 300px at 0% 85%,  rgba(201,168,76,0.06) 0%, transparent 55%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    #sidebar::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Sidebar width transitions */
+    .sidebar-expanded  { width: 17rem; }
+    .sidebar-collapsed { width: 4.5rem; }
+    .sidebar-transition { transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+
+    /* Content margin transitions */
+    .content-expanded  { margin-left: 17rem; }
+    .content-collapsed { margin-left: 4.5rem; }
+    .content-transition { transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+
+    @media (max-width: 1023px) {
+      .content-expanded,
+      .content-collapsed { margin-left: 0 !important; }
+    }
+
+    /* Nav items */
+    .nav-item a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      color: rgba(255,255,255,0.55);
+      font-size: 0.825rem;
+      font-weight: 500;
+      text-decoration: none;
+      transition: background 0.2s, color 0.2s;
+      position: relative;
+      white-space: nowrap;
+    }
+    .nav-item a:hover {
+      background: rgba(255,255,255,0.07);
+      color: rgba(255,255,255,0.9);
+    }
+    .nav-item a.active {
+      background: rgba(140,21,21,0.22);
+      color: #fff;
+      box-shadow: inset 0 0 0 1px rgba(140,21,21,0.35);
+    }
+    .nav-item a.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 60%;
+      background: var(--red);
+      border-radius: 0 3px 3px 0;
+      box-shadow: 0 0 8px var(--red-glow);
+    }
+    .nav-icon {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      opacity: 0.8;
+    }
+    .nav-item a.active .nav-icon { opacity: 1; }
+
+    /* Tooltip (collapsed mode) */
+    .tooltip {
+      position: absolute;
+      left: calc(100% + 14px);
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--navy);
+      color: rgba(255,255,255,0.9);
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 7px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s;
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 99;
+    }
+    .tooltip::before {
+      content: '';
+      position: absolute;
+      right: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 5px solid transparent;
+      border-right-color: var(--navy);
+    }
+    .nav-item:hover .tooltip { opacity: 1; }
+    .sidebar-expanded .tooltip { display: none; }
+
+    /* Sidebar section label */
+    .sidebar-section-label {
+      font-size: 0.6rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.2);
+      padding: 0 12px;
+      margin-bottom: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    /* Text fade */
+    .nav-text, .sidebar-section-label {
+      transition: opacity 0.25s ease;
+    }
+
+    /* ═══════════════════════════════════════
+       HEADER
+    ═══════════════════════════════════════ */
+    #topbar {
+      background: rgba(246,244,241,0.88);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--stone-mid);
+      transition: box-shadow 0.3s;
+    }
+    #topbar.scrolled { box-shadow: 0 2px 20px rgba(0,0,0,0.06); }
+
+    /* Search input */
+    .search-input {
+      background: var(--stone);
+      border: 1.5px solid var(--stone-mid);
+      border-radius: 9px;
+      font-family: "Poppins", sans-serif;
+      font-size: 0.8rem;
+      color: var(--navy);
+      transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+    .search-input:focus {
+      border-color: var(--red);
+      background: white;
+      box-shadow: 0 0 0 3px rgba(140,21,21,0.08);
+    }
+    .search-input::placeholder { color: #bbb; }
+
+    /* Icon buttons in header */
+    .hbtn {
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 9px;
+      border: none; background: transparent; cursor: pointer;
+      color: #777;
+      transition: background 0.2s, color 0.2s;
+    }
+    .hbtn:hover { background: var(--stone-mid); color: var(--navy); }
+
+    /* User avatar */
+    .user-avatar {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 0.78rem; color: #fff;
+      border: 2px solid var(--stone-mid);
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .user-avatar:hover {
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(140,21,21,0.1);
+    }
+
+    /* Dropdown */
+    #userDropdown {
+      position: absolute;
+      right: 0; top: calc(100% + 10px);
+      width: 210px;
+      background: white;
+      border: 1px solid var(--stone-mid);
+      border-radius: 14px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.1);
+      overflow: hidden;
+      z-index: 60;
+    }
+    .dropdown-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 16px;
+      font-size: 0.8rem; font-weight: 500;
+      color: #555; text-decoration: none;
+      transition: background 0.15s, color 0.15s;
+      cursor: pointer; border: none; background: none; width: 100%; text-align: left;
+    }
+    .dropdown-item:hover { background: var(--stone); color: var(--navy); }
+    .dropdown-item.danger { color: var(--red); }
+    .dropdown-item.danger:hover { background: var(--red-muted); color: var(--red-dark); }
+    .dropdown-divider { height: 1px; background: var(--stone-mid); margin: 4px 0; }
+
+    /* ═══════════════════════════════════════
+       MAIN CONTENT
+    ═══════════════════════════════════════ */
+    main { padding: 1.75rem 2rem; }
+
+    /* Alert messages */
+    .alert {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 12px 16px; border-radius: 10px;
+      font-size: 0.82rem; font-weight: 500;
+      margin-bottom: 16px;
+    }
+    .alert-error   { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+    .alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+    .alert-info    { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+
+    /* Toggle btn */
+    .toggle-btn {
+      width: 30px; height: 30px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      cursor: pointer; color: rgba(255,255,255,0.6);
+      transition: background 0.2s, color 0.2s;
+      flex-shrink: 0;
+    }
+    .toggle-btn:hover { background: rgba(255,255,255,0.14); color: #fff; }
+
+    /* Notification dot */
+    .notif-dot {
+      position: absolute;
+      top: 6px; right: 6px;
+      width: 7px; height: 7px;
+      background: var(--red);
+      border-radius: 50%;
+      border: 2px solid var(--stone);
+    }
+
+    /* Mobile overlay */
+    #mobileOverlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(4px);
+      z-index: 40;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    #mobileOverlay.visible { opacity: 1; pointer-events: all; }
+
+    @keyframes pulse-dot {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: 0.5; transform: scale(1.5); }
+    }
+    .pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
+
+    @media (max-width: 640px) {
+      main { padding: 1.25rem; }
+    }
+  </style>
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<!-- Mobile overlay -->
+<div id="mobileOverlay"></div>
+
+<!-- ═══════════════════════════════════════════
+     SIDEBAR
+═══════════════════════════════════════════ -->
+<aside id="sidebar" class="fixed left-0 top-0 h-full sidebar-expanded sidebar-transition z-50 transform -translate-x-full lg:translate-x-0">
+
+  <!-- All sidebar content sits above pseudo-elements -->
+  <div class="relative z-10 flex flex-col h-full">
+
+    <!-- Logo -->
+    <div class="flex items-center justify-between px-4 h-[68px] border-b border-white/[0.07] flex-shrink-0">
+      <a href="/" class="flex items-center gap-2.5 min-w-0">
+        <div style="width:32px;height:32px;background:var(--red);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 16px var(--red-glow)">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+            <path d="M10 2.5L16.5 6v8L10 17.5 3.5 14V6L10 2.5z" stroke="white" stroke-width="1.7" fill="none" stroke-linejoin="round"/>
+            <circle cx="10" cy="10" r="2.4" fill="white"/>
+          </svg>
+        </div>
+        <span id="sidebarTitle" class="nav-text font-bold text-white" style="font-size:1rem;letter-spacing:-0.02em">
+          Vigil<span style="color:var(--red)">Pay</span>
+        </span>
+      </a>
+
+      <!-- Desktop collapse toggle -->
+      <button id="toggleSidebar" class="toggle-btn hidden lg:flex ml-auto">
+        <svg id="toggleIcon" width="14" height="14" viewBox="0 0 14 14" fill="none" style="transition:transform 0.3s">
+          <path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+
+      <!-- Mobile close -->
+      <button id="closeSidebar" class="lg:hidden toggle-btn ml-2">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 overflow-y-auto px-3 py-5 space-y-6">
+
+      <!-- Main -->
+      <div>
+        <div class="sidebar-section-label nav-text mb-2">Main</div>
+        <ul class="space-y-0.5">
+
+          <li class="nav-item relative">
+            <a href="{% url 'dashboard_page' %}">
+              <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 13a1 1 0 011-1h4a1 1 0 011 1v6a1 1 0 01-1 1h-4a1 1 0 01-1-1v-6z"/></svg>
+              <span class="nav-text">Overview</span>
+              <span class="tooltip">Overview</span>
+            </a>
+          </li>
+
+          <li class="nav-item relative">
+            <a href="{% url 'dashboard_page' %}">
+              <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+              <span class="nav-text">Risk Tracker</span>
+              <span class="tooltip">Risk Tracker</span>
+            </a>
+          </li>
+
+          <li class="nav-item relative">
+            <a href="{% url 'dashboard_page' %}">
+              <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+              <span class="nav-text">Insights</span>
+              <span class="tooltip">Insights</span>
+            </a>
+          </li>
+
+          <li class="nav-item relative">
+            <a href="{% url 'dashboard_page' %}">
+              <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              <span class="nav-text">Customers</span>
+              <span class="tooltip">Customers</span>
+            </a>
+          </li>
+
+          <li class="nav-item relative">
+            <a href="{% url 'dashboard_page' %}">
+              <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+              <span class="nav-text">Cards</span>
+              <span class="tooltip">Cards</span>
+            </a>
+          </li>
+
+        </ul>
+      </div>
+
+      <!-- Data -->
+      <div>
+        <div class="sidebar-section-label nav-text mb-2">Data</div>
+        <ul class="space-y-0.5">
+
+          <li class="nav-item relative">
+            <a href="{% url 'dashboard_page' %}">
+              <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg>
+              <span class="nav-text">Data Management</span>
+              <span class="tooltip">Data Management</span>
+            </a>
+          </li>
+
+          <li class="nav-item relative">
+            <a href="{% url 'dashboard_page' %}">
+              <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              <span class="nav-text">Reports</span>
+              <span class="tooltip">Reports</span>
+            </a>
+          </li>
+
+        </ul>
+      </div>
+
+    </nav>
+
+    <!-- User footer -->
+    <div class="flex-shrink-0 border-t border-white/[0.07] px-3 py-4">
+      <div class="flex items-center gap-3">
+        <div style="width:34px;height:34px;background:linear-gradient(135deg,var(--red) 0%,var(--red-dark) 100%);border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.72rem;color:#fff;flex-shrink:0">
+          {% if user.is_authenticated %}{{ user.first_name.0|default:user.username.0|upper }}{% else %}G{% endif %}
+        </div>
+        <div class="nav-text min-w-0 flex-1 overflow-hidden">
+          <p style="font-size:0.78rem;font-weight:700;color:rgba(255,255,255,0.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+            {% if user.is_authenticated %}{{ user.get_full_name|default:user.username }}{% else %}Guest{% endif %}
+          </p>
+          <p style="font-size:0.65rem;color:rgba(255,255,255,0.35);white-space:nowrap">Administrator</p>
+        </div>
+        <a href="{% url 'landing' %}" class="nav-text toggle-btn flex-shrink-0" title="Logout" style="color:rgba(255,255,255,0.4)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke="currentColor"/></svg>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</aside>
+
+<!-- ═══════════════════════════════════════════
+     MAIN CONTENT
+═══════════════════════════════════════════ -->
+<div id="mainContent" class="content-expanded content-transition min-h-screen flex flex-col">
+
+  <!-- Top Bar -->
+  <header id="topbar" class="sticky top-0 z-30">
+    <div class="flex items-center justify-between h-[68px] px-5 lg:px-7 gap-4">
+
+      <!-- Left -->
+      <div class="flex items-center gap-3 flex-1 min-w-0">
+        <!-- Mobile menu button -->
+        <button id="openSidebar" class="hbtn lg:hidden">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+
+        <!-- Page title (set per-page via block) -->
+        <div class="min-w-0">
+          <h1 style="font-family:'Playfair Display',serif;font-weight:900;font-size:clamp(1.1rem,2vw,1.35rem);color:var(--navy);letter-spacing:-0.02em;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+            {% block page_title %}Dashboard{% endblock %}
+          </h1>
+          <p style="font-size:0.7rem;color:#aaa;font-weight:500;margin-top:1px">{% now "l, F j, Y" %}</p>
+        </div>
+      </div>
+
+      <!-- Right -->
+      <div class="flex items-center gap-1.5 flex-shrink-0">
+
+        <!-- Search — hidden on mobile -->
+        <div class="relative hidden md:block">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#bbb;pointer-events:none"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input type="text" placeholder="Search..." class="search-input" style="padding:7px 14px 7px 32px;width:220px"/>
+        </div>
+
+        <!-- Notifications -->
+        <button class="hbtn relative">
+          <svg width="17" height="17" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+          <span class="notif-dot pulse-dot"></span>
+        </button>
+
+        <!-- Divider -->
+        <div style="width:1px;height:24px;background:var(--stone-mid);margin:0 4px"></div>
+
+        <!-- User -->
+        <div class="relative">
+          <button id="userMenuButton" style="display:flex;align-items:center;gap:8px;background:none;border:none;cursor:pointer;padding:4px">
+            <div class="user-avatar">
+              {% if user.is_authenticated %}{{ user.first_name.0|default:user.username.0|upper }}{% else %}G{% endif %}
+            </div>
+            <div class="hidden lg:block text-left" style="min-width:0">
+              <p style="font-size:0.78rem;font-weight:700;color:var(--navy);white-space:nowrap">
+                {% if user.is_authenticated %}{{ user.first_name|default:user.username }}{% else %}Guest{% endif %}
+              </p>
+              <p style="font-size:0.65rem;color:#aaa;white-space:nowrap">Administrator</p>
+            </div>
+            <svg class="hidden lg:block" width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color:#bbb;flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+
+          <!-- Dropdown -->
+          <div id="userDropdown" class="hidden">
+            {% if user.is_authenticated %}
+            <div style="padding:12px 16px;border-bottom:1px solid var(--stone-mid)">
+              <p style="font-size:0.8rem;font-weight:700;color:var(--navy)">{{ user.get_full_name|default:user.username }}</p>
+              <p style="font-size:0.7rem;color:#aaa;margin-top:2px">{{ user.email|default:"No email" }}</p>
+            </div>
+            <a href="#" class="dropdown-item">
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+              Profile Settings
+            </a>
+            <a href="#" class="dropdown-item">
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              Preferences
+            </a>
+            <div class="dropdown-divider"></div>
+            <a href="{% url 'landing' %}" class="dropdown-item danger">
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+              Logout
+            </a>
+            {% else %}
+            <a href="{% url 'login_page' %}" class="dropdown-item">
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
+              Login
+            </a>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- Page Content -->
+  <main class="flex-1">
+
+    <!-- Django messages -->
+    {% if messages %}
+    <div style="padding:0 2rem;padding-top:1.5rem">
+      {% for message in messages %}
+      <div class="alert {% if message.tags == 'error' %}alert-error{% elif message.tags == 'success' %}alert-success{% else %}alert-info{% endif %}">
+        <svg width="15" height="15" fill="currentColor" viewBox="0 0 20 20" style="flex-shrink:0;margin-top:1px">
+          {% if message.tags == 'error' %}<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+          {% elif message.tags == 'success' %}<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          {% else %}<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>{% endif %}
+        </svg>
+        <span>{{ message }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCRIPTS
+═══════════════════════════════════════════ -->
+<script>
+  const sidebar     = document.getElementById('sidebar');
+  const mainContent = document.getElementById('mainContent');
+  const overlay     = document.getElementById('mobileOverlay');
+  const toggleBtn   = document.getElementById('toggleSidebar');
+  const toggleIcon  = document.getElementById('toggleIcon');
+  const openBtn     = document.getElementById('openSidebar');
+  const closeBtn    = document.getElementById('closeSidebar');
+
+  const navTexts    = document.querySelectorAll('.nav-text');
+  const sidebarTitle= document.getElementById('sidebarTitle');
+
+  let collapsed = localStorage.getItem('vpSidebarCollapsed') === 'true';
+
+  // Apply saved state silently on load (desktop)
+  if (collapsed && window.innerWidth >= 1024) applySidebarState(false);
+
+  function applySidebarState(animate = true) {
+    if (collapsed) {
+      sidebar.classList.replace('sidebar-expanded', 'sidebar-collapsed');
+      mainContent.classList.replace('content-expanded', 'content-collapsed');
+      toggleIcon.style.transform = 'rotate(180deg)';
+      navTexts.forEach(el => {
+        if (animate) { el.style.opacity = '0'; setTimeout(() => el.style.display = 'none', 220); }
+        else { el.style.display = 'none'; el.style.opacity = '0'; }
+      });
+    } else {
+      sidebar.classList.replace('sidebar-collapsed', 'sidebar-expanded');
+      mainContent.classList.replace('content-collapsed', 'content-expanded');
+      toggleIcon.style.transform = 'rotate(0deg)';
+      setTimeout(() => {
+        navTexts.forEach(el => {
+          el.style.display = 'block';
+          setTimeout(() => el.style.opacity = '1', animate ? 10 : 0);
+        });
+      }, animate ? 120 : 0);
+    }
+    localStorage.setItem('vpSidebarCollapsed', collapsed);
+  }
+
+  toggleBtn?.addEventListener('click', () => {
+    collapsed = !collapsed;
+    applySidebarState(true);
+  });
+
+  // Mobile
+  function openMobile()  { sidebar.classList.remove('-translate-x-full'); overlay.classList.add('visible'); document.body.style.overflow = 'hidden'; }
+  function closeMobile() { sidebar.classList.add('-translate-x-full');    overlay.classList.remove('visible'); document.body.style.overflow = ''; }
+  openBtn?.addEventListener('click', openMobile);
+  closeBtn?.addEventListener('click', closeMobile);
+  overlay?.addEventListener('click', closeMobile);
+
+  // Close on nav link click (mobile)
+  sidebar.querySelectorAll('a').forEach(a => a.addEventListener('click', () => { if (window.innerWidth < 1024) closeMobile(); }));
+
+  // Resize handler
+  window.addEventListener('resize', () => {
+    if (window.innerWidth >= 1024) { closeMobile(); applySidebarState(false); }
+  }, { passive: true });
+
+  // Active nav link
+  const currentPath = window.location.pathname;
+  sidebar.querySelectorAll('.nav-item a').forEach(link => {
+    if (link.getAttribute('href') === currentPath) link.classList.add('active');
+  });
+
+  // Topbar scroll shadow
+  const topbar = document.getElementById('topbar');
+  window.addEventListener('scroll', () => topbar.classList.toggle('scrolled', window.scrollY > 10), { passive: true });
+
+  // User dropdown
+  const userBtn      = document.getElementById('userMenuButton');
+  const userDropdown = document.getElementById('userDropdown');
+  userBtn?.addEventListener('click', e => { e.stopPropagation(); userDropdown.classList.toggle('hidden'); });
+  document.addEventListener('click', e => { if (!userBtn?.contains(e.target)) userDropdown?.classList.add('hidden'); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') userDropdown?.classList.add('hidden'); });
+</script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

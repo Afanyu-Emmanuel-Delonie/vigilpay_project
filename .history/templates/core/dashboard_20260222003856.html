@@ -1,0 +1,725 @@
+{% extends 'base.html' %}
+{% block title %}Overview — VigilPay{% endblock %}
+{% block page_title %}Overview{% endblock %}
+
+{% block extra_head %}
+<meta name="active-nav" content="dashboard">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --red:       #8C1515;
+    --red-dark:  #6A0F0F;
+    --red-muted: #F5E6E6;
+    --red-glow:  rgba(140,21,21,0.18);
+    --navy:      #252422;
+    --navy-dark: #1a1917;
+    --gold:      #C9A84C;
+    --gold-light:#E8C97A;
+    --stone:     #F6F4F1;
+    --stone-mid: #E8E3DC;
+    --white:     #ffffff;
+  }
+
+  .dash { padding: 1.75rem 2rem 3rem; display: flex; flex-direction: column; gap: 1.75rem; }
+
+  .section-label {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 0.6rem; font-weight: 800; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--red); margin-bottom: 0.875rem;
+  }
+  .section-label::before { content: ''; width: 14px; height: 2px; background: var(--red); border-radius: 2px; }
+
+  /* ═══════════════════════════════════════
+     KPI CARDS — dark brand gradient + coin
+  ═══════════════════════════════════════ */
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+
+  .kpi-card {
+    border-radius: 16px;
+    padding: 1.4rem 1.45rem;
+    display: flex; flex-direction: column; gap: 0;
+    position: relative; overflow: hidden;
+    border: 1px solid transparent;
+    transition: transform 0.28s cubic-bezier(0.34,1.5,0.64,1), box-shadow 0.28s;
+  }
+  .kpi-card:hover { transform: translateY(-4px); }
+
+  /* Top shimmer line */
+  .kpi-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 1.5px;
+    border-radius: 16px 16px 0 0;
+    z-index: 1;
+  }
+
+  /* Coin ring decoration — bottom-right */
+  .kpi-card::after {
+    content: '';
+    position: absolute;
+    width: 150px; height: 150px;
+    border-radius: 50%;
+    right: -38px; bottom: -46px;
+    pointer-events: none;
+    border: 26px solid rgba(255,255,255,0.055);
+    box-shadow:
+      0 0 0 14px rgba(255,255,255,0.028),
+      0 0 0 26px rgba(255,255,255,0.012);
+    z-index: 0;
+  }
+
+  /* All inner content above decorations */
+  .kpi-header, .kpi-value, .kpi-label, .kpi-sub { position: relative; z-index: 2; }
+
+  /* ── navy — Total Customers ── */
+  .kpi-card.navy {
+    background: linear-gradient(145deg, #2e2b28 0%, #252422 40%, #1a1917 100%);
+    box-shadow: 0 8px 30px rgba(20,18,16,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.07);
+  }
+  .kpi-card.navy::before { background: linear-gradient(90deg, rgba(255,255,255,0.18), transparent 70%); }
+  .kpi-card.navy::after  { border-color: rgba(255,255,255,0.06); box-shadow: 0 0 0 14px rgba(255,255,255,0.03), 0 0 0 26px rgba(255,255,255,0.012); }
+  .kpi-card.navy:hover   { box-shadow: 0 18px 48px rgba(20,18,16,0.5), inset 0 1px 0 rgba(255,255,255,0.06); }
+
+  /* ── red — Predicted Churn ── */
+  .kpi-card.red {
+    background: linear-gradient(145deg, #2e2b28 0%, #271010 45%, #1e0808 100%);
+    box-shadow: 0 8px 30px rgba(140,21,21,0.28), inset 0 1px 0 rgba(140,21,21,0.2);
+    border-color: rgba(140,21,21,0.22);
+  }
+  .kpi-card.red::before { background: linear-gradient(90deg, rgba(140,21,21,0.9), rgba(192,57,43,0.4) 60%, transparent); }
+  .kpi-card.red::after  { border-color: rgba(140,21,21,0.18); box-shadow: 0 0 0 14px rgba(140,21,21,0.08), 0 0 0 26px rgba(140,21,21,0.04); }
+  .kpi-card.red:hover   { box-shadow: 0 18px 48px rgba(140,21,21,0.38), inset 0 1px 0 rgba(140,21,21,0.2); }
+
+  /* ── gold — Revenue at Risk ── */
+  .kpi-card.gold {
+    background: linear-gradient(145deg, #2e2b28 0%, #241c0a 45%, #1a1306 100%);
+    box-shadow: 0 8px 30px rgba(201,168,76,0.22), inset 0 1px 0 rgba(201,168,76,0.18);
+    border-color: rgba(201,168,76,0.2);
+  }
+  .kpi-card.gold::before { background: linear-gradient(90deg, rgba(201,168,76,0.9), rgba(232,201,122,0.4) 60%, transparent); }
+  .kpi-card.gold::after  { border-color: rgba(201,168,76,0.15); box-shadow: 0 0 0 14px rgba(201,168,76,0.07), 0 0 0 26px rgba(201,168,76,0.03); }
+  .kpi-card.gold:hover   { box-shadow: 0 18px 48px rgba(201,168,76,0.32), inset 0 1px 0 rgba(201,168,76,0.18); }
+
+  /* ── green — Model Confidence ── */
+  .kpi-card.green {
+    background: linear-gradient(145deg, #2e2b28 0%, #0d1e16 45%, #081410 100%);
+    box-shadow: 0 8px 30px rgba(5,150,105,0.22), inset 0 1px 0 rgba(5,150,105,0.18);
+    border-color: rgba(5,150,105,0.2);
+  }
+  .kpi-card.green::before { background: linear-gradient(90deg, rgba(5,150,105,0.9), rgba(16,185,129,0.4) 60%, transparent); }
+  .kpi-card.green::after  { border-color: rgba(5,150,105,0.14); box-shadow: 0 0 0 14px rgba(5,150,105,0.07), 0 0 0 26px rgba(5,150,105,0.03); }
+  .kpi-card.green:hover   { box-shadow: 0 18px 48px rgba(5,150,105,0.32), inset 0 1px 0 rgba(5,150,105,0.18); }
+
+  /* ── KPI inner elements (all on dark bg) ── */
+  .kpi-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+
+  .kpi-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .kpi-icon.navy  { background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.1); }
+  .kpi-icon.red   { background: rgba(140,21,21,0.35);   border: 1px solid rgba(140,21,21,0.4); }
+  .kpi-icon.gold  { background: rgba(201,168,76,0.22);  border: 1px solid rgba(201,168,76,0.3); }
+  .kpi-icon.green { background: rgba(5,150,105,0.25);   border: 1px solid rgba(5,150,105,0.35); }
+
+  .kpi-badge {
+    font-size: 0.62rem; font-weight: 800; padding: 3px 9px;
+    border-radius: 999px; letter-spacing: 0.04em;
+  }
+  .kpi-badge.up   { background: rgba(5,150,105,0.22);   color: #34d399; border: 1px solid rgba(52,211,153,0.22); }
+  .kpi-badge.down { background: rgba(140,21,21,0.3);    color: #f87171; border: 1px solid rgba(248,113,113,0.22); }
+  .kpi-badge.flat { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.1); }
+
+  .kpi-value {
+    font-family: 'Playfair Display', serif; font-weight: 900;
+    font-size: 2rem; color: #ffffff; line-height: 1; letter-spacing: -0.02em;
+    margin-bottom: 5px;
+    animation: kpiIn 0.55s cubic-bezier(0.34,1.2,0.64,1) both;
+  }
+  .kpi-card:nth-child(1) .kpi-value { animation-delay: 0.05s; }
+  .kpi-card:nth-child(2) .kpi-value { animation-delay: 0.13s; }
+  .kpi-card:nth-child(3) .kpi-value { animation-delay: 0.21s; }
+  .kpi-card:nth-child(4) .kpi-value { animation-delay: 0.29s; }
+  @keyframes kpiIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+  .kpi-label { font-size: 0.72rem; font-weight: 600; color: rgba(255,255,255,0.42); letter-spacing: 0.02em; }
+  .kpi-sub   { font-size: 0.67rem; color: rgba(255,255,255,0.25); margin-top: 7px; }
+
+  /* ── KPI icon stroke colors on dark bg ── */
+  .kpi-icon.navy  svg { stroke: rgba(255,255,255,0.75); }
+  .kpi-icon.red   svg { stroke: #f87171; }
+  .kpi-icon.gold  svg { stroke: var(--gold-light); }
+  .kpi-icon.green svg { stroke: #34d399; }
+
+  /* ═══════════════════════════════════════
+     REST OF DASHBOARD (unchanged)
+  ═══════════════════════════════════════ */
+  .chart-grid-4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+  .chart-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+  .chart-card {
+    background: var(--white); border: 1px solid var(--stone-mid);
+    border-radius: 14px; padding: 1.35rem 1.4rem;
+    transition: box-shadow 0.25s;
+  }
+  .chart-card:hover { box-shadow: 0 12px 32px rgba(0,0,0,0.06); }
+  .chart-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.1rem; }
+  .chart-card-title { font-weight: 800; font-size: 0.875rem; color: var(--navy); margin-bottom: 2px; }
+  .chart-card-sub   { font-size: 0.7rem; color: #aaa; font-weight: 400; }
+  .chart-tag {
+    font-size: 0.6rem; font-weight: 800; letter-spacing: 0.08em;
+    text-transform: uppercase; padding: 3px 9px; border-radius: 999px;
+    background: var(--red-muted); color: var(--red);
+  }
+  .chart-wrap { position: relative; }
+
+  .action-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 1rem; }
+
+  .risk-table { width: 100%; border-collapse: collapse; }
+  .risk-table th { font-size: 0.63rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: #bbb; padding: 0 12px 10px; text-align: left; }
+  .risk-table td { padding: 11px 12px; border-top: 1px solid var(--stone-mid); }
+  .risk-table tr:hover td { background: var(--stone); }
+  .risk-table tr:first-child td { border-top: none; }
+
+  .customer-av {
+    width: 32px; height: 32px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 0.65rem; color: #fff; flex-shrink: 0;
+  }
+  .risk-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; font-size: 0.65rem; font-weight: 800; }
+  .risk-pill.high   { background: rgba(140,21,21,0.1); color: var(--red); }
+  .risk-pill.medium { background: #fef3c7; color: #92400e; }
+  .risk-pill.low    { background: rgba(5,150,105,0.1); color: #059669; }
+  .risk-pill::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+  .btn-contact {
+    font-size: 0.68rem; font-weight: 700; padding: 5px 12px;
+    border-radius: 7px; border: 1.5px solid var(--stone-mid);
+    background: transparent; color: var(--navy); cursor: pointer; transition: all 0.18s;
+  }
+  .btn-contact:hover { border-color: var(--red); color: var(--red); background: var(--red-muted); }
+
+  .insight-card {
+    background: var(--stone); border: 1px solid var(--stone-mid);
+    border-radius: 12px; padding: 1rem 1.1rem;
+    display: flex; gap: 12px; align-items: flex-start;
+    transition: border-color 0.2s, background 0.2s; margin-bottom: 0.6rem;
+  }
+  .insight-card:last-child { margin-bottom: 0; }
+  .insight-card:hover { border-color: rgba(140,21,21,0.2); background: white; }
+  .insight-icon { width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .insight-icon.alert { background: var(--red-muted); }
+  .insight-icon.tip   { background: rgba(201,168,76,0.12); }
+  .insight-icon.info  { background: rgba(5,150,105,0.1); }
+  .insight-title { font-size: 0.78rem; font-weight: 800; color: var(--navy); margin-bottom: 3px; }
+  .insight-body  { font-size: 0.72rem; color: #666; line-height: 1.55; }
+  .insight-tag { display: inline-block; margin-top: 6px; font-size: 0.58rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; }
+  .insight-tag.urgent  { background: var(--red-muted); color: var(--red); }
+  .insight-tag.monitor { background: #fef3c7; color: #92400e; }
+  .insight-tag.good    { background: rgba(5,150,105,0.1); color: #059669; }
+
+  .fi-bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .fi-bar-row:last-child { margin-bottom: 0; }
+  .fi-label { font-size: 0.73rem; font-weight: 600; color: var(--navy); width: 140px; flex-shrink: 0; }
+  .fi-track { flex: 1; height: 8px; background: var(--stone-mid); border-radius: 99px; overflow: hidden; }
+  .fi-fill  { height: 100%; border-radius: 99px; transition: width 1.2s cubic-bezier(0.34,1.1,0.64,1); width: 0; }
+  .fi-pct   { font-size: 0.7rem; font-weight: 800; color: var(--navy); width: 38px; text-align: right; flex-shrink: 0; }
+
+  .sim-card {
+    background: linear-gradient(160deg, #252422 0%, #1a1917 55%, #1e100f 100%);
+    border-radius: 14px; padding: 1.5rem 1.6rem; position: relative; overflow: hidden;
+  }
+  .sim-card::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse 300px 250px at 100% 0%, rgba(140,21,21,0.3) 0%, transparent 60%);
+  }
+  .sim-card::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  }
+  .sim-inner { position: relative; z-index: 2; }
+  .sim-title { font-family:'Playfair Display',serif; font-weight:900; font-size:1.05rem; color:#fff; margin-bottom:3px; letter-spacing:-0.02em; }
+  .sim-sub   { font-size:0.72rem; color:rgba(255,255,255,0.42); margin-bottom:1.25rem; }
+  .sim-field { margin-bottom: 1rem; }
+  .sim-field:last-of-type { margin-bottom: 1.25rem; }
+  .sim-label { font-size: 0.65rem; font-weight: 700; color: rgba(255,255,255,0.5); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 5px; display: flex; justify-content: space-between; }
+  .sim-label span { color: rgba(255,255,255,0.85); font-weight: 800; }
+  .sim-range { -webkit-appearance: none; width: 100%; height: 4px; border-radius: 99px; background: rgba(255,255,255,0.12); outline: none; cursor: pointer; }
+  .sim-range::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--red); border: 2px solid rgba(255,255,255,0.4); box-shadow: 0 0 8px var(--red-glow); cursor: pointer; transition: transform 0.15s; }
+  .sim-range::-webkit-slider-thumb:hover { transform: scale(1.15); }
+  .sim-result { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 1rem 1.2rem; display: flex; align-items: center; gap: 16px; }
+  .gauge-ring { position: relative; width: 64px; height: 64px; flex-shrink: 0; }
+  .gauge-ring svg { width: 64px; height: 64px; transform: rotate(-90deg); }
+  .gauge-track { fill: none; stroke: rgba(255,255,255,0.1); stroke-width: 6; }
+  .gauge-fill  { fill: none; stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 0.6s cubic-bezier(0.34,1.1,0.64,1); }
+  .gauge-text  { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .gauge-pct   { font-family:'Playfair Display',serif; font-weight:900; font-size:1rem; color:#fff; line-height:1; }
+  .gauge-sub2  { font-size:0.5rem; color:rgba(255,255,255,0.4); font-weight:600; letter-spacing:0.05em; text-transform:uppercase; }
+  .sim-verdict { flex:1; }
+  .sim-verdict-label { font-size:0.65rem; font-weight:700; color:rgba(255,255,255,0.45); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:4px; }
+  .sim-verdict-val   { font-size:1rem; font-weight:800; color:#fff; margin-bottom:4px; }
+  .sim-verdict-desc  { font-size:0.7rem; color:rgba(255,255,255,0.42); line-height:1.5; }
+
+  @media (max-width:1280px) {
+    .kpi-grid    { grid-template-columns: repeat(2,1fr); }
+    .chart-grid-4 { grid-template-columns: repeat(2,1fr); }
+    .action-grid { grid-template-columns: 1fr; }
+    .chart-grid-2 { grid-template-columns: 1fr; }
+  }
+  @media (max-width:768px) {
+    .dash { padding: 1.25rem; gap: 1.25rem; }
+    .kpi-grid { grid-template-columns: repeat(2,1fr); gap:0.75rem; }
+    .chart-grid-4 { grid-template-columns: 1fr; }
+    .chart-grid-2 { grid-template-columns: 1fr; }
+  }
+  @media (max-width:480px) {
+    .kpi-grid { grid-template-columns: 1fr; }
+    .fi-label { width: 100px; font-size:0.65rem; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dash">
+
+  <!-- 1. KPI CARDS -->
+  <div>
+    <div class="section-label">At a Glance</div>
+    <div class="kpi-grid">
+
+      <!-- Total Customers -->
+      <div class="kpi-card navy">
+        <div class="kpi-header">
+  
+          <span class="kpi-badge up">▲ 3.2%</span>
+        </div>
+        <div class="kpi-value">10,000</div>
+        <div class="kpi-label">Total Customers</div>
+        <div class="kpi-sub">+312 from last month</div>
+      </div>
+
+      <!-- Predicted Churn Rate -->
+      <div class="kpi-card red">
+        <div class="kpi-header">
+          <div class="kpi-icon red">
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/></svg>
+          </div>
+          <span class="kpi-badge down">▼ Risk</span>
+        </div>
+        <div class="kpi-value">20.4<span style="font-size:1.15rem">%</span></div>
+        <div class="kpi-label">Predicted Churn Rate</div>
+        <div class="kpi-sub">2,037 customers flagged</div>
+      </div>
+
+      <!-- Revenue at Risk -->
+      <div class="kpi-card gold">
+        <div class="kpi-header">
+          <div class="kpi-icon gold">
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <span class="kpi-badge down">High Risk</span>
+        </div>
+        <div class="kpi-value">$4.2<span style="font-size:1.15rem">M</span></div>
+        <div class="kpi-label">Revenue at Risk</div>
+        <div class="kpi-sub">Customers with score &gt; 80%</div>
+      </div>
+
+      <!-- Model Confidence -->
+      <div class="kpi-card green">
+        <div class="kpi-header">
+          <div class="kpi-icon green">
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          </div>
+          <span class="kpi-badge up">▲ Optimal</span>
+        </div>
+        <div class="kpi-value">94<span style="font-size:1.15rem">%</span></div>
+        <div class="kpi-label">Model Confidence</div>
+        <div class="kpi-sub">Last trained: Today, 06:00 AM</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 2. CHARTS ROW 1 -->
+  <div>
+    <div class="section-label">Risk Visualisation</div>
+    <div class="chart-grid-4">
+
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div>
+            <div class="chart-card-title">Churn Risk Distribution</div>
+            <div class="chart-card-sub">Customers by risk band</div>
+          </div>
+          <span class="chart-tag">Bar</span>
+        </div>
+        <div class="chart-wrap" style="height:230px"><canvas id="chartBar"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div>
+            <div class="chart-card-title">Geography of Risk</div>
+            <div class="chart-card-sub">Churn concentration by region</div>
+          </div>
+          <span class="chart-tag">Donut</span>
+        </div>
+        <div class="chart-wrap" style="height:230px"><canvas id="chartDonut"></canvas></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Charts Row 2 -->
+  <div class="chart-grid-4">
+
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div>
+          <div class="chart-card-title">Balance vs. Age</div>
+          <div class="chart-card-sub"><span style="color:var(--red);font-weight:700">●</span> Churn predicted &nbsp;<span style="color:#C4BBB0;font-weight:700">●</span> Retained</div>
+        </div>
+        <span class="chart-tag">Scatter</span>
+      </div>
+      <div class="chart-wrap" style="height:230px"><canvas id="chartScatter"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div>
+          <div class="chart-card-title">Monthly Churn Trend</div>
+          <div class="chart-card-sub">6-month historical view</div>
+        </div>
+        <span class="chart-tag">Trend</span>
+      </div>
+      <div class="chart-wrap" style="height:230px"><canvas id="chartLine"></canvas></div>
+    </div>
+
+  </div>
+
+  <!-- 3. ACTION CENTER -->
+  <div>
+    <div class="section-label">Action Centre</div>
+    <div class="action-grid">
+
+      <div class="chart-card" style="padding-bottom:0.5rem">
+        <div class="chart-card-header">
+          <div>
+            <div class="chart-card-title">High-Risk Customers</div>
+            <div class="chart-card-sub">Top 5 by churn score — act now</div>
+          </div>
+          <a href="#" style="font-size:0.72rem;font-weight:700;color:var(--red);text-decoration:none;display:flex;align-items:center;gap:4px">
+            View All
+            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+        <table class="risk-table">
+          <thead>
+            <tr>
+              <th>Customer</th><th>Credit Score</th><th>Churn Risk</th><th>Balance</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><div style="display:flex;align-items:center;gap:10px"><div class="customer-av" style="background:var(--red)">JD</div><div><div style="font-size:0.8rem;font-weight:700;color:var(--navy)">John Doe</div><div style="font-size:0.65rem;color:#aaa">France</div></div></div></td>
+              <td style="font-size:0.8rem;font-weight:600;color:var(--navy)">492</td>
+              <td><span class="risk-pill high">88%</span></td>
+              <td style="font-size:0.8rem;font-weight:600;color:var(--navy)">$142,750</td>
+              <td><button class="btn-contact">Contact</button></td>
+            </tr>
+            <tr>
+              <td><div style="display:flex;align-items:center;gap:10px"><div class="customer-av" style="background:#7c3aed">AM</div><div><div style="font-size:0.8rem;font-weight:700;color:var(--navy)">Amara Mwangi</div><div style="font-size:0.65rem;color:#aaa">Germany</div></div></div></td>
+              <td style="font-size:0.8rem;font-weight:600;color:var(--navy)">538</td>
+              <td><span class="risk-pill high">83%</span></td>
+              <td style="font-size:0.8rem;font-weight:600;color:var(--navy)">$98,200</td>
+              <td><button class="btn-contact">Contact</button></td>
+            </tr>
+            <tr>
+              <td><div style="display:flex;align-items:center;gap:10px"><div class="customer-av" style="background:#0891b2">SO</div><div><div style="font-size:0.8rem;font-weight:700;color:var(--navy)">Sarah Ochieng</div><div style="font-size:0.65rem;color:#aaa">Spain</div></div></div></td>
+              <td style="font-size:0.8rem;font-weight:600;color:var(--navy)">611</td>
+              <td><span class="risk-pill high">79%</span></td>
+              <td style="font-size:0.8rem;font-weight:600;color:var(--navy)">$67,400</td>
+              <td><button class="btn-contact">Contact</button></td>
+            </tr>
+            <tr>
+              <td><div style="display:flex;align-items:center;gap:10px"><div class="customer-av" style="background:#d97706">LM</div><div><div style="font-size:0.8rem;font-weight:700;color:var(--navy)">Luis Martinez</div><div style="font-size:0.65rem;color:#aaa">France</div></div></div></td>
+              <td style="font-size:0.8rem;font-weight:600;color:var(--navy)">574</td>
+              <td><span class="risk-pill medium">64%</span></td>
+              <td style="font-size:0.8rem;font-weight:600;color:var(--navy)">$33,900</td>
+              <td><button class="btn-contact">Contact</button></td>
+            </tr>
+            <tr>
+              <td><div style="display:flex;align-items:center;gap:10px"><div class="customer-av" style="background:#059669">CW</div><div><div style="font-size:0.8rem;font-weight:700;color:var(--navy)">Claire Weber</div><div style="font-size:0.65rem;color:#aaa">Germany</div></div></div></td>
+              <td style="font-size:0.8rem;font-weight:600;color:var(--navy)">658</td>
+              <td><span class="risk-pill medium">58%</span></td>
+              <td style="font-size:0.8rem;font-weight:600;color:var(--navy)">$21,300</td>
+              <td><button class="btn-contact">Contact</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div>
+            <div class="chart-card-title">Key Moves</div>
+            <div class="chart-card-sub">ML-generated strategic insights</div>
+          </div>
+        </div>
+        <div class="insight-card">
+          <div class="insight-icon alert">
+            <svg width="16" height="16" fill="none" stroke="var(--red)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+          </div>
+          <div>
+            <div class="insight-title">Germany — Female Segment Alert</div>
+            <div class="insight-body">Female customers aged 30–45 in Germany are <strong>20% more likely</strong> to churn this cycle. Recommend issuing a loyalty bonus or premium product upgrade.</div>
+            <span class="insight-tag urgent">Urgent</span>
+          </div>
+        </div>
+        <div class="insight-card">
+          <div class="insight-icon tip">
+            <svg width="16" height="16" fill="none" stroke="var(--gold)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </div>
+          <div>
+            <div class="insight-title">Inactive Low-Balance Churn Driver</div>
+            <div class="insight-body">Inactive members with a balance below <strong>$10,000</strong> are the primary churn drivers — accounting for 41% of all flagged customers.</div>
+            <span class="insight-tag monitor">Monitor</span>
+          </div>
+        </div>
+        <div class="insight-card">
+          <div class="insight-icon info">
+            <svg width="16" height="16" fill="none" stroke="#059669" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <div>
+            <div class="insight-title">Multi-Product Customers Stable</div>
+            <div class="insight-body">Customers holding <strong>2+ products</strong> have a churn rate of only 7.6%. Cross-selling is your strongest retention lever.</div>
+            <span class="insight-tag good">Positive Signal</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 4. FEATURE IMPORTANCE + SIMULATOR -->
+  <div>
+    <div class="section-label">Model Intelligence</div>
+    <div class="chart-grid-2">
+
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div>
+            <div class="chart-card-title">Feature Importance</div>
+            <div class="chart-card-sub">What the Random Forest weighs most heavily</div>
+          </div>
+          <span class="chart-tag">Why</span>
+        </div>
+        <div id="fi-bars" style="padding-top:0.25rem">
+          <div class="fi-bar-row"><div class="fi-label">Age</div><div class="fi-track"><div class="fi-fill" data-w="82" style="background:linear-gradient(90deg,var(--red),#c0392b)"></div></div><div class="fi-pct">82%</div></div>
+          <div class="fi-bar-row"><div class="fi-label">Number of Products</div><div class="fi-track"><div class="fi-fill" data-w="74" style="background:linear-gradient(90deg,var(--red),#c0392b)"></div></div><div class="fi-pct">74%</div></div>
+          <div class="fi-bar-row"><div class="fi-label">Balance</div><div class="fi-track"><div class="fi-fill" data-w="68" style="background:linear-gradient(90deg,var(--gold),var(--gold-light))"></div></div><div class="fi-pct">68%</div></div>
+          <div class="fi-bar-row"><div class="fi-label">Credit Score</div><div class="fi-track"><div class="fi-fill" data-w="57" style="background:linear-gradient(90deg,var(--gold),var(--gold-light))"></div></div><div class="fi-pct">57%</div></div>
+          <div class="fi-bar-row"><div class="fi-label">Is Active Member</div><div class="fi-track"><div class="fi-fill" data-w="49" style="background:linear-gradient(90deg,#374151,#6b7280)"></div></div><div class="fi-pct">49%</div></div>
+          <div class="fi-bar-row"><div class="fi-label">Tenure</div><div class="fi-track"><div class="fi-fill" data-w="38" style="background:linear-gradient(90deg,#374151,#6b7280)"></div></div><div class="fi-pct">38%</div></div>
+          <div class="fi-bar-row"><div class="fi-label">Geography</div><div class="fi-track"><div class="fi-fill" data-w="31" style="background:linear-gradient(90deg,#374151,#6b7280)"></div></div><div class="fi-pct">31%</div></div>
+          <div class="fi-bar-row"><div class="fi-label">Gender</div><div class="fi-track"><div class="fi-fill" data-w="22" style="background:linear-gradient(90deg,#374151,#6b7280)"></div></div><div class="fi-pct">22%</div></div>
+        </div>
+      </div>
+
+      <div class="sim-card">
+        <div class="sim-inner">
+          <div class="sim-title">What-If Simulator</div>
+          <div class="sim-sub">Adjust a customer's profile to preview churn risk in real-time.</div>
+          <div class="sim-field">
+            <div class="sim-label">Credit Score <span id="simCreditVal">620</span></div>
+            <input type="range" class="sim-range" id="simCredit" min="350" max="850" value="620" oninput="runSim()">
+          </div>
+          <div class="sim-field">
+            <div class="sim-label">Balance ($) <span id="simBalanceVal">$45,000</span></div>
+            <input type="range" class="sim-range" id="simBalance" min="0" max="200000" step="1000" value="45000" oninput="runSim()">
+          </div>
+          <div class="sim-field">
+            <div class="sim-label">Age <span id="simAgeVal">38</span></div>
+            <input type="range" class="sim-range" id="simAge" min="18" max="75" value="38" oninput="runSim()">
+          </div>
+          <div class="sim-field">
+            <div class="sim-label">No. of Products <span id="simProdVal">1</span></div>
+            <input type="range" class="sim-range" id="simProd" min="1" max="4" value="1" oninput="runSim()">
+          </div>
+          <div class="sim-result">
+            <div class="gauge-ring">
+              <svg viewBox="0 0 64 64">
+                <circle class="gauge-track" cx="32" cy="32" r="26"/>
+                <circle class="gauge-fill" id="gaugeFill" cx="32" cy="32" r="26" stroke="var(--red)" stroke-dasharray="163.36" stroke-dashoffset="60"/>
+              </svg>
+              <div class="gauge-text">
+                <div class="gauge-pct" id="gaugeLabel">63%</div>
+                <div class="gauge-sub2">Risk</div>
+              </div>
+            </div>
+            <div class="sim-verdict">
+              <div class="sim-verdict-label">Prediction</div>
+              <div class="sim-verdict-val" id="simVerdict">Medium Risk</div>
+              <div class="sim-verdict-desc" id="simDesc">This customer has moderate churn likelihood. Monitor engagement and offer a product upgrade.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+Chart.defaults.font.family  = "'Poppins', system-ui, sans-serif";
+Chart.defaults.font.size    = 11;
+Chart.defaults.color        = '#aaa';
+Chart.defaults.plugins.legend.display = false;
+
+const RED   = '#8C1515';
+const GOLD  = '#C9A84C';
+const NAVY  = '#252422';
+const STONE = '#E8E3DC';
+
+new Chart(document.getElementById('chartBar'), {
+  type: 'bar',
+  data: {
+    labels: ['Low Risk', 'Medium Risk', 'High Risk'],
+    datasets: [{
+      data: [5842, 2121, 2037],
+      backgroundColor: ['rgba(5,150,105,0.15)', 'rgba(201,168,76,0.25)', 'rgba(140,21,21,0.2)'],
+      borderColor: ['#059669', GOLD, RED],
+      borderWidth: 2, borderRadius: 8, borderSkipped: false,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y.toLocaleString()} customers` } } },
+    scales: {
+      x: { grid: { display: false }, border: { display: false }, ticks: { font: { weight: '600' } } },
+      y: { grid: { color: '#f0ece7' }, border: { display: false }, ticks: { callback: v => v.toLocaleString() } }
+    }
+  }
+});
+
+new Chart(document.getElementById('chartDonut'), {
+  type: 'doughnut',
+  data: {
+    labels: ['France', 'Germany', 'Spain'],
+    datasets: [{
+      data: [4204, 2509, 3287],
+      backgroundColor: [RED, GOLD, '#374151'],
+      borderColor: '#fff', borderWidth: 3, hoverOffset: 6,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false, cutout: '68%',
+    plugins: {
+      legend: { display: true, position: 'bottom', labels: { boxWidth: 10, boxHeight: 10, borderRadius: 3, padding: 14, font: { weight: '600' } } },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed.toLocaleString()} customers` } }
+    }
+  }
+});
+
+(function() {
+  const churnPts = [], retainedPts = [];
+  const seed = n => { let x = Math.sin(n) * 10000; return x - Math.floor(x); };
+  for (let i = 0; i < 200; i++) {
+    const age = Math.round(18 + seed(i*3)*57);
+    const balance = Math.round(seed(i*7+1)*200000);
+    const churn = (balance < 40000 && age > 38) || (seed(i*11) < 0.18);
+    (churn ? churnPts : retainedPts).push({ x: age, y: balance });
+  }
+  new Chart(document.getElementById('chartScatter'), {
+    type: 'scatter',
+    data: { datasets: [
+      { label: 'Churned',  data: churnPts,    backgroundColor: 'rgba(140,21,21,0.55)',  pointRadius: 4, pointHoverRadius: 6 },
+      { label: 'Retained', data: retainedPts, backgroundColor: 'rgba(196,187,176,0.5)', pointRadius: 3, pointHoverRadius: 5 }
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: { title: { display: true, text: 'Age', font: { weight: '700' }, color: '#bbb' }, grid: { color: '#f0ece7' }, border: { display: false } },
+        y: { title: { display: true, text: 'Balance ($)', font: { weight: '700' }, color: '#bbb' }, grid: { color: '#f0ece7' }, border: { display: false }, ticks: { callback: v => '$'+(v/1000).toFixed(0)+'k' } }
+      },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` Age ${ctx.parsed.x}, $${ctx.parsed.y.toLocaleString()}` } } }
+    }
+  });
+})();
+
+new Chart(document.getElementById('chartLine'), {
+  type: 'line',
+  data: {
+    labels: ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'],
+    datasets: [{
+      data: [18.1, 19.4, 21.2, 22.8, 21.5, 20.4],
+      borderColor: RED, backgroundColor: 'rgba(140,21,21,0.07)',
+      fill: true, tension: 0.42,
+      pointBackgroundColor: RED, pointBorderColor: '#fff',
+      pointBorderWidth: 2, pointRadius: 5, pointHoverRadius: 7,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: {
+      x: { grid: { display: false }, border: { display: false }, ticks: { font: { weight: '600' } } },
+      y: { grid: { color: '#f0ece7' }, border: { display: false }, min: 15, max: 26, ticks: { callback: v => v + '%' } }
+    },
+    plugins: { tooltip: { callbacks: { label: ctx => ` Churn Rate: ${ctx.parsed.y}%` } } }
+  }
+});
+
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      document.querySelectorAll('.fi-fill[data-w]').forEach(bar => { bar.style.width = bar.dataset.w + '%'; });
+      io.disconnect();
+    }
+  });
+}, { threshold: 0.3 });
+io.observe(document.getElementById('fi-bars'));
+
+function runSim() {
+  const credit  = +document.getElementById('simCredit').value;
+  const balance = +document.getElementById('simBalance').value;
+  const age     = +document.getElementById('simAge').value;
+  const prods   = +document.getElementById('simProd').value;
+
+  document.getElementById('simCreditVal').textContent  = credit;
+  document.getElementById('simBalanceVal').textContent = '$' + balance.toLocaleString();
+  document.getElementById('simAgeVal').textContent     = age;
+  document.getElementById('simProdVal').textContent    = prods;
+
+  let risk = 50;
+  risk += (850 - credit) / 850 * 25;
+  risk -= Math.min(balance / 200000 * 20, 20);
+  if (age > 45 || age < 28) risk += 10;
+  risk -= (prods - 1) * 12;
+  risk = Math.max(5, Math.min(97, Math.round(risk)));
+
+  const circ = 163.36;
+  const fill = document.getElementById('gaugeFill');
+  fill.style.strokeDashoffset = circ - (risk / 100) * circ;
+  fill.style.stroke = risk >= 75 ? '#8C1515' : risk >= 45 ? '#C9A84C' : '#059669';
+  document.getElementById('gaugeLabel').textContent = risk + '%';
+
+  const vEl = document.getElementById('simVerdict');
+  const dEl = document.getElementById('simDesc');
+  if (risk >= 75) {
+    vEl.textContent = 'High Risk — Intervene Now'; vEl.style.color = '#f87171';
+    dEl.textContent = 'This customer is very likely to churn. Immediate outreach with a targeted retention offer is recommended.';
+  } else if (risk >= 45) {
+    vEl.textContent = 'Medium Risk — Monitor'; vEl.style.color = '#fbbf24';
+    dEl.textContent = 'Moderate churn likelihood. Schedule a check-in and consider a product upgrade or loyalty benefit.';
+  } else {
+    vEl.textContent = 'Low Risk — Retain Focus'; vEl.style.color = '#34d399';
+    dEl.textContent = 'This customer profile is stable. Focus resources on higher-risk segments.';
+  }
+}
+runSim();
+</script>
+{% endblock %}

@@ -1,0 +1,1025 @@
+{% extends 'base.html' %}
+{% block title %}Data Management — VigilPay{% endblock %}
+{% block page_title %}Data Management{% endblock %}
+
+{% block extra_head %}
+<meta name="active-nav" content="data">
+<style>
+  :root {
+    --red:       #8C1515;
+    --red-dark:  #6A0F0F;
+    --red-muted: #F5E6E6;
+    --red-glow:  rgba(140,21,21,0.2);
+    --navy:      #252422;
+    --navy-dark: #1a1917;
+    --navy-mid:  #2e2b28;
+    --gold:      #C9A84C;
+    --gold-light:#E8C97A;
+    --stone:     #F6F4F1;
+    --stone-mid: #E8E3DC;
+    --white:     #ffffff;
+  }
+
+  .page { padding: 1.75rem 2rem 3rem; display: flex; flex-direction: column; gap: 1.5rem; }
+
+  .section-label {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 0.6rem; font-weight: 800; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--red); margin-bottom: 0.85rem;
+  }
+  .section-label::before { content:''; width:14px; height:2px; background:var(--red); border-radius:2px; }
+
+  /* ═══════════════════════════════════════
+     MAIN GRID — 60 / 40 split
+  ═══════════════════════════════════════ */
+  .upload-grid {
+    display: grid;
+    grid-template-columns: 1fr 0.65fr;
+    gap: 1.25rem;
+    align-items: start;
+  }
+
+  /* ── Shared card shell ── */
+  .card {
+    background: var(--white);
+    border: 1px solid var(--stone-mid);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .card-body   { padding: 1.4rem 1.5rem; }
+  .card-title  { font-weight: 800; font-size: 0.9rem; color: var(--navy); margin-bottom: 3px; }
+  .card-sub    { font-size: 0.7rem; color: #aaa; }
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.1rem 1.5rem; border-bottom: 1px solid var(--stone-mid);
+  }
+
+  /* ═══════════════════════════════════════
+     UPLOAD ZONE
+  ═══════════════════════════════════════ */
+  .upload-zone {
+    border: 2px dashed var(--stone-mid);
+    border-radius: 12px;
+    background: #faf9f7;
+    padding: 3rem 2rem;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; gap: 0.875rem;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    position: relative;
+    min-height: 260px;
+  }
+  .upload-zone:hover,
+  .upload-zone.dragover {
+    border-color: var(--red);
+    background: var(--red-muted);
+    box-shadow: 0 0 0 4px rgba(140,21,21,0.06);
+  }
+  .upload-zone.dragover .upload-icon { color: var(--red); }
+
+  .upload-zone input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+
+  .upload-icon { color: var(--navy); transition: color 0.2s; }
+
+  .upload-headline {
+    font-family: 'Playfair Display', serif;
+    font-weight: 900; font-size: 1.1rem; color: var(--navy); letter-spacing: -0.02em;
+  }
+  .upload-hint { font-size: 0.75rem; color: #aaa; }
+  .upload-hint a { color: var(--red); font-weight: 700; text-decoration: none; }
+  .upload-hint a:hover { text-decoration: underline; }
+
+  .upload-badges { display: flex; align-items: center; gap: 8px; }
+  .badge-csv {
+    font-size: 0.6rem; font-weight: 800; letter-spacing: 0.1em;
+    padding: 3px 9px; border-radius: 5px;
+    background: var(--navy); color: #fff;
+  }
+  .badge-size {
+    font-size: 0.62rem; font-weight: 600; color: #aaa;
+    background: var(--stone); border: 1px solid var(--stone-mid);
+    padding: 3px 9px; border-radius: 5px;
+  }
+
+  /* ═══════════════════════════════════════
+     PRE-FLIGHT CHECKLIST
+  ═══════════════════════════════════════ */
+  .preflight {
+    display: none;
+    border: 1px solid var(--stone-mid);
+    border-radius: 12px; overflow: hidden;
+    margin-top: 1rem;
+    animation: slideDown 0.35s cubic-bezier(0.34,1.1,0.64,1);
+  }
+  .preflight.visible { display: block; }
+  @keyframes slideDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+
+  .preflight-header {
+    background: var(--stone); border-bottom: 1px solid var(--stone-mid);
+    padding: 0.8rem 1.1rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .preflight-title { font-size: 0.75rem; font-weight: 800; color: var(--navy); }
+  .preflight-file  { font-size: 0.68rem; color: #aaa; font-family: monospace; }
+
+  .preflight-body { padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.6rem; }
+
+  .check-row {
+    display: flex; align-items: flex-start; gap: 10px;
+    font-size: 0.78rem;
+  }
+  .check-icon {
+    width: 20px; height: 20px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .check-icon.ok   { background: rgba(5,150,105,0.12); color: #059669; }
+  .check-icon.warn { background: rgba(201,168,76,0.15); color: #92400e; }
+  .check-icon.err  { background: rgba(140,21,21,0.1);  color: var(--red); }
+
+  .check-text { color: var(--navy); font-weight: 500; line-height: 1.45; }
+  .check-note { font-size: 0.67rem; color: #aaa; margin-top: 2px; }
+
+  .preflight-meta {
+    display: flex; gap: 1.5rem; margin-top: 0.25rem;
+    padding-top: 0.75rem; border-top: 1px solid var(--stone-mid);
+  }
+  .meta-item { font-size: 0.7rem; }
+  .meta-label { color: #aaa; font-weight: 600; display: block; margin-bottom: 2px; }
+  .meta-value { color: var(--navy); font-weight: 800; }
+
+  /* ── Upload submit button ── */
+  .btn-upload {
+    display: flex; align-items: center; gap: 8px; justify-content: center;
+    width: 100%; padding: 11px;
+    border-radius: 10px; border: none;
+    background: linear-gradient(145deg, #2e2b28 0%, #252422 50%, #1a1917 100%);
+    color: #fff; font-family: 'Poppins', sans-serif;
+    font-size: 0.82rem; font-weight: 700; cursor: pointer;
+    transition: box-shadow 0.2s, transform 0.2s;
+    box-shadow: 0 4px 16px rgba(20,18,16,0.3);
+    margin-top: 1rem;
+    display: none;
+  }
+  .btn-upload.visible { display: flex; }
+  .btn-upload:hover { box-shadow: 0 6px 24px rgba(140,21,21,0.3); background: linear-gradient(145deg, #2e2b28 0%, #271010 50%, #1e0808 100%); transform: translateY(-1px); }
+  .btn-upload:active { transform: translateY(0); }
+
+  /* ═══════════════════════════════════════
+     PROCESSING VISUALIZER
+  ═══════════════════════════════════════ */
+  .processor { display: none; margin-top: 1rem; }
+  .processor.visible { display: block; animation: slideDown 0.35s cubic-bezier(0.34,1.1,0.64,1); }
+
+  .proc-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 0.6rem;
+  }
+  .proc-label { font-size: 0.73rem; font-weight: 800; color: var(--navy); }
+  .proc-pct   { font-size: 0.73rem; font-weight: 800; color: var(--red); }
+
+  .proc-track {
+    height: 6px; background: var(--stone-mid); border-radius: 99px; overflow: hidden; margin-bottom: 1rem;
+  }
+  .proc-fill {
+    height: 100%; border-radius: 99px;
+    background: linear-gradient(90deg, var(--red-dark), var(--red), #c0392b);
+    width: 0%; transition: width 0.4s ease;
+    box-shadow: 0 0 8px var(--red-glow);
+  }
+
+  /* Log terminal */
+  .log-window {
+    background: #0f1117;
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+    height: 160px;
+    overflow-y: auto;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.7rem;
+    line-height: 1.7;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: inset 0 2px 12px rgba(0,0,0,0.4);
+    scroll-behavior: smooth;
+  }
+  .log-window::-webkit-scrollbar { width: 3px; }
+  .log-window::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 99px; }
+
+  .log-line { display: block; animation: logIn 0.2s ease both; }
+  @keyframes logIn { from { opacity:0; } to { opacity:1; } }
+
+  .log-info    { color: #60a5fa; }
+  .log-success { color: #34d399; }
+  .log-warn    { color: #fbbf24; }
+  .log-error   { color: #f87171; }
+  .log-dim     { color: rgba(255,255,255,0.3); }
+
+  /* ═══════════════════════════════════════
+     RIGHT COLUMN — DATA GUIDELINES
+  ═══════════════════════════════════════ */
+  .guidelines-list { display: flex; flex-direction: column; gap: 0; }
+  .guideline-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 0.7rem 0; border-bottom: 1px solid var(--stone-mid);
+  }
+  .guideline-row:last-child { border-bottom: none; }
+
+  .g-num {
+    width: 24px; height: 24px; border-radius: 7px; flex-shrink: 0;
+    background: var(--red-muted); color: var(--red);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.62rem; font-weight: 800;
+  }
+  .g-col { font-size: 0.78rem; font-weight: 700; color: var(--navy); }
+  .g-type { font-size: 0.62rem; color: #bbb; font-family: monospace; margin-top: 1px; }
+  .g-req {
+    margin-left: auto; font-size: 0.58rem; font-weight: 800; padding: 2px 7px;
+    border-radius: 4px; white-space: nowrap;
+  }
+  .g-req.required { background: rgba(140,21,21,0.1); color: var(--red); }
+  .g-req.optional { background: var(--stone); color: #aaa; }
+
+  .btn-download-tpl {
+    display: flex; align-items: center; gap: 7px; justify-content: center;
+    width: 100%; margin-top: 1.1rem; padding: 10px;
+    border-radius: 9px; border: 1.5px solid var(--stone-mid);
+    background: transparent; color: var(--navy);
+    font-family: 'Poppins', sans-serif; font-size: 0.75rem; font-weight: 700;
+    cursor: pointer; transition: all 0.18s; text-decoration: none;
+  }
+  .btn-download-tpl:hover { border-color: var(--red); color: var(--red); background: var(--red-muted); }
+
+  /* ═══════════════════════════════════════
+     AUDIT TRAIL TABLE
+  ═══════════════════════════════════════ */
+  .table-header {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 0.75rem;
+  }
+
+  .audit-search {
+    position: relative;
+  }
+  .audit-search svg {
+    position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+    color: #bbb; pointer-events: none;
+  }
+  .audit-search input {
+    background: var(--stone); border: 1.5px solid var(--stone-mid);
+    border-radius: 9px; padding: 7px 12px 7px 32px;
+    font-family: 'Poppins', sans-serif; font-size: 0.77rem;
+    color: var(--navy); outline: none; width: 220px;
+    transition: border-color 0.18s, box-shadow 0.18s;
+  }
+  .audit-search input::placeholder { color: #bbb; }
+  .audit-search input:focus { border-color: var(--red); box-shadow: 0 0 0 3px rgba(140,21,21,0.08); }
+
+  .audit-table { width: 100%; border-collapse: collapse; }
+  .audit-table thead { background: var(--stone); }
+  .audit-table th {
+    font-size: 0.62rem; font-weight: 800; letter-spacing: 0.1em;
+    text-transform: uppercase; color: #aaa; padding: 10px 16px;
+    text-align: left; white-space: nowrap; border-bottom: 1px solid var(--stone-mid);
+  }
+  .audit-table td {
+    padding: 13px 16px; font-size: 0.78rem; color: var(--navy);
+    border-bottom: 1px solid var(--stone-mid); vertical-align: middle;
+  }
+  .audit-table tbody tr:last-child td { border-bottom: none; }
+  .audit-table tbody tr { transition: background 0.14s; }
+  .audit-table tbody tr:hover { background: var(--stone); }
+
+  .file-name {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .file-icon {
+    width: 30px; height: 30px; border-radius: 7px;
+    background: var(--stone); border: 1px solid var(--stone-mid);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; color: var(--navy);
+  }
+  .fname { font-weight: 700; font-size: 0.78rem; color: var(--navy); font-family: monospace; }
+  .fref  { font-size: 0.62rem; color: #bbb; margin-top: 1px; }
+
+  .uploader-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.72rem; font-weight: 600; color: #555;
+  }
+  .uploader-av {
+    width: 22px; height: 22px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.55rem; font-weight: 800; color: #fff;
+  }
+
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 0.63rem; font-weight: 800; padding: 3px 10px;
+    border-radius: 999px; white-space: nowrap;
+  }
+  .status-pill::before { content:''; width:5px; height:5px; border-radius:50%; background:currentColor; flex-shrink:0; }
+  .status-pill.processed { background: rgba(5,150,105,0.1);  color: #059669; border: 1px solid rgba(5,150,105,0.15); }
+  .status-pill.error     { background: rgba(140,21,21,0.1);  color: var(--red); border: 1px solid rgba(140,21,21,0.15); }
+  .status-pill.pending   { background: rgba(201,168,76,0.12); color: #92400e; border: 1px solid rgba(201,168,76,0.2); }
+
+  .btn-detail {
+    font-size: 0.65rem; font-weight: 700; padding: 5px 11px;
+    border-radius: 7px; border: 1.5px solid var(--stone-mid);
+    background: transparent; color: var(--navy); cursor: pointer;
+    transition: all 0.18s; white-space: nowrap;
+  }
+  .btn-detail:hover { border-color: var(--red); color: var(--red); background: var(--red-muted); }
+
+  .btn-err-detail {
+    font-size: 0.65rem; font-weight: 700; padding: 5px 11px;
+    border-radius: 7px; border: 1.5px solid rgba(140,21,21,0.25);
+    background: var(--red-muted); color: var(--red); cursor: pointer;
+    transition: all 0.18s; white-space: nowrap;
+  }
+  .btn-err-detail:hover { background: #f0c0c0; border-color: var(--red); }
+
+  /* ═══════════════════════════════════════
+     ERROR MODAL
+  ═══════════════════════════════════════ */
+  .modal-backdrop {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(20,18,16,0.55);
+    backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.25s;
+    padding: 1rem;
+  }
+  .modal-backdrop.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--white); border-radius: 18px;
+    width: 100%; max-width: 560px; max-height: 85vh;
+    overflow-y: auto; box-shadow: 0 32px 80px rgba(0,0,0,0.22);
+    transform: translateY(16px) scale(0.98);
+    transition: transform 0.3s cubic-bezier(0.34,1.2,0.64,1);
+    border: 1px solid var(--stone-mid);
+  }
+  .modal-backdrop.open .modal { transform: translateY(0) scale(1); }
+
+  .modal-top {
+    padding: 1.4rem 1.5rem 1.1rem;
+    border-bottom: 1px solid var(--stone-mid);
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+  }
+  .modal-icon {
+    width: 42px; height: 42px; border-radius: 11px;
+    background: var(--red-muted); display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0;
+  }
+  .modal-title { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 1.05rem; color: var(--red); letter-spacing: -0.02em; margin-bottom: 3px; }
+  .modal-file  { font-size: 0.7rem; color: #aaa; font-family: monospace; }
+  .modal-close {
+    width: 30px; height: 30px; border-radius: 8px; border: 1.5px solid var(--stone-mid);
+    background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    color: #aaa; transition: all 0.18s; flex-shrink: 0;
+  }
+  .modal-close:hover { border-color: var(--red); color: var(--red); background: var(--red-muted); }
+
+  .modal-body { padding: 1.2rem 1.5rem; }
+  .modal-section-title { font-size: 0.65rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: #aaa; margin-bottom: 0.75rem; }
+
+  .error-row {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 0.75rem 0; border-bottom: 1px solid var(--stone-mid);
+  }
+  .error-row:last-child { border-bottom: none; }
+
+  .err-line {
+    font-size: 0.65rem; font-weight: 800; font-family: monospace;
+    background: var(--red-muted); color: var(--red);
+    padding: 2px 8px; border-radius: 5px; flex-shrink: 0; margin-top: 2px;
+  }
+  .err-col  { font-size: 0.75rem; font-weight: 700; color: var(--navy); }
+  .err-desc { font-size: 0.7rem; color: #777; margin-top: 3px; line-height: 1.5; }
+
+  .modal-summary {
+    display: flex; gap: 1rem; margin-top: 1.1rem; padding-top: 1rem;
+    border-top: 1px solid var(--stone-mid);
+  }
+  .modal-stat { flex: 1; background: var(--stone); border-radius: 9px; padding: 0.75rem 1rem; }
+  .modal-stat-val { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 1.3rem; color: var(--navy); }
+  .modal-stat-val.red { color: var(--red); }
+  .modal-stat-label { font-size: 0.65rem; color: #aaa; font-weight: 600; margin-top: 2px; }
+
+  .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--stone-mid); display: flex; gap: 0.6rem; justify-content: flex-end; }
+  .btn-modal-sec {
+    padding: 9px 18px; border-radius: 9px; border: 1.5px solid var(--stone-mid);
+    background: transparent; color: var(--navy); font-family: 'Poppins', sans-serif;
+    font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.18s;
+  }
+  .btn-modal-sec:hover { border-color: var(--stone-deep, #C4BBB0); }
+  .btn-modal-pri {
+    padding: 9px 20px; border-radius: 9px; border: none;
+    background: var(--navy); color: #fff; font-family: 'Poppins', sans-serif;
+    font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.18s;
+  }
+  .btn-modal-pri:hover { background: var(--red); box-shadow: 0 4px 14px var(--red-glow); }
+
+  /* ── Responsive ── */
+  @media (max-width: 960px) {
+    .upload-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .page { padding: 1.25rem; }
+    .audit-search input { width: 160px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <!-- ══════════════════════════════════════
+       UPLOAD + GUIDELINES GRID
+  ══════════════════════════════════════ -->
+  <div>
+    <div class="section-label">Upload Centre</div>
+
+    <div class="upload-grid">
+
+      <!-- LEFT — Upload Zone + Pre-flight + Processor -->
+      <div style="display:flex;flex-direction:column;gap:0">
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Import Customer Data</div>
+              <div class="card-sub">Upload a validated CSV file for ML ingestion</div>
+            </div>
+            <span style="font-size:0.62rem;font-weight:800;letter-spacing:0.08em;padding:3px 9px;border-radius:5px;background:var(--red-muted);color:var(--red)">CSV ONLY</span>
+          </div>
+
+          <div class="card-body">
+
+            <!-- Drop Zone -->
+            <div class="upload-zone" id="uploadZone">
+              <input type="file" accept=".csv" id="fileInput">
+
+              <div class="upload-icon">
+                <svg width="52" height="52" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+              </div>
+
+              <div>
+                <div class="upload-headline">Drop your CSV file here</div>
+                <div class="upload-hint" style="margin-top:4px">or click to browse from your device</div>
+              </div>
+
+              <div class="upload-badges">
+                <span class="badge-csv">CSV ONLY</span>
+                <span class="badge-size">Max 50 MB</span>
+              </div>
+
+              <div class="upload-hint">
+                Need a template?
+                <a href="#">Download Sample CSV</a>
+              </div>
+            </div>
+
+            <!-- Pre-flight Checklist -->
+            <div class="preflight" id="preflight">
+              <div class="preflight-header">
+                <span class="preflight-title">Pre-flight Data Check</span>
+                <span class="preflight-file" id="preflightFile">—</span>
+              </div>
+              <div class="preflight-body">
+
+                <div class="preflight-meta" id="preflightMeta">
+                  <div class="meta-item"><span class="meta-label">File Name</span><span class="meta-value" id="metaName">—</span></div>
+                  <div class="meta-item"><span class="meta-label">File Size</span><span class="meta-value" id="metaSize">—</span></div>
+                  <div class="meta-item"><span class="meta-label">Type</span><span class="meta-value" id="metaType">—</span></div>
+                </div>
+
+                <div class="check-row">
+                  <div class="check-icon ok">
+                    <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                  </div>
+                  <div>
+                    <div class="check-text">Column headers detected successfully</div>
+                    <div class="check-note">All 10 required columns present in header row</div>
+                  </div>
+                </div>
+
+                <div class="check-row">
+                  <div class="check-icon ok">
+                    <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                  </div>
+                  <div>
+                    <div class="check-text">No empty critical rows found</div>
+                    <div class="check-note">Customer ID, Geography and Credit Score fields are fully populated</div>
+                  </div>
+                </div>
+
+                <div class="check-row">
+                  <div class="check-icon warn">
+                    <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01"/></svg>
+                  </div>
+                  <div>
+                    <div class="check-text">12 missing Age values detected</div>
+                    <div class="check-note">System will auto-impute using column median. No rows will be discarded.</div>
+                  </div>
+                </div>
+
+                <div class="check-row">
+                  <div class="check-icon ok">
+                    <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                  </div>
+                  <div>
+                    <div class="check-text">Encoding validated — UTF-8 detected</div>
+                    <div class="check-note">No special character conflicts found</div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Submit button -->
+            <button class="btn-upload" id="btnUpload" onclick="startProcessing()">
+              <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+              Begin ML Ingestion
+            </button>
+
+            <!-- Processing Visualizer -->
+            <div class="processor" id="processor">
+              <div class="proc-header">
+                <span class="proc-label" id="procLabel">Initialising pipeline...</span>
+                <span class="proc-pct" id="procPct">0%</span>
+              </div>
+              <div class="proc-track">
+                <div class="proc-fill" id="procFill"></div>
+              </div>
+
+              <!-- Log terminal -->
+              <div class="log-window" id="logWindow">
+                <span class="log-dim log-line">VigilPay ML Pipeline v2.4.1 — ready</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT — Data Guidelines -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Required Data Schema</div>
+            <div class="card-sub">10 columns must be present in exact order</div>
+          </div>
+        </div>
+        <div class="card-body" style="padding-top:0.75rem;padding-bottom:0.75rem">
+          <div class="guidelines-list">
+
+            <div class="guideline-row">
+              <div class="g-num">1</div>
+              <div><div class="g-col">Customer ID</div><div class="g-type">INTEGER</div></div>
+              <span class="g-req required">Required</span>
+            </div>
+            <div class="guideline-row">
+              <div class="g-num">2</div>
+              <div><div class="g-col">Credit Score</div><div class="g-type">INTEGER · 300–850</div></div>
+              <span class="g-req required">Required</span>
+            </div>
+            <div class="guideline-row">
+              <div class="g-num">3</div>
+              <div><div class="g-col">Geography</div><div class="g-type">STRING · France / Germany / Spain</div></div>
+              <span class="g-req required">Required</span>
+            </div>
+            <div class="guideline-row">
+              <div class="g-num">4</div>
+              <div><div class="g-col">Gender</div><div class="g-type">STRING · Male / Female</div></div>
+              <span class="g-req required">Required</span>
+            </div>
+            <div class="guideline-row">
+              <div class="g-num">5</div>
+              <div><div class="g-col">Age</div><div class="g-type">INTEGER · 18–100</div></div>
+              <span class="g-req required">Required</span>
+            </div>
+            <div class="guideline-row">
+              <div class="g-num">6</div>
+              <div><div class="g-col">Tenure</div><div class="g-type">INTEGER · Years (0–10)</div></div>
+              <span class="g-req required">Required</span>
+            </div>
+            <div class="guideline-row">
+              <div class="g-num">7</div>
+              <div><div class="g-col">Balance</div><div class="g-type">FLOAT · Account balance (USD)</div></div>
+              <span class="g-req required">Required</span>
+            </div>
+            <div class="guideline-row">
+              <div class="g-num">8</div>
+              <div><div class="g-col">Number of Products</div><div class="g-type">INTEGER · 1–4</div></div>
+              <span class="g-req required">Required</span>
+            </div>
+            <div class="guideline-row">
+              <div class="g-num">9</div>
+              <div><div class="g-col">Is Active Member</div><div class="g-type">BOOLEAN · 0 / 1</div></div>
+              <span class="g-req required">Required</span>
+            </div>
+            <div class="guideline-row">
+              <div class="g-num">10</div>
+              <div><div class="g-col">Estimated Salary</div><div class="g-type">FLOAT · Optional for scoring</div></div>
+              <span class="g-req optional">Optional</span>
+            </div>
+
+          </div>
+
+          <a href="#" class="btn-download-tpl">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Download Sample Template
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       AUDIT TRAIL TABLE
+  ══════════════════════════════════════ -->
+  <div>
+    <div class="section-label">Upload History</div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Audit Trail</div>
+          <div class="card-sub">Complete record of all ingestion events</div>
+        </div>
+        <div class="table-header">
+          <div class="audit-search">
+            <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input type="text" placeholder="Search uploads…" id="auditSearch" oninput="filterAudit(this.value)">
+          </div>
+        </div>
+      </div>
+
+      <div style="overflow-x:auto">
+        <table class="audit-table" id="auditTable">
+          <thead>
+            <tr>
+              <th>File Reference</th>
+              <th>Uploaded By</th>
+              <th>Date</th>
+              <th>Records</th>
+              <th>Status</th>
+              <th style="width:100px"></th>
+            </tr>
+          </thead>
+          <tbody>
+
+            <tr data-name="branch_001_jan.csv">
+              <td>
+                <div class="file-name">
+                  <div class="file-icon">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                  </div>
+                  <div>
+                    <div class="fname">branch_001_jan.csv</div>
+                    <div class="fref">REF-20260222-001</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="uploader-badge">
+                  <div class="uploader-av" style="background:var(--navy)">AJ</div>
+                  Admin_John
+                </div>
+              </td>
+              <td style="color:#666;font-size:0.75rem;white-space:nowrap">Feb 22, 2026</td>
+              <td style="font-weight:700;font-family:monospace">5,400</td>
+              <td><span class="status-pill processed">Processed</span></td>
+              <td><button class="btn-detail">View Report</button></td>
+            </tr>
+
+            <tr data-name="test_corrupted.csv">
+              <td>
+                <div class="file-name">
+                  <div class="file-icon" style="background:var(--red-muted);border-color:rgba(140,21,21,0.15)">
+                    <svg width="14" height="14" fill="none" stroke="var(--red)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                  </div>
+                  <div>
+                    <div class="fname" style="color:var(--red)">test_corrupted.csv</div>
+                    <div class="fref">REF-20260221-002</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="uploader-badge">
+                  <div class="uploader-av" style="background:#7c3aed">SJ</div>
+                  Staff_Jane
+                </div>
+              </td>
+              <td style="color:#666;font-size:0.75rem;white-space:nowrap">Feb 21, 2026</td>
+              <td style="font-weight:700;font-family:monospace;color:#bbb">0</td>
+              <td><span class="status-pill error">Column Error</span></td>
+              <td><button class="btn-err-detail" onclick="openErrorModal()">View Errors</button></td>
+            </tr>
+
+            <tr data-name="hq_master_file.csv">
+              <td>
+                <div class="file-name">
+                  <div class="file-icon">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                  </div>
+                  <div>
+                    <div class="fname">hq_master_file.csv</div>
+                    <div class="fref">REF-20260220-003</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="uploader-badge">
+                  <div class="uploader-av" style="background:var(--navy)">AJ</div>
+                  Admin_John
+                </div>
+              </td>
+              <td style="color:#666;font-size:0.75rem;white-space:nowrap">Feb 20, 2026</td>
+              <td style="font-weight:700;font-family:monospace">12,000</td>
+              <td><span class="status-pill processed">Processed</span></td>
+              <td><button class="btn-detail">View Report</button></td>
+            </tr>
+
+            <tr data-name="q4_branches_de.csv">
+              <td>
+                <div class="file-name">
+                  <div class="file-icon">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                  </div>
+                  <div>
+                    <div class="fname">q4_branches_de.csv</div>
+                    <div class="fref">REF-20260218-004</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="uploader-badge">
+                  <div class="uploader-av" style="background:#0891b2">MK</div>
+                  Manager_Kim
+                </div>
+              </td>
+              <td style="color:#666;font-size:0.75rem;white-space:nowrap">Feb 18, 2026</td>
+              <td style="font-weight:700;font-family:monospace">8,712</td>
+              <td><span class="status-pill processed">Processed</span></td>
+              <td><button class="btn-detail">View Report</button></td>
+            </tr>
+
+            <tr data-name="spain_q1_partial.csv">
+              <td>
+                <div class="file-name">
+                  <div class="file-icon" style="background:rgba(201,168,76,0.08);border-color:rgba(201,168,76,0.2)">
+                    <svg width="14" height="14" fill="none" stroke="var(--gold)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 9v2m0 4h.01"/></svg>
+                  </div>
+                  <div>
+                    <div class="fname">spain_q1_partial.csv</div>
+                    <div class="fref">REF-20260215-005</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="uploader-badge">
+                  <div class="uploader-av" style="background:#d97706">SR</div>
+                  Staff_Rosa
+                </div>
+              </td>
+              <td style="color:#666;font-size:0.75rem;white-space:nowrap">Feb 15, 2026</td>
+              <td style="font-weight:700;font-family:monospace;color:#bbb">—</td>
+              <td><span class="status-pill pending">Pending Review</span></td>
+              <td><button class="btn-detail">View Report</button></td>
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════
+     ERROR MODAL
+══════════════════════════════════════ -->
+<div class="modal-backdrop" id="errorModal" onclick="closeIfBackdrop(event)">
+  <div class="modal">
+
+    <div class="modal-top">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div class="modal-icon">
+          <svg width="20" height="20" fill="none" stroke="var(--red)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+        </div>
+        <div>
+          <div class="modal-title">Data Inconsistency Detected</div>
+          <div class="modal-file">test_corrupted.csv &nbsp;·&nbsp; REF-20260221-002</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeErrorModal()">
+        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+
+      <div class="modal-section-title">Column-Level Errors Detected</div>
+
+      <div class="error-row">
+        <span class="err-line">ROW 1</span>
+        <div>
+          <div class="err-col">Missing Header: <code style="font-size:0.72rem;background:var(--stone);padding:1px 6px;border-radius:4px">CreditScore</code></div>
+          <div class="err-desc">The column header was labelled "Credit_Score" using an underscore. The schema requires the exact string "CreditScore" with no separator.</div>
+        </div>
+      </div>
+
+      <div class="error-row">
+        <span class="err-line">ROW 1</span>
+        <div>
+          <div class="err-col">Unrecognised Column: <code style="font-size:0.72rem;background:var(--stone);padding:1px 6px;border-radius:4px">AccountRef</code></div>
+          <div class="err-desc">An unknown column "AccountRef" was found in position 3. The pipeline does not accept extraneous columns — remove it or remap to a permitted field.</div>
+        </div>
+      </div>
+
+      <div class="error-row">
+        <span class="err-line">ROW 34</span>
+        <div>
+          <div class="err-col">Invalid Type in <code style="font-size:0.72rem;background:var(--stone);padding:1px 6px;border-radius:4px">Balance</code></div>
+          <div class="err-desc">Row 34 contains the string "N/A" in the Balance column. Expected a numeric FLOAT. Null or empty values are permitted but string placeholders are not.</div>
+        </div>
+      </div>
+
+      <div class="error-row">
+        <span class="err-line">ROW 98</span>
+        <div>
+          <div class="err-col">Out-of-Range Value in <code style="font-size:0.72rem;background:var(--stone);padding:1px 6px;border-radius:4px">NumOfProducts</code></div>
+          <div class="err-desc">Value "7" exceeds the permitted range of 1–4. The ML model was trained on this constraint and cannot score records outside it.</div>
+        </div>
+      </div>
+
+      <div class="error-row">
+        <span class="err-line">ROW 211</span>
+        <div>
+          <div class="err-col">Critical Null in <code style="font-size:0.72rem;background:var(--stone);padding:1px 6px;border-radius:4px">Geography</code></div>
+          <div class="err-desc">Geography is a required, non-nullable field used for regional risk segmentation. Row 211 has an empty cell. This row cannot be auto-repaired and must be corrected manually.</div>
+        </div>
+      </div>
+
+      <div class="modal-summary">
+        <div class="modal-stat">
+          <div class="modal-stat-val red">5</div>
+          <div class="modal-stat-label">Errors Found</div>
+        </div>
+        <div class="modal-stat">
+          <div class="modal-stat-val">0</div>
+          <div class="modal-stat-label">Records Ingested</div>
+        </div>
+        <div class="modal-stat">
+          <div class="modal-stat-val">3</div>
+          <div class="modal-stat-label">Auto-Repairable</div>
+        </div>
+        <div class="modal-stat">
+          <div class="modal-stat-val red">2</div>
+          <div class="modal-stat-label">Require Manual Fix</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-modal-sec" onclick="closeErrorModal()">Dismiss</button>
+      <button class="btn-modal-pri">Download Error Report</button>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+  /* ══════════════════════════════════════
+     DRAG & DROP
+  ══════════════════════════════════════ */
+  const zone      = document.getElementById('uploadZone');
+  const fileInput = document.getElementById('fileInput');
+  const preflight = document.getElementById('preflight');
+  const btnUpload = document.getElementById('btnUpload');
+
+  zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', ()  => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    const f = e.dataTransfer.files[0];
+    if (f) handleFile(f);
+  });
+
+  fileInput.addEventListener('change', e => {
+    if (e.target.files[0]) handleFile(e.target.files[0]);
+  });
+
+  function handleFile(file) {
+    const isCSV = file.name.endsWith('.csv') || file.type === 'text/csv';
+    if (!isCSV) {
+      alert('Only CSV files are accepted. Please check the format and try again.');
+      return;
+    }
+
+    // Populate pre-flight meta
+    document.getElementById('preflightFile').textContent = file.name;
+    document.getElementById('metaName').textContent      = file.name;
+    document.getElementById('metaSize').textContent      = formatBytes(file.size);
+    document.getElementById('metaType').textContent      = 'text/csv';
+
+    preflight.classList.add('visible');
+    btnUpload.classList.add('visible');
+  }
+
+  function formatBytes(b) {
+    if (b < 1024)         return b + ' B';
+    if (b < 1024 * 1024)  return (b / 1024).toFixed(1) + ' KB';
+    return (b / (1024*1024)).toFixed(1) + ' MB';
+  }
+
+  /* ══════════════════════════════════════
+     PROCESSING VISUALISER
+  ══════════════════════════════════════ */
+  const logs = [
+    { t: 300,  cls: 'log-info',    msg: '[INFO] Pipeline initialised. Reading file...' },
+    { t: 700,  cls: 'log-info',    msg: '[INFO] Scanning 10,000 rows...' },
+    { t: 1200, cls: 'log-info',    msg: '[INFO] Validating column schema against model contract...' },
+    { t: 1700, cls: 'log-info',    msg: '[INFO] Normalising account balances (USD base)...' },
+    { t: 2200, cls: 'log-warn',    msg: '[WARN] 12 missing Age values — applying median imputation...' },
+    { t: 2700, cls: 'log-info',    msg: '[INFO] Encoding categorical variables (Geography, Gender)...' },
+    { t: 3100, cls: 'log-info',    msg: '[INFO] Feature engineering: Balance-to-Age ratio computed...' },
+    { t: 3500, cls: 'log-info',    msg: '[INFO] Running Random Forest classifier on 9,988 clean records...' },
+    { t: 4000, cls: 'log-info',    msg: '[INFO] Computing SHAP values for feature attribution...' },
+    { t: 4400, cls: 'log-success', msg: '[SUCCESS] 9,988 records scored and written to database.' },
+    { t: 4700, cls: 'log-success', msg: '[SUCCESS] Upload reference REF-' + Date.now().toString().slice(-8) + ' created.' },
+    { t: 5000, cls: 'log-dim',     msg: '--- Pipeline complete. Duration: 4.9s ---' },
+  ];
+
+  function startProcessing() {
+    btnUpload.classList.remove('visible');
+    preflight.classList.remove('visible');
+
+    const processor = document.getElementById('processor');
+    const fill      = document.getElementById('procFill');
+    const pct       = document.getElementById('procPct');
+    const label     = document.getElementById('procLabel');
+    const logWin    = document.getElementById('logWindow');
+
+    processor.classList.add('visible');
+
+    // Animate progress bar
+    const dur = 5200;
+    const t0  = performance.now();
+    const labels = ['Initialising pipeline...','Scanning rows...','Normalising data...','Encoding features...','Running ML model...','Finalising...','Complete'];
+
+    function tick(ts) {
+      const p = Math.min((ts - t0) / dur, 1);
+      const pctVal = Math.round(p * 100);
+      fill.style.width = pctVal + '%';
+      pct.textContent  = pctVal + '%';
+      label.textContent = labels[Math.min(Math.floor(p * labels.length), labels.length - 1)];
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+
+    // Append log lines
+    logs.forEach(({ t, cls, msg }) => {
+      setTimeout(() => {
+        const span = document.createElement('span');
+        span.className = cls + ' log-line';
+        span.textContent = msg;
+        logWin.appendChild(document.createElement('br'));
+        logWin.appendChild(span);
+        logWin.scrollTop = logWin.scrollHeight;
+      }, t);
+    });
+  }
+
+  /* ══════════════════════════════════════
+     AUDIT SEARCH
+  ══════════════════════════════════════ */
+  function filterAudit(q) {
+    const rows = document.querySelectorAll('#auditTable tbody tr');
+    rows.forEach(row => {
+      row.style.display = row.dataset.name?.toLowerCase().includes(q.toLowerCase()) || row.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
+    });
+  }
+
+  /* ══════════════════════════════════════
+     ERROR MODAL
+  ══════════════════════════════════════ */
+  function openErrorModal()  { document.getElementById('errorModal').classList.add('open'); document.body.style.overflow = 'hidden'; }
+  function closeErrorModal() { document.getElementById('errorModal').classList.remove('open'); document.body.style.overflow = ''; }
+  function closeIfBackdrop(e) { if (e.target === document.getElementById('errorModal')) closeErrorModal(); }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeErrorModal(); });
+</script>
+{% endblock %}

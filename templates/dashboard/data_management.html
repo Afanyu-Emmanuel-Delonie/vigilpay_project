@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Data Management - VigilPay{% endblock %}
+{% block page_title %}Data Management{% endblock %}
+
+{% block extra_head %}
+<meta name="active-nav" content="data">
+<link rel="stylesheet" href="{% static 'styles/dashboard_data_management.css' %}" />
+{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div>
+    <div class="section-label">Upload Centre</div>
+    <div class="upload-grid">
+      <div style="display:flex;flex-direction:column;gap:0">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Import Customer Data</div>
+              <div class="card-sub">Upload a validated CSV file for ML ingestion</div>
+            </div>
+            <span style="font-size:0.62rem;font-weight:800;letter-spacing:0.08em;padding:3px 9px;border-radius:5px;background:var(--red-muted);color:var(--red)">CSV ONLY</span>
+          </div>
+          <div class="card-body">
+            {% if can_manage_dataset %}
+              <div class="upload-zone" id="uploadZone">
+                <input type="file" accept=".csv" id="fileInput">
+                <div class="upload-icon">
+                  <svg width="52" height="52" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                </div>
+                <div>
+                  <div class="upload-headline">Drop your CSV file here</div>
+                  <div class="upload-hint" style="margin-top:4px">or click to browse from your device</div>
+                </div>
+                <div class="upload-badges">
+                  <span class="badge-csv">CSV ONLY</span>
+                  <span class="badge-size">Max 50 MB</span>
+                </div>
+              </div>
+            {% else %}
+              <div class="upload-zone" style="cursor:not-allowed;opacity:0.7">
+                <div class="upload-icon">
+                  <svg width="52" height="52" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.4" d="M12 15v2m0 4h.01M3.6 18h16.8a1.6 1.6 0 001.39-2.4L13.39 3.2a1.6 1.6 0 00-2.78 0L2.21 15.6A1.6 1.6 0 003.6 18z"/></svg>
+                </div>
+                <div>
+                  <div class="upload-headline">Upload restricted</div>
+                  <div class="upload-hint" style="margin-top:4px">Only admin users can upload datasets.</div>
+                </div>
+              </div>
+            {% endif %}
+
+            <div class="preflight" id="preflight">
+              <div class="preflight-header">
+                <span class="preflight-title">Pre-flight Data Check</span>
+                <span class="preflight-file" id="preflightFile">-</span>
+              </div>
+              <div class="preflight-body">
+                <div class="preflight-meta" id="preflightMeta">
+                  <div class="meta-item"><span class="meta-label">File Name</span><span class="meta-value" id="metaName">-</span></div>
+                  <div class="meta-item"><span class="meta-label">File Size</span><span class="meta-value" id="metaSize">-</span></div>
+                  <div class="meta-item"><span class="meta-label">Type</span><span class="meta-value" id="metaType">-</span></div>
+                </div>
+              </div>
+            </div>
+
+            {% if can_manage_dataset %}
+              <button class="btn-upload" id="btnUpload" data-upload-url="{% url 'data_management_upload' %}">
+                <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                Begin ML Ingestion
+              </button>
+            {% endif %}
+
+            <div class="processor" id="processor">
+              <div class="proc-header">
+                <span class="proc-label" id="procLabel">Waiting for upload...</span>
+                <span class="proc-pct" id="procPct">0%</span>
+              </div>
+              <div class="proc-track">
+                <div class="proc-fill" id="procFill"></div>
+              </div>
+              <div class="log-window" id="logWindow">
+                <span class="log-dim log-line">VigilPay data pipeline ready</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Required Data Schema</div>
+            <div class="card-sub">Expected fields for ingestion</div>
+          </div>
+        </div>
+        <div class="card-body" style="padding-top:0.75rem;padding-bottom:0.75rem">
+          <div class="guidelines-list">
+            <div class="guideline-row"><div class="g-num">1</div><div><div class="g-col">CustomerId</div><div class="g-type">INTEGER</div></div><span class="g-req required">Required</span></div>
+            <div class="guideline-row"><div class="g-num">2</div><div><div class="g-col">CreditScore</div><div class="g-type">INTEGER</div></div><span class="g-req required">Required</span></div>
+            <div class="guideline-row"><div class="g-num">3</div><div><div class="g-col">Geography</div><div class="g-type">STRING</div></div><span class="g-req required">Required</span></div>
+            <div class="guideline-row"><div class="g-num">4</div><div><div class="g-col">Gender</div><div class="g-type">STRING</div></div><span class="g-req required">Required</span></div>
+            <div class="guideline-row"><div class="g-num">5</div><div><div class="g-col">Age</div><div class="g-type">INTEGER</div></div><span class="g-req required">Required</span></div>
+            <div class="guideline-row"><div class="g-num">6</div><div><div class="g-col">Tenure</div><div class="g-type">INTEGER</div></div><span class="g-req required">Required</span></div>
+            <div class="guideline-row"><div class="g-num">7</div><div><div class="g-col">Balance</div><div class="g-type">FLOAT</div></div><span class="g-req required">Required</span></div>
+            <div class="guideline-row"><div class="g-num">8</div><div><div class="g-col">NumOfProducts</div><div class="g-type">INTEGER</div></div><span class="g-req required">Required</span></div>
+            <div class="guideline-row"><div class="g-num">9</div><div><div class="g-col">HasCrCard</div><div class="g-type">BOOLEAN</div></div><span class="g-req required">Required</span></div>
+            <div class="guideline-row"><div class="g-num">10</div><div><div class="g-col">IsActiveMember</div><div class="g-type">BOOLEAN</div></div><span class="g-req required">Required</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="section-label">Upload History</div>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Audit Trail</div>
+          <div class="card-sub">Latest ingestion events</div>
+        </div>
+        <div class="table-header">
+          <div class="audit-search">
+            <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input type="text" placeholder="Search uploads..." id="auditSearch">
+          </div>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="audit-table" id="auditTable">
+          <thead>
+            <tr>
+              <th>File Reference</th>
+              <th>Uploaded By</th>
+              <th>Date</th>
+              <th>Records</th>
+              <th>Status</th>
+              <th style="width:100px"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in upload_history %}
+            <tr data-name="{{ item.file_name.name }}">
+              <td>
+                <div class="file-name">
+                  <div class="file-icon">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                  </div>
+                  <div>
+                    <div class="fname">{{ item.file_name.name }}</div>
+                    <div class="fref">REF-{{ item.uploaded_at|date:"Ymd" }}-{{ item.id }}</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="uploader-badge">
+                  <div class="uploader-av" style="background:var(--navy)">{{ item.uploaded_by.username|slice:":2"|upper }}</div>
+                  {{ item.uploaded_by.username }}
+                </div>
+              </td>
+              <td style="color:#666;font-size:0.75rem;white-space:nowrap">{{ item.uploaded_at|date:"M d, Y" }}</td>
+              <td style="font-weight:700;font-family:monospace">{{ item.row_count }}</td>
+              <td>
+                {% if item.processed %}
+                <span class="status-pill processed">Processed</span>
+                {% else %}
+                <span class="status-pill error">Failed</span>
+                {% endif %}
+              </td>
+              <td><button class="btn-detail" type="button">View Report</button></td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" style="padding:14px;color:#777">No upload history yet.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'scripts/dashboard_data_management.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,243 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VigilPay - Register</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Poppins:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="{% static 'styles/app.css' %}" />
+  </head>
+  <body class="login-page register-page">
+    <div class="page">
+      <div class="panel-left">
+        <svg
+          class="arcs"
+          viewBox="0 0 600 600"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <circle
+            class="arc-animate a1"
+            cx="600"
+            cy="0"
+            r="200"
+            stroke="rgba(255,255,255,0.5)"
+            stroke-width="0.8"
+          />
+          <circle
+            class="arc-animate a2"
+            cx="600"
+            cy="0"
+            r="300"
+            stroke="rgba(255,255,255,0.4)"
+            stroke-width="0.7"
+          />
+          <circle
+            class="arc-animate a3"
+            cx="600"
+            cy="0"
+            r="400"
+            stroke="rgba(255,255,255,0.3)"
+            stroke-width="0.6"
+          />
+          <circle
+            class="arc-animate a4"
+            cx="600"
+            cy="0"
+            r="500"
+            stroke="rgba(255,255,255,0.2)"
+            stroke-width="0.5"
+          />
+        </svg>
+
+        <a href="/" class="logo">
+          <div class="logo-icon">
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+              <path
+                d="M10 2.5L16.5 6v8L10 17.5 3.5 14V6L10 2.5z"
+                stroke="white"
+                stroke-width="1.7"
+                fill="none"
+                stroke-linejoin="round"
+              />
+              <circle cx="10" cy="10" r="2.4" fill="white" />
+            </svg>
+          </div>
+          <span class="logo-text">Vigil<span>Pay</span></span>
+        </a>
+
+        <div class="left-hero">
+          <div class="left-tag">Secure Banking Intelligence</div>
+          <h2 class="left-title">
+            Join<br />
+            Vigil<em>Pay</em><br />
+          </h2>
+          <p class="left-desc">
+            Create your account to start monitoring customer churn risk and make
+            faster, data-backed retention decisions.
+          </p>
+        </div>
+
+        <div class="left-stats">
+          <div class="lstat">
+            <div class="lstat-num">500<span>k</span></div>
+            <div class="lstat-label">Active Users</div>
+          </div>
+          <div class="lstat-divider"></div>
+          <div class="lstat">
+            <div class="lstat-num">99<span>%</span></div>
+            <div class="lstat-label">Uptime SLA</div>
+          </div>
+          <div class="lstat-divider"></div>
+          <div class="lstat">
+            <div class="lstat-num">40<span>+</span></div>
+            <div class="lstat-label">Partner Banks</div>
+          </div>
+        </div>
+
+        <p class="left-copy">
+          &copy; 2026 VigilPay Technologies Ltd. All rights reserved.
+        </p>
+      </div>
+
+      <div class="panel-right">
+        <div class="form-wrap">
+          <div class="right-brand">
+            <div class="right-brand-icon">
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
+                <path
+                  d="M10 2.5L16.5 6v8L10 17.5 3.5 14V6L10 2.5z"
+                  stroke="white"
+                  stroke-width="1.7"
+                  fill="none"
+                  stroke-linejoin="round"
+                />
+                <circle cx="10" cy="10" r="2.4" fill="white" />
+              </svg>
+            </div>
+            <span class="right-brand-text">Vigil<span>Pay</span></span>
+          </div>
+
+          <div class="form-heading">
+            <h1>Create Account</h1>
+            <p>
+              Already have an account?
+              <a href="{% url 'login_page' %}">Sign in</a>
+            </p>
+          </div>
+
+          {% if messages %}
+          <div style="margin-bottom: 1rem; color: #8c1515; font-size: 0.78rem; font-weight: 600;">
+            {% for message in messages %}
+            <p>{{ message }}</p>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          <form class="form-body register-form" action="{% url 'register_page' %}" method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="form-row two-col">
+              <div class="field" id="field-first-name">
+                <label for="first_name">First Name</label>
+                <div class="field-input-wrap">
+                  <span class="field-icon">
+                    <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
+                      <circle cx="10" cy="6.5" r="3" stroke="currentColor" stroke-width="1.5" />
+                      <path d="M4 17c.6-2.4 2.8-4 6-4s5.4 1.6 6 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                  </span>
+                  <input type="text" id="first_name" name="first_name" placeholder="Emmanuel" autocomplete="given-name" required />
+                </div>
+              </div>
+              <div class="field" id="field-last-name">
+                <label for="last_name">Last Name</label>
+                <div class="field-input-wrap">
+                  <span class="field-icon">
+                    <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
+                      <circle cx="10" cy="6.5" r="3" stroke="currentColor" stroke-width="1.5" />
+                      <path d="M4 17c.6-2.4 2.8-4 6-4s5.4 1.6 6 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                  </span>
+                  <input type="text" id="last_name" name="last_name" placeholder="Afanyu" autocomplete="family-name" required />
+                </div>
+              </div>
+            </div>
+
+            <div class="field centered-field" id="field-username">
+              <label for="username">Username</label>
+              <div class="field-input-wrap">
+                <span class="field-icon">
+                  <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
+                    <path d="M3 5.5a2 2 0 012-2h10a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-9z" stroke="currentColor" stroke-width="1.5" />
+                    <path d="M7 9h6M7 12h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                  </svg>
+                </span>
+                <input type="text" id="username" name="username" placeholder="afanyuemma" autocomplete="username" required />
+              </div>
+            </div>
+
+            <div class="field centered-field" id="field-email">
+              <label for="email">Email Address</label>
+              <div class="field-input-wrap">
+                <span class="field-icon">
+                  <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
+                    <path d="M3 5h14a1 1 0 011 1v9a1 1 0 01-1 1H3a1 1 0 01-1-1V6a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5" />
+                    <path d="M2 6l8 6 8-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                  </svg>
+                </span>
+                <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" required />
+              </div>
+            </div>
+
+            <div class="form-row two-col">
+              <div class="field" id="field-password">
+                <label for="password">Password</label>
+                <div class="field-input-wrap">
+                  <span class="field-icon">
+                    <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
+                      <rect x="4" y="9" width="12" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5" />
+                      <path d="M7 9V6a3 3 0 016 0v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                  </span>
+                  <input type="password" id="password" name="password" placeholder="Create a password" autocomplete="new-password" required />
+                </div>
+              </div>
+              <div class="field" id="field-confirm-password">
+                <label for="confirm_password">Confirm Password</label>
+                <div class="field-input-wrap">
+                  <span class="field-icon">
+                    <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
+                      <rect x="4" y="9" width="12" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5" />
+                      <path d="M7 9V6a3 3 0 016 0v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                  </span>
+                  <input type="password" id="confirm_password" name="confirm_password" placeholder="Repeat password" autocomplete="new-password" required />
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-login" id="registerBtn">
+              <span class="btn-text">Create Account</span>
+            </button>
+          </form>
+
+          <p class="signup-row">
+            Already registered? <a href="{% url 'login_page' %}">Login here</a>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script src="{% static 'scripts/app.js' %}"></script>
+  </body>
+</html>
