@@ -1,25 +1,173 @@
+﻿import logging
+from functools import wraps
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import get_user_model
-from django.db import DatabaseError
-from functools import wraps
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import CharField, Q
 from django.db.models.functions import Cast
 from django.http import HttpResponseRedirect, JsonResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.urls import reverse
 
-from data_manager.models import UploadHistory
+from core.models import User
 from customers.ml_service import (
     get_feature_importance,
+    get_model_metrics,
     get_primary_churn_driver,
     predict_churn,
 )
 from customers.models import Customer
+from data_manager.models import UploadHistory
+
+logger = logging.getLogger(__name__)
 
 
-def _safe_dashboard_context():
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _risk_level(score: float) -> str:
+    if score >= 70:
+        return "High"
+    if score >= 40:
+        return "Medium"
+    return "Low"
+
+
+def _to_payload(customer) -> dict:
+    return {
+        "credit_score": customer.credit_score,
+        "geography": customer.geography,
+        "gender": customer.gender,
+        "age": customer.age,
+        "tenure": customer.tenure,
+        "balance": float(customer.balance or 0),
+        "num_of_products": customer.num_of_products,
+        "has_cr_card": customer.has_cr_card,
+        "is_active_member": customer.is_active_member,
+    }
+
+
+def _safe_score(customer) -> float:
+    """
+    Return a 0-100 churn score. Uses the saved score if available,
+    falls back to the ML model, then falls back to 0.0.
+    Avoids calling predict_churn when we already have a stored value.
+    """
+    saved = customer.churn_risk_score
+    payload = _to_payload(customer)
+    if saved is not None:
+        try:
+            value = float(saved)
+            # Legacy uploads sometimes stored labels (0/1) instead of probabilities.
+            if value in (0.0, 1.0):
+                return float(predict_churn(payload))
+            # Normalise true probability range 0-1 to 0-100.
+            if 0.0 < value < 1.0:
+                value *= 100
+            return max(0.0, min(100.0, value))
+        except (TypeError, ValueError):
+            pass
+    try:
+        return float(predict_churn(payload))
+    except Exception:
+        logger.warning("predict_churn failed for customer %s.", getattr(customer, "customer_id", "?"))
+        return 0.0
+
+
+def _initials(name: str) -> str:
+    parts = [p for p in (name or "").strip().split() if p]
+    if len(parts) >= 2:
+        return (parts[0][0] + parts[1][0]).upper()
+    return (name or "CU")[:2].upper()
+
+
+def _compact_number(value, currency=False) -> str:
+    try:
+        number = float(value or 0)
+    except (TypeError, ValueError):
+        number = 0.0
+
+    abs_n = abs(number)
+    if abs_n >= 1_000_000_000:
+        text = f"{number / 1_000_000_000:.1f}B"
+    elif abs_n >= 1_000_000:
+        text = f"{number / 1_000_000:.1f}M"
+    elif abs_n >= 1_000:
+        text = f"{number / 1_000:.1f}K"
+    else:
+        text = f"{number:.1f}"
+
+    text = text.replace(".0B", "B").replace(".0M", "M").replace(".0K", "K").replace(".0", "")
+    return f"${text}" if currency else text
+
+
+def _score_all_customers(customers: list) -> list:
+    """
+    Score a list of Customer objects in one pass.
+    Calls predict_churn only for customers without a stored score,
+    keeping ML calls to the minimum necessary.
+    """
+    scored = []
+    for customer in customers:
+        score = round(_safe_score(customer), 2)
+        scored.append({
+            "customer_id": customer.customer_id,
+            "surname": customer.surname,
+            "initials": _initials(customer.surname),
+            "credit_score": customer.credit_score,
+            "geography": customer.geography,
+            "gender": customer.gender,
+            "age": int(customer.age or 0),
+            "balance": float(customer.balance or 0),
+            "num_of_products": customer.num_of_products,
+            "is_active_member": int(customer.is_active_member or 0),
+            "score": score,
+            "risk_level": _risk_level(score),
+            "risk_class": _risk_level(score).lower(),
+            "driver": _safe_driver(customer),
+        })
+    return scored
+
+
+def _safe_driver(customer) -> str:
+    try:
+        return get_primary_churn_driver(_to_payload(customer))
+    except Exception:
+        return "Unavailable"
+
+
+def _paginate(queryset, page_number, per_page=20):
+    paginator = Paginator(queryset, per_page)
+    try:
+        page_obj = paginator.page(page_number)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
+    return paginator, page_obj
+
+
+def _page_numbers(paginator, current_page):
+    """Build a smart page number list with ellipses."""
+    total = paginator.num_pages
+    if total <= 7:
+        return list(paginator.page_range)
+
+    numbers = [1]
+    if current_page > 4:
+        numbers.append("...")
+    for n in range(max(2, current_page - 2), min(total - 1, current_page + 2) + 1):
+        numbers.append(n)
+    if current_page < total - 3:
+        numbers.append("...")
+    numbers.append(total)
+    return numbers
+
+
+def _safe_dashboard_context() -> dict:
+    """Fallback context used when the dashboard crashes."""
     return {
         "total_customers": 0,
         "total_customers_compact": "0",
@@ -40,201 +188,89 @@ def _safe_dashboard_context():
             "bar": {"labels": ["Low Risk", "Medium Risk", "High Risk"], "values": [0, 0, 0]},
             "donut": {"labels": [], "values": []},
             "scatter": {"high": [], "low": []},
-            "line": {"labels": [f"{i}Y" for i in range(0, 11)], "values": [0] * 11},
+            "line": {"labels": [f"{i}Y" for i in range(11)], "values": [0] * 11},
         },
     }
 
 
+# ---------------------------------------------------------------------------
+# Decorator
+# ---------------------------------------------------------------------------
+
 def no_500_dashboard(view_func):
+    """
+    Catches unhandled exceptions in dashboard views and renders a safe
+    fallback instead of a 500. Always logs the full traceback so the
+    error is still visible in the server logs.
+    """
     @wraps(view_func)
     def _wrapped(request, *args, **kwargs):
         try:
             return view_func(request, *args, **kwargs)
         except Exception:
-            messages.error(
-                request,
-                "Dashboard data is temporarily unavailable. The page loaded in safe mode.",
-            )
+            logger.exception("Dashboard view '%s' raised an unhandled exception.", view_func.__name__)
+            messages.error(request, "Dashboard data is temporarily unavailable.")
             return render(request, "core/dashboard.html", _safe_dashboard_context())
-
     return _wrapped
 
 
-def _normalize_score(raw_score):
-    if raw_score is None:
-        return None
-    try:
-        value = float(raw_score)
-    except (TypeError, ValueError):
-        return None
-    if value <= 1:
-        value *= 100
-    return max(0.0, min(100.0, value))
-
-
-def _to_payload(customer):
-    return {
-        "credit_score": customer.credit_score,
-        "geography": customer.geography,
-        "gender": customer.gender,
-        "age": customer.age,
-        "tenure": customer.tenure,
-        "balance": customer.balance,
-        "num_of_products": customer.num_of_products,
-        "has_cr_card": customer.has_cr_card,
-        "is_active_member": customer.is_active_member,
-    }
-
-
-def _safe_score(customer):
-    saved_score = _normalize_score(customer.churn_risk_score)
-    if saved_score is not None:
-        return saved_score
-    try:
-        return float(predict_churn(_to_payload(customer)))
-    except Exception:
-        return 0.0
-
-
-def _initials(name: str):
-    cleaned = (name or "").strip()
-    if not cleaned:
-        return "CU"
-    parts = [p for p in cleaned.split(" ") if p]
-    if len(parts) >= 2:
-        return (parts[0][0] + parts[1][0]).upper()
-    return cleaned[:2].upper()
-
-
-def _compact_number(value, currency=False):
-    try:
-        number = float(value or 0)
-    except (TypeError, ValueError):
-        number = 0.0
-
-    abs_number = abs(number)
-    suffix = ""
-    scaled = number
-
-    if abs_number >= 1_000_000_000:
-        scaled = number / 1_000_000_000
-        suffix = "B"
-    elif abs_number >= 1_000_000:
-        scaled = number / 1_000_000
-        suffix = "M"
-    elif abs_number >= 1_000:
-        scaled = number / 1_000
-        suffix = "K"
-
-    text = f"{scaled:.1f}"
-    if text.endswith(".0"):
-        text = text[:-2]
-    if currency:
-        return f"${text}{suffix}"
-    return f"{text}{suffix}"
-
+# ---------------------------------------------------------------------------
+# Dashboard
+# ---------------------------------------------------------------------------
 
 @login_required(login_url="login_page")
 @no_500_dashboard
 def dashboard_page(request):
     try:
         customers = list(Customer.objects.all())
-    except DatabaseError:
+    except Exception:
+        logger.exception("Failed to load customers from database.")
         messages.error(request, "Customer dataset is unavailable. Upload a dataset to continue.")
         customers = []
 
-    scored_customers = []
+    # Score all customers in one pass â€” avoids repeated ML calls per page
+    scored = _score_all_customers(customers)
+    scored.sort(key=lambda c: c["score"], reverse=True)
+
+    total = len(scored)
+    high   = sum(1 for c in scored if c["score"] >= 70)
+    medium = sum(1 for c in scored if 40 <= c["score"] < 70)
+    low    = total - high - medium
+
+    avg_score      = round(sum(c["score"] for c in scored) / total, 2) if total else 0.0
+    churn_rate     = round((high / total) * 100, 2) if total else 0.0
+    at_risk_balance = sum(c["balance"] for c in scored if c["score"] >= 80)
+    active_members = sum(1 for c in scored if c["is_active_member"] == 1)
+
+    # Geography breakdown
     geo_count = {}
-    tenure_risk_sum = {str(i): 0.0 for i in range(0, 11)}
-    tenure_count = {str(i): 0 for i in range(0, 11)}
-    high_points = []
-    low_points = []
+    for c in scored:
+        geo_count[c["geography"]] = geo_count.get(c["geography"], 0) + 1
+    sorted_geo = sorted(geo_count.items(), key=lambda x: x[1], reverse=True)
+    geo_labels = [g[0] for g in sorted_geo[:6]]
+    geo_values = [g[1] for g in sorted_geo[:6]]
 
-    for customer in customers:
-        score = _safe_score(customer)
-        level = _risk_level(score)
-        driver = get_primary_churn_driver(_to_payload(customer))
+    # Tenure risk trend
+    tenure_sum   = {str(i): 0.0 for i in range(11)}
+    tenure_count = {str(i): 0   for i in range(11)}
+    for customer, row in zip(customers, scored):
+        key = str(max(0, min(10, int(customer.tenure or 0))))
+        tenure_sum[key]   += row["score"]
+        tenure_count[key] += 1
 
-        scored = {
-            "customer_id": customer.customer_id,
-            "surname": customer.surname,
-            "credit_score": customer.credit_score,
-            "geography": customer.geography,
-            "gender": customer.gender,
-            "age": customer.age,
-            "balance": float(customer.balance),
-            "num_of_products": customer.num_of_products,
-            "is_active_member": customer.is_active_member,
-            "score": round(score, 2),
-            "risk_level": level,
-            "driver": driver,
-        }
-        scored_customers.append(scored)
+    tenure_values = [
+        round(tenure_sum[str(i)] / tenure_count[str(i)], 2) if tenure_count[str(i)] else 0
+        for i in range(11)
+    ]
 
-        geo_count[customer.geography] = geo_count.get(customer.geography, 0) + 1
-
-        tenure_key = str(max(0, min(10, int(customer.tenure))))
-        tenure_risk_sum[tenure_key] += score
-        tenure_count[tenure_key] += 1
-
-        point = {"x": int(customer.age), "y": round(float(customer.balance), 2)}
-        if score >= 50:
-            high_points.append(point)
-        else:
-            low_points.append(point)
-
-    scored_customers.sort(key=lambda c: c["score"], reverse=True)
-
-    total = len(scored_customers)
-    high = sum(1 for c in scored_customers if c["score"] >= 70)
-    medium = sum(1 for c in scored_customers if 40 <= c["score"] < 70)
-    low = total - high - medium
-    avg_score = round(sum(c["score"] for c in scored_customers) / total, 2) if total else 0.0
-
-    churn_rate = round((high / total) * 100, 2) if total else 0.0
-    at_risk_balance = sum(c["balance"] for c in scored_customers if c["score"] >= 80)
-    active_members = sum(1 for c in scored_customers if c["is_active_member"] == 1)
-
-    top_customers = scored_customers[:5]
-
-    sorted_geo = sorted(geo_count.items(), key=lambda item: item[1], reverse=True)
-    geo_labels = [item[0] for item in sorted_geo[:6]]
-    geo_values = [item[1] for item in sorted_geo[:6]]
-
-    tenure_labels = [f"{i}Y" for i in range(0, 11)]
-    tenure_values = []
-    for i in range(0, 11):
-        key = str(i)
-        if tenure_count[key] == 0:
-            tenure_values.append(0)
-        else:
-            tenure_values.append(round(tenure_risk_sum[key] / tenure_count[key], 2))
-
-    highest_geo = geo_labels[0] if geo_labels else "N/A"
-    highest_geo_count = geo_values[0] if geo_values else 0
-    inactive_low_balance = sum(
-        1 for c in scored_customers if c["is_active_member"] == 0 and c["balance"] < 10000
-    )
-    multi_product_stable = sum(
-        1 for c in scored_customers if c["num_of_products"] >= 2 and c["score"] < 40
-    )
-
-    dashboard_data = {
-        "bar": {
-            "labels": ["Low Risk", "Medium Risk", "High Risk"],
-            "values": [low, medium, high],
-        },
-        "donut": {"labels": geo_labels, "values": geo_values},
-        "scatter": {
-            "high": high_points[:250],
-            "low": low_points[:250],
-        },
-        "line": {"labels": tenure_labels, "values": tenure_values},
-    }
+    # Scatter data (capped for performance)
+    high_points = [{"x": c["age"], "y": c["balance"]} for c in scored if c["score"] >= 50][:250]
+    low_points  = [{"x": c["age"], "y": c["balance"]} for c in scored if c["score"] < 50][:250]
 
     try:
         feature_importance = get_feature_importance()
     except Exception:
+        logger.warning("Feature importance unavailable.")
         feature_importance = []
 
     context = {
@@ -247,92 +283,60 @@ def dashboard_page(request):
         "active_members": active_members,
         "active_members_compact": _compact_number(active_members),
         "avg_score": avg_score,
-        "top_customers": top_customers,
-        "highest_geo": highest_geo,
-        "highest_geo_count": highest_geo_count,
-        "inactive_low_balance": inactive_low_balance,
-        "multi_product_stable": multi_product_stable,
+        "top_customers": scored[:5],
+        "highest_geo": geo_labels[0] if geo_labels else "N/A",
+        "highest_geo_count": geo_values[0] if geo_values else 0,
+        "inactive_low_balance": sum(1 for c in scored if c["is_active_member"] == 0 and c["balance"] < 10000),
+        "multi_product_stable": sum(1 for c in scored if c["num_of_products"] >= 2 and c["score"] < 40),
         "feature_importance": feature_importance,
-        "dashboard_data": dashboard_data,
+        "dashboard_data": {
+            "bar":    {"labels": ["Low Risk", "Medium Risk", "High Risk"], "values": [low, medium, high]},
+            "donut":  {"labels": geo_labels, "values": geo_values},
+            "scatter": {"high": high_points, "low": low_points},
+            "line":   {"labels": [f"{i}Y" for i in range(11)], "values": tenure_values},
+        },
     }
     return render(request, "core/dashboard.html", context)
 
+
+# ---------------------------------------------------------------------------
+# Risk Level
+# ---------------------------------------------------------------------------
 
 @login_required(login_url="login_page")
 def risk_level_page(request):
     customers = list(Customer.objects.all())
 
-    rows = []
-    geographies = sorted({(c.geography or "").strip() for c in customers if c.geography})
+    # Score once upfront â€” no per-row ML calls inside the filter loop
+    scored = _score_all_customers(customers)
 
-    selected_risk = (request.GET.get("risk_level") or "").strip().lower()
-    selected_geo = (request.GET.get("geography") or "").strip()
-    selected_active = (request.GET.get("is_active") or "").strip()
-    query = (request.GET.get("q") or "").strip().lower()
+    # Filters
+    selected_risk   = request.GET.get("risk_level", "").strip().lower()
+    selected_geo    = request.GET.get("geography", "").strip()
+    selected_active = request.GET.get("is_active", "").strip()
+    query           = request.GET.get("q", "").strip().lower()
 
-    for customer in customers:
-        score = round(_safe_score(customer), 2)
-        level = _risk_level(score)
-        level_key = level.lower()
+    rows = [
+        c for c in scored
+        if (not selected_risk   or c["risk_class"] == selected_risk)
+        and (not selected_geo   or c["geography"] == selected_geo)
+        and (selected_active not in {"0", "1"} or str(c["is_active_member"]) == selected_active)
+        and (not query or query in str(c["customer_id"]).lower() or query in c["surname"].lower())
+    ]
 
-        if selected_risk and level_key != selected_risk:
-            continue
-        if selected_geo and customer.geography != selected_geo:
-            continue
-        if selected_active in {"0", "1"} and str(customer.is_active_member) != selected_active:
-            continue
-        if query and query not in str(customer.customer_id).lower() and query not in (customer.surname or "").lower():
-            continue
+    rows.sort(key=lambda c: c["score"], reverse=True)
 
-        rows.append(
-            {
-                "customer_id": customer.customer_id,
-                "surname": customer.surname,
-                "initials": _initials(customer.surname),
-                "risk_score": score,
-                "risk_level": level,
-                "risk_class": level_key,
-                "driver": get_primary_churn_driver(_to_payload(customer)),
-                "balance": float(customer.balance or 0),
-                "is_active_member": int(customer.is_active_member or 0),
-            }
-        )
+    total  = len(rows)
+    high   = sum(1 for c in rows if c["score"] >= 70)
+    medium = sum(1 for c in rows if 40 <= c["score"] < 70)
+    low    = total - high - medium
 
-    rows.sort(key=lambda c: c["risk_score"], reverse=True)
+    geographies = sorted({c["geography"] for c in scored if c["geography"]})
 
-    total = len(rows)
-    high = sum(1 for c in rows if c["risk_score"] >= 70)
-    medium = sum(1 for c in rows if 40 <= c["risk_score"] < 70)
-    low = total - high - medium
-
-    paginator = Paginator(rows, 20)
-    page_number = request.GET.get("page", 1)
-    try:
-        page_obj = paginator.page(page_number)
-    except PageNotAnInteger:
-        page_obj = paginator.page(1)
-    except EmptyPage:
-        page_obj = paginator.page(paginator.num_pages)
-
-    page_numbers = []
-    if paginator.num_pages <= 7:
-        page_numbers = list(paginator.page_range)
-    else:
-        current = page_obj.number
-        page_numbers = [1]
-        if current > 4:
-            page_numbers.append("...")
-        start = max(2, current - 2)
-        end = min(paginator.num_pages - 1, current + 2)
-        for num in range(start, end + 1):
-            page_numbers.append(num)
-        if current < paginator.num_pages - 3:
-            page_numbers.append("...")
-        page_numbers.append(paginator.num_pages)
+    paginator, page_obj = _paginate(rows, request.GET.get("page", 1))
 
     querydict = request.GET.copy()
     querydict.pop("page", None)
-    base_query = querydict.urlencode()
 
     context = {
         "customers": page_obj.object_list,
@@ -343,11 +347,15 @@ def risk_level_page(request):
         "geographies": geographies,
         "page_obj": page_obj,
         "paginator": paginator,
-        "page_numbers": page_numbers,
-        "base_query": base_query,
+        "page_numbers": _page_numbers(paginator, page_obj.number),
+        "base_query": querydict.urlencode(),
     }
     return render(request, "dashboard/risk_level.html", context)
 
+
+# ---------------------------------------------------------------------------
+# Data Management
+# ---------------------------------------------------------------------------
 
 @login_required(login_url="login_page")
 def data_management_page(request):
@@ -355,57 +363,63 @@ def data_management_page(request):
         UploadHistory.objects.select_related("uploaded_by")
         .order_by("-uploaded_at")[:100]
     )
-    return render(
-        request,
-        "dashboard/data_management.html",
-        {
-            "upload_history": upload_history,
-            "can_manage_dataset": request.user.is_staff,
-        },
-    )
+    return render(request, "dashboard/data_management.html", {
+        "upload_history": upload_history,
+        "can_manage_dataset": request.user.is_staff,
+    })
 
+
+@login_required(login_url="login_page")
+def clear_dataset(request):
+    if not request.user.is_staff:
+        messages.error(request, "Only admin users can clear datasets.")
+        return redirect("data_management_page")
+
+    if request.method != "POST":
+        messages.error(request, "Invalid request.")
+        return redirect("data_management_page")
+
+    customer_count = Customer.objects.count()
+    uploads = list(UploadHistory.objects.all())
+
+    for upload in uploads:
+        if upload.file_name:
+            upload.file_name.delete(save=False)
+
+    UploadHistory.objects.all().delete()
+    Customer.objects.all().delete()
+
+    messages.success(
+        request,
+        f"Dataset cleared: {customer_count} customers and {len(uploads)} upload records removed.",
+    )
+    return redirect("data_management_page")
+
+
+# ---------------------------------------------------------------------------
+# Model Insights
+# ---------------------------------------------------------------------------
 
 @login_required(login_url="login_page")
 def model_insight_page(request):
     customers = list(Customer.objects.all())
-    latest_processed_upload = (
-        UploadHistory.objects.filter(processed=True).order_by("-uploaded_at").first()
-    )
-    has_uploaded_dataset = latest_processed_upload is not None
-    has_customer_rows = len(customers) > 0
+    latest_upload = UploadHistory.objects.filter(processed=True).order_by("-uploaded_at").first()
+
+    has_data = len(customers) > 0 and latest_upload is not None
 
     scored = []
-    high_points = []
-    low_points = []
-    region_totals = {}
-    region_high = {}
+    high_points, low_points = [], []
+    region_totals, region_high = {}, {}
     truth_pairs = []
 
     for customer in customers:
-        payload = _to_payload(customer)
-        try:
-            model_score = float(predict_churn(payload))
-        except Exception:
-            model_score = float(_safe_score(customer))
-        score = round(model_score, 2)
+        score = round(_safe_score(customer), 2)
         geo = customer.geography or "Unknown"
 
-        scored.append(
-            {
-                "score": score,
-                "geography": geo,
-                "age": int(customer.age or 0),
-                "balance": float(customer.balance or 0),
-                "credit_score": int(customer.credit_score or 0),
-                "num_of_products": int(customer.num_of_products or 0),
-            }
-        )
+        scored.append({"score": score, "geography": geo})
 
         point = {"x": int(customer.age or 0), "y": round(float(customer.balance or 0), 2)}
-        if score >= 50:
-            high_points.append(point)
-        else:
-            low_points.append(point)
+        (high_points if score >= 50 else low_points).append(point)
 
         region_totals[geo] = region_totals.get(geo, 0) + 1
         if score >= 70:
@@ -415,66 +429,64 @@ def model_insight_page(request):
         if raw is not None:
             try:
                 raw_float = float(raw)
+                if raw_float in (0.0, 1.0):
+                    truth_pairs.append((int(raw_float), 1 if score >= 50 else 0))
             except (TypeError, ValueError):
-                raw_float = None
-            if raw_float is not None and raw_float in (0.0, 1.0):
-                truth_pairs.append((int(raw_float), 1 if model_score >= 50 else 0))
+                pass
 
-    # Feature importance should only appear when we have uploaded dataset rows.
-    fi = []
-    if has_uploaded_dataset and has_customer_rows:
-        try:
-            fi = get_feature_importance()
-        except Exception:
-            fi = []
-
+    # Feature importance
     feature_rows = []
-    for item in fi[:8]:
-        feature_rows.append(
-            {
-                "name": item["label"],
-                "pct": round(float(item["value"]), 1),
-                "tip": f"{item['label']} contributes {round(float(item['value']), 1)}% to model decisions.",
-            }
-        )
+    if has_data:
+        try:
+            for item in get_feature_importance()[:8]:
+                feature_rows.append({
+                    "name": item["label"],
+                    "pct": round(float(item["value"]), 1),
+                    "tip": f"{item['label']} contributes {round(float(item['value']), 1)}% to model decisions.",
+                })
+        except Exception:
+            logger.warning("Feature importance unavailable for model insights.")
 
-    # Regional risk concentration among high-risk customers
-    region_data = []
+    # Regional concentration
     total_high = sum(region_high.values())
-    for geo, high_count in sorted(region_high.items(), key=lambda it: it[1], reverse=True):
-        pct = round((high_count / total_high) * 100, 1) if total_high else 0.0
-        region_data.append({"name": geo, "pct": pct, "high_count": high_count})
-    if not region_data and region_totals:
-        # fallback when no one is >= 70, use total distribution
+    region_data = [
+        {
+            "name": geo,
+            "pct": round((count / total_high) * 100, 1) if total_high else 0.0,
+            "high_count": count,
+        }
+        for geo, count in sorted(region_high.items(), key=lambda x: x[1], reverse=True)
+    ]
+    if not region_data:
         grand = sum(region_totals.values())
-        for geo, total_count in sorted(region_totals.items(), key=lambda it: it[1], reverse=True):
-            pct = round((total_count / grand) * 100, 1) if grand else 0.0
-            region_data.append({"name": geo, "pct": pct, "high_count": 0})
+        region_data = [
+            {"name": geo, "pct": round((n / grand) * 100, 1) if grand else 0.0, "high_count": 0}
+            for geo, n in sorted(region_totals.items(), key=lambda x: x[1], reverse=True)
+        ]
 
-    # Model health from labeled rows if available
+    # Model health metrics
     accuracy = precision = recall = None
     metrics_available = False
+    labeled_count = 0
     if truth_pairs:
         tp = sum(1 for y, p in truth_pairs if y == 1 and p == 1)
         tn = sum(1 for y, p in truth_pairs if y == 0 and p == 0)
         fp = sum(1 for y, p in truth_pairs if y == 0 and p == 1)
         fn = sum(1 for y, p in truth_pairs if y == 1 and p == 0)
         total = len(truth_pairs)
-        accuracy = round(((tp + tn) / total) * 100, 1) if total else 0.0
+        accuracy  = round(((tp + tn) / total) * 100, 1) if total else 0.0
         precision = round((tp / (tp + fp)) * 100, 1) if (tp + fp) else 0.0
-        recall = round((tp / (tp + fn)) * 100, 1) if (tp + fn) else 0.0
+        recall    = round((tp / (tp + fn)) * 100, 1) if (tp + fn) else 0.0
         metrics_available = True
-
-    dashboard_data = {
-        "donut": {
-            "labels": [r["name"] for r in region_data[:6]],
-            "values": [r["pct"] for r in region_data[:6]],
-        },
-        "scatter": {
-            "high": high_points[:300],
-            "retained": low_points[:300],
-        },
-    }
+        labeled_count = len(truth_pairs)
+    else:
+        persisted = get_model_metrics() or {}
+        if persisted:
+            accuracy = persisted.get("accuracy")
+            precision = persisted.get("precision")
+            recall = persisted.get("recall")
+            labeled_count = persisted.get("test_samples", 0)
+            metrics_available = all(v is not None for v in (accuracy, precision, recall))
 
     context = {
         "feature_rows": feature_rows,
@@ -483,71 +495,80 @@ def model_insight_page(request):
         "precision": precision,
         "recall": recall,
         "metrics_available": metrics_available,
-        "labeled_count": len(truth_pairs),
+        "labeled_count": labeled_count,
         "training_last_text": (
-            latest_processed_upload.uploaded_at.strftime("%b %d, %Y")
-            if latest_processed_upload
-            else "No dataset uploaded"
+            latest_upload.uploaded_at.strftime("%b %d, %Y") if latest_upload else "No dataset uploaded"
         ),
-        "insight_data": dashboard_data,
+        "insight_data": {
+            "donut":   {"labels": [r["name"] for r in region_data[:6]], "values": [r["pct"] for r in region_data[:6]]},
+            "scatter": {"high": high_points[:300], "retained": low_points[:300]},
+        },
     }
     return render(request, "dashboard/model_insights.html", context)
 
 
+# ---------------------------------------------------------------------------
+# Settings
+# ---------------------------------------------------------------------------
+
 @login_required(login_url="login_page")
 def settings_page(request):
-    User = get_user_model()
-    can_view_all_users = request.user.is_staff
-    if can_view_all_users:
-        members = User.objects.all().order_by("-created_at")
-    else:
-        members = User.objects.filter(pk=request.user.pk)
-    return render(
-        request,
-        "dashboard/settings.html",
-        {
-            "members": members,
-            "member_count": members.count(),
-            "can_manage_dataset": request.user.is_staff,
-            "can_view_all_users": can_view_all_users,
-        },
-    )
+    can_view_all = request.user.is_staff
+    members = User.objects.all().order_by("-created_at") if can_view_all else User.objects.filter(pk=request.user.pk)
+    return render(request, "dashboard/settings.html", {
+        "members": members,
+        "member_count": members.count(),
+        "can_manage_dataset": request.user.is_staff,
+        "can_view_all_users": can_view_all,
+    })
 
+
+
+# ---------------------------------------------------------------------------
+# Engagement Hub
+# ---------------------------------------------------------------------------
 
 @login_required(login_url="login_page")
-def clear_dataset(request):
-    if not request.user.is_staff:
-        messages.error(request, "Only admin users can clear datasets.")
-        return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/dashboard/profile/"))
+def engagement_hub_page(request):
+    """
+    Central engagement hub for stakeholders.
+    Shows complaints, notifications, goals and surveys across all customers.
+    """
+    from core.models import Complaint, Goal, Notification, Survey
 
-    if request.method == "POST":
-        customer_count = Customer.objects.count()
-        uploads = list(UploadHistory.objects.all())
-        upload_count = len(uploads)
+    recent_complaints = (
+        Complaint.objects.select_related("user")
+        .order_by("-created_at")[:10]
+    )
+    recent_notifications = (
+        Notification.objects.select_related("target_user")
+        .order_by("-created_at")[:10]
+    )
+    recent_goals = (
+        Goal.objects.select_related("user")
+        .order_by("-created_at")[:10]
+    )
+    recent_surveys = (
+        Survey.objects.select_related("user")
+        .order_by("-created_at")[:10]
+    )
 
-        for upload in uploads:
-            if upload.file_name:
-                upload.file_name.delete(save=False)
+    open_complaints = Complaint.objects.filter(status=Complaint.STATUS_OPEN).count()
+    unread_notifications = Notification.objects.filter(is_read=False).count()
 
-        UploadHistory.objects.all().delete()
-        Customer.objects.all().delete()
+    context = {
+        "recent_complaints": recent_complaints,
+        "recent_notifications": recent_notifications,
+        "recent_goals": recent_goals,
+        "recent_surveys": recent_surveys,
+        "open_complaints": open_complaints,
+        "unread_notifications": unread_notifications,
+    }
+    return render(request, "dashboard/engagement_hub.html", context)
 
-        messages.success(
-            request,
-            f"Dataset cleared: {customer_count} customers and {upload_count} upload records removed.",
-        )
-    else:
-        messages.error(request, "Invalid request method for clearing dataset.")
-    return HttpResponseRedirect(request.META.get("HTTP_REFERER", "/dashboard/profile/"))
-
-
-def _risk_level(score: float) -> str:
-    if score >= 70:
-        return "High"
-    if score >= 40:
-        return "Medium"
-    return "Low"
-
+# ---------------------------------------------------------------------------
+# Search (JSON)
+# ---------------------------------------------------------------------------
 
 @login_required(login_url="login_page")
 def dashboard_search(request):
@@ -557,7 +578,8 @@ def dashboard_search(request):
         return JsonResponse({"query": query, "count": 0, "results": []})
 
     customers = (
-        Customer.objects.annotate(customer_id_str=Cast("customer_id", CharField()))
+        Customer.objects
+        .annotate(customer_id_str=Cast("customer_id", CharField()))
         .filter(
             Q(customer_id_str__icontains=query)
             | Q(surname__icontains=query)
@@ -567,39 +589,23 @@ def dashboard_search(request):
         .order_by("-churn_risk_score", "surname")[:8]
     )
 
-    results = []
     risk_level_url = reverse("risk_level_page")
+    results = []
     for customer in customers:
-        payload = {
-            "credit_score": customer.credit_score,
+        score = round(_safe_score(customer), 2)
+        results.append({
+            "customer_id": customer.customer_id,
+            "surname": customer.surname,
             "geography": customer.geography,
             "gender": customer.gender,
-            "age": customer.age,
-            "tenure": customer.tenure,
-            "balance": customer.balance,
-            "num_of_products": customer.num_of_products,
-            "has_cr_card": customer.has_cr_card,
-            "is_active_member": customer.is_active_member,
-        }
-
-        try:
-            ml_score = predict_churn(payload)
-            driver = get_primary_churn_driver(payload)
-        except Exception:
-            ml_score = round(float(customer.churn_risk_score or 0), 2)
-            driver = "Model scoring unavailable"
-
-        results.append(
-            {
-                "customer_id": customer.customer_id,
-                "surname": customer.surname,
-                "geography": customer.geography,
-                "gender": customer.gender,
-                "risk_score": ml_score,
-                "risk_level": _risk_level(ml_score),
-                "driver": driver,
-                "risk_url": risk_level_url,
-            }
-        )
+            "risk_score": score,
+            "risk_level": _risk_level(score),
+            "driver": _safe_driver(customer),
+            "risk_url": risk_level_url,
+        })
 
     return JsonResponse({"query": query, "count": len(results), "results": results})
+
+
+
+

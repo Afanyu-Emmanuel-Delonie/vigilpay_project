@@ -7,23 +7,27 @@ from django.http import JsonResponse
 from django.utils.decorators import method_decorator
 from django.views import View
 
+from customers.ml_service import predict_churn, train_churn_model
 from customers.models import Customer
 from data_manager.models import UploadHistory
 
 MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024
-REQUIRED_COLUMNS = (
-    "CustomerId",
-    "Surname",
-    "CreditScore",
-    "Geography",
-    "Gender",
-    "Age",
-    "Tenure",
-    "Balance",
-    "NumOfProducts",
-    "HasCrCard",
-    "IsActiveMember",
-)
+REQUIRED_COLUMN_ALIASES = {
+    # Optional: auto-generated when absent.
+    "CustomerId": ("customerid", "customer_id"),
+    "Surname": ("surname",),
+    # Required columns (accept common snake_case aliases too).
+    "CreditScore": ("creditscore", "credit_score"),
+    "Geography": ("geography",),
+    "Gender": ("gender",),
+    "Age": ("age",),
+    "Tenure": ("tenure",),
+    "Balance": ("balance",),
+    "NumOfProducts": ("numofproducts", "num_of_products"),
+    "HasCrCard": ("hascrcard", "has_cr_card"),
+    "IsActiveMember": ("isactivemember", "is_active_member"),
+}
+OPTIONAL_AUTOFILL_COLUMNS = {"CustomerId", "Surname"}
 
 
 def _pick(row, *keys, default=None):
@@ -31,6 +35,10 @@ def _pick(row, *keys, default=None):
         if key in row and str(row[key]).strip() != "":
             return row[key]
     return default
+
+
+def _has_any_column(normalized_headers, aliases):
+    return any(alias in normalized_headers for alias in aliases)
 
 
 def _to_int(value, default=0):
@@ -103,7 +111,12 @@ class UploadDataView(View):
                 return JsonResponse({"error": "CSV appears empty or missing headers."}, status=400)
 
             normalized = {name.strip().lower() for name in reader.fieldnames if name}
-            missing = [col for col in REQUIRED_COLUMNS if col.lower() not in normalized]
+            missing = []
+            for canonical, aliases in REQUIRED_COLUMN_ALIASES.items():
+                if canonical in OPTIONAL_AUTOFILL_COLUMNS:
+                    continue
+                if not _has_any_column(normalized, aliases):
+                    missing.append(canonical)
             if missing:
                 return JsonResponse(
                     {"error": f"Missing required columns: {', '.join(missing)}"},
@@ -132,24 +145,55 @@ class UploadDataView(View):
                 status=400,
             )
 
+        training_samples = []
+        training_labels = []
+        prepared_rows = []
+        for idx, row in enumerate(rows, start=1):
+            payload = {
+                "credit_score": _to_int(_pick(row, "CreditScore", "credit_score"), 600),
+                "geography": str(_pick(row, "Geography", "geography", default="Unknown")),
+                "gender": str(_pick(row, "Gender", "gender", default="Unknown")),
+                "age": _to_int(_pick(row, "Age", "age"), 35),
+                "tenure": _to_int(_pick(row, "Tenure", "tenure"), 0),
+                "balance": _to_float(_pick(row, "Balance", "balance"), 0.0),
+                "num_of_products": _to_int(_pick(row, "NumOfProducts", "num_of_products"), 1),
+                "has_cr_card": _to_int(_pick(row, "HasCrCard", "has_cr_card"), 1),
+                "is_active_member": _to_int(_pick(row, "IsActiveMember", "is_active_member"), 1),
+                "has_active_complaint": 0,
+            }
+            prepared_rows.append((idx, row, payload))
+
+            label_raw = _pick(row, "Exited", "exited", "churn_risk_score")
+            if label_raw is None:
+                continue
+            label = _to_int(label_raw, -1)
+            if label in (0, 1):
+                training_samples.append(payload)
+                training_labels.append(label)
+
+        model_result = {"trained": False, "reason": "no labels found in upload"}
+        if training_labels:
+            model_result = train_churn_model(training_samples, training_labels)
+
         created = 0
         with transaction.atomic():
             Customer.objects.all().delete()
-            for idx, row in enumerate(rows, start=1):
+            for idx, row, payload in prepared_rows:
                 customer_id = _to_int(_pick(row, "CustomerId", "customer_id", "customerid"), idx)
+                predicted_score = predict_churn(payload)
                 Customer.objects.create(
                     customer_id=customer_id,
                     surname=str(_pick(row, "Surname", "surname", default=f"Customer {idx}")),
-                    credit_score=_to_int(_pick(row, "CreditScore", "credit_score"), 600),
-                    geography=str(_pick(row, "Geography", "geography", default="Unknown")),
-                    gender=str(_pick(row, "Gender", "gender", default="Unknown")),
-                    age=_to_int(_pick(row, "Age", "age"), 35),
-                    tenure=_to_int(_pick(row, "Tenure", "tenure"), 0),
-                    balance=_to_float(_pick(row, "Balance", "balance"), 0.0),
-                    num_of_products=_to_int(_pick(row, "NumOfProducts", "num_of_products"), 1),
-                    has_cr_card=_to_int(_pick(row, "HasCrCard", "has_cr_card"), 1),
-                    is_active_member=_to_int(_pick(row, "IsActiveMember", "is_active_member"), 1),
-                    churn_risk_score=_to_float(_pick(row, "Exited", "churn_risk_score"), 0.0),
+                    credit_score=payload["credit_score"],
+                    geography=payload["geography"],
+                    gender=payload["gender"],
+                    age=payload["age"],
+                    tenure=payload["tenure"],
+                    balance=payload["balance"],
+                    num_of_products=payload["num_of_products"],
+                    has_cr_card=payload["has_cr_card"],
+                    is_active_member=payload["is_active_member"],
+                    churn_risk_score=predicted_score,
                 )
                 created += 1
 
@@ -160,4 +204,10 @@ class UploadDataView(View):
                 uploaded_by=request.user,
             )
 
-        return JsonResponse({"rows_prepared": created}, status=200)
+        return JsonResponse(
+            {
+                "rows_prepared": created,
+                "ml_model": model_result,
+            },
+            status=200,
+        )
