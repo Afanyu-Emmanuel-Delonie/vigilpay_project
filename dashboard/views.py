@@ -1,4 +1,4 @@
-import logging
+﻿import logging
 from functools import wraps
 
 from django.contrib import messages
@@ -11,7 +11,12 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 
 from core.models import User
-from customers.ml_service import get_feature_importance, get_primary_churn_driver, predict_churn
+from customers.ml_service import (
+    get_feature_importance,
+    get_model_metrics,
+    get_primary_churn_driver,
+    predict_churn,
+)
 from customers.models import Customer
 from data_manager.models import UploadHistory
 
@@ -46,22 +51,26 @@ def _to_payload(customer) -> dict:
 
 def _safe_score(customer) -> float:
     """
-    Return a 0–100 churn score. Uses the saved score if available,
+    Return a 0-100 churn score. Uses the saved score if available,
     falls back to the ML model, then falls back to 0.0.
     Avoids calling predict_churn when we already have a stored value.
     """
     saved = customer.churn_risk_score
+    payload = _to_payload(customer)
     if saved is not None:
         try:
             value = float(saved)
-            # Normalise 0–1 range to 0–100
-            if value <= 1.0:
+            # Legacy uploads sometimes stored labels (0/1) instead of probabilities.
+            if value in (0.0, 1.0):
+                return float(predict_churn(payload))
+            # Normalise true probability range 0-1 to 0-100.
+            if 0.0 < value < 1.0:
                 value *= 100
             return max(0.0, min(100.0, value))
         except (TypeError, ValueError):
             pass
     try:
-        return float(predict_churn(_to_payload(customer)))
+        return float(predict_churn(payload))
     except Exception:
         logger.warning("predict_churn failed for customer %s.", getattr(customer, "customer_id", "?"))
         return 0.0
@@ -219,7 +228,7 @@ def dashboard_page(request):
         messages.error(request, "Customer dataset is unavailable. Upload a dataset to continue.")
         customers = []
 
-    # Score all customers in one pass — avoids repeated ML calls per page
+    # Score all customers in one pass â€” avoids repeated ML calls per page
     scored = _score_all_customers(customers)
     scored.sort(key=lambda c: c["score"], reverse=True)
 
@@ -298,7 +307,7 @@ def dashboard_page(request):
 def risk_level_page(request):
     customers = list(Customer.objects.all())
 
-    # Score once upfront — no per-row ML calls inside the filter loop
+    # Score once upfront â€” no per-row ML calls inside the filter loop
     scored = _score_all_customers(customers)
 
     # Filters
@@ -457,6 +466,8 @@ def model_insight_page(request):
 
     # Model health metrics
     accuracy = precision = recall = None
+    metrics_available = False
+    labeled_count = 0
     if truth_pairs:
         tp = sum(1 for y, p in truth_pairs if y == 1 and p == 1)
         tn = sum(1 for y, p in truth_pairs if y == 0 and p == 0)
@@ -466,6 +477,16 @@ def model_insight_page(request):
         accuracy  = round(((tp + tn) / total) * 100, 1) if total else 0.0
         precision = round((tp / (tp + fp)) * 100, 1) if (tp + fp) else 0.0
         recall    = round((tp / (tp + fn)) * 100, 1) if (tp + fn) else 0.0
+        metrics_available = True
+        labeled_count = len(truth_pairs)
+    else:
+        persisted = get_model_metrics() or {}
+        if persisted:
+            accuracy = persisted.get("accuracy")
+            precision = persisted.get("precision")
+            recall = persisted.get("recall")
+            labeled_count = persisted.get("test_samples", 0)
+            metrics_available = all(v is not None for v in (accuracy, precision, recall))
 
     context = {
         "feature_rows": feature_rows,
@@ -473,8 +494,8 @@ def model_insight_page(request):
         "accuracy": accuracy,
         "precision": precision,
         "recall": recall,
-        "metrics_available": bool(truth_pairs),
-        "labeled_count": len(truth_pairs),
+        "metrics_available": metrics_available,
+        "labeled_count": labeled_count,
         "training_last_text": (
             latest_upload.uploaded_at.strftime("%b %d, %Y") if latest_upload else "No dataset uploaded"
         ),
@@ -584,5 +605,7 @@ def dashboard_search(request):
         })
 
     return JsonResponse({"query": query, "count": len(results), "results": results})
+
+
 
 
