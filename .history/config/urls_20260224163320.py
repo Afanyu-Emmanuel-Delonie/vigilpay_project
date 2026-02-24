@@ -1,0 +1,19 @@
+from django.contrib import admin
+from django.http import HttpResponse
+from django.urls import include, path
+
+
+def home(_request):
+    return HttpResponse("VigilPay", content_type="text/plain")
+
+
+def health(_request):
+    return HttpResponse("ok", content_type="text/plain")
+
+urlpatterns = [
+    path("", include("core.urls")),
+    path("healthz/", health, name="healthz"),
+    path("admin/", admin.site.urls),
+    path("api/", include("api.urls")),
+    path("dashboard/", include("dashboard.urls")),
+]
