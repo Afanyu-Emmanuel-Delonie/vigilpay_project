@@ -1,0 +1,63 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VigilPay - Verify OTP</title>
+    <link rel="stylesheet" href="{% static 'styles/app.css' %}" />
+  </head>
+  <body class="login-page">
+    <div class="page">
+      <div class="panel-right" style="max-width: 620px; margin: 0 auto">
+        <div class="form-wrap">
+          <div class="form-heading">
+            <h1>Verify OTP</h1>
+            <p>
+              We sent a 6-digit OTP to <strong>{{ email }}</strong>.
+              {% if purpose == 'registration' %}Verify to complete registration.{% else %}Verify to continue password reset.{% endif %}
+            </p>
+          </div>
+
+          {% if messages %}
+          <div style="margin-bottom: 1rem; color: #8c1515; font-size: 0.78rem; font-weight: 600;">
+            {% for message in messages %}
+            <p>{{ message }}</p>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          <form class="form-body" method="post" action="{% url 'verify_otp_page' %}">
+            {% csrf_token %}
+            <div class="field" id="field-otp-code">
+              <label for="otp_code">OTP Code</label>
+              <div class="field-input-wrap">
+                <input
+                  type="text"
+                  id="otp_code"
+                  name="otp_code"
+                  value="{{ form.data.otp_code|default:'' }}"
+                  placeholder="123456"
+                  inputmode="numeric"
+                  maxlength="6"
+                  required
+                />
+              </div>
+            </div>
+            <button type="submit" class="btn-login">
+              <span class="btn-text">Verify OTP</span>
+            </button>
+          </form>
+
+          <form method="post" action="{% url 'verify_otp_page' %}" style="margin-top: 0.75rem">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="resend" />
+            <button type="submit" class="btn-login">
+              <span class="btn-text">Resend OTP</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

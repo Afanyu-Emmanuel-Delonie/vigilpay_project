@@ -1,0 +1,349 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Profile - VigilPay{% endblock %}
+{% block page_title %}Profile{% endblock %}
+
+{% block extra_head %}
+<meta name="active-nav" content="profile">
+<link rel="stylesheet" href="{% static 'styles/dashboard_settings.css' %}" />
+<style>
+  /* ── Kebab Menu ── */
+  .action-cell { position: relative; }
+
+  .kebab-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    border: 1.5px solid #e5e5e5;
+    background: #fff;
+    cursor: pointer;
+    color: #555;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .kebab-btn:hover {
+    background: #f5f5f5;
+    border-color: #ccc;
+  }
+  .kebab-btn svg {
+    pointer-events: none;
+  }
+
+  .kebab-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    min-width: 170px;
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    z-index: 999;
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px) scale(0.97);
+    transform-origin: top right;
+    transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+  }
+  .kebab-menu.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+  }
+
+  .kebab-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    padding: 9px 14px;
+    font-size: 0.73rem;
+    font-weight: 600;
+    color: #333;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.12s;
+  }
+  .kebab-item:hover { background: #f5f5f5; }
+  .kebab-item.danger { color: #c0392b; }
+  .kebab-item.danger:hover { background: #fff1f0; }
+
+  .kebab-item svg { flex-shrink: 0; opacity: 0.75; }
+  .kebab-divider {
+    height: 1px;
+    background: #f0f0f0;
+    margin: 3px 0;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div>
+    <div class="section-label">Account</div>
+    <div class="top-grid">
+      <div class="card">
+        <div class="profile-header">
+          <div class="profile-header-inner">
+            <div class="profile-avatar-wrap">
+              <div class="profile-avatar">{{ user.first_name.0|default:user.username.0|upper }}{{ user.last_name.0|upper }}</div>
+              <div class="profile-online"></div>
+            </div>
+            <div class="profile-name">{{ user.get_full_name|default:user.username }}</div>
+            <div class="profile-email">{{ user.email }}</div>
+            <span class="role-badge">
+              <span class="role-dot"></span>
+              {% if user.is_superuser %}System Administrator{% elif user.is_staff %}Staff Member{% else %}Member{% endif %}
+            </span>
+          </div>
+        </div>
+        <div class="profile-body">
+          <div class="perm-title">Role Permissions</div>
+          <div class="perm-list">
+            <div class="perm-row"><div class="perm-icon">A</div>Access to PII Data <span class="perm-status">Granted</span></div>
+            <div class="perm-row"><div class="perm-icon">U</div>Dataset Upload Rights <span class="perm-status">{% if can_manage_dataset %}Granted{% else %}Restricted{% endif %}</span></div>
+            <div class="perm-row"><div class="perm-icon">M</div>Model Retraining Control <span class="perm-status">Granted</span></div>
+            <div class="perm-row"><div class="perm-icon">T</div>Team Management <span class="perm-status">{% if can_view_all_users %}Granted{% else %}Restricted{% endif %}</span></div>
+            <div class="perm-row"><div class="perm-icon">L</div>Full Audit Log Access <span class="perm-status">Granted</span></div>
+          </div>
+          <button class="btn-edit" type="button">Edit Profile</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Account Preferences</div>
+            <div class="card-sub">Notifications, display and session settings</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="pref-section">
+            <div class="pref-section-title">Notifications</div>
+            <div class="pref-row"><div><div class="pref-label">High-Risk Alerts</div><div class="pref-desc">Email notification when a customer crosses the 70% risk threshold</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+            <div class="pref-row"><div><div class="pref-label">Upload Completion</div><div class="pref-desc">Notify when a dataset finishes processing</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+            <div class="pref-row"><div><div class="pref-label">Model Retrain Complete</div><div class="pref-desc">Alert when the ML pipeline finishes training</div></div><label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+          </div>
+          <div class="pref-section">
+            <div class="pref-section-title">Display</div>
+            <div class="pref-row"><div><div class="pref-label">Default Risk View</div><div class="pref-desc">Risk page default filter</div></div><select class="pref-select"><option>All Levels</option><option selected>High Risk Only</option><option>Medium Risk</option></select></div>
+            <div class="pref-row"><div><div class="pref-label">Rows per Page</div><div class="pref-desc">Number of records shown in tables</div></div><select class="pref-select"><option>10</option><option selected>20</option><option>50</option></select></div>
+          </div>
+          <div class="pref-section">
+            <div class="pref-section-title">Security</div>
+            <div class="pref-row"><div><div class="pref-label">Session Timeout</div><div class="pref-desc">Automatically log out after inactivity</div></div><select class="pref-select"><option>30 minutes</option><option selected>1 hour</option><option>4 hours</option></select></div>
+            <div class="pref-row"><div><div class="pref-label">Two-Factor Authentication</div><div class="pref-desc">Require verification code on login</div></div><label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="section-label">Team</div>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Registered Members</div>
+          <div class="card-sub">{% if can_view_all_users %}All users registered on VigilPay{% else %}Only your account is visible for non-admin users{% endif %}</div>
+        </div>
+        <span style="font-size:0.7rem;font-weight:700;color:#aaa">{{ member_count }} member{% if member_count != 1 %}s{% endif %}</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="team-table">
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Username</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Last Active</th>
+              {% if can_manage_accounts %}<th>Actions</th>{% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in members %}
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div class="team-av" style="background:var(--red)">{{ m.first_name|default:m.email|slice:":1"|upper }}{{ m.last_name|slice:":1"|upper }}</div>
+                  <div>
+                    <div class="team-name">{{ m.get_full_name|default:m.email }}</div>
+                    <div class="team-email">{{ m.email }}</div>
+                  </div>
+                </div>
+              </td>
+              <td style="font-size:0.72rem;color:#666">{{ m.username }}</td>
+              <td><span class="team-role-badge">{% if m.is_superuser %}Super Admin{% elif m.is_staff %}Staff{% else %}Member{% endif %}</span></td>
+              <td><div class="status-indicator"><div class="status-dot {% if m.is_active %}online{% else %}offline{% endif %}"></div><span style="color:{% if m.is_active %}#059669{% else %}#aaa{% endif %}">{% if m.is_active %}Active{% else %}Inactive{% endif %}</span></div></td>
+              <td style="font-size:0.72rem;color:#aaa">{{ m.last_activity|date:"M d, Y H:i" }}</td>
+
+              {% if can_manage_accounts %}
+              <td class="action-cell">
+                {% if m.pk == user.pk %}
+                  <span style="font-size:0.7rem;color:#888">Current account</span>
+                {% else %}
+                  <!-- Kebab trigger -->
+                  <button
+                    class="kebab-btn"
+                    type="button"
+                    aria-label="Member actions"
+                    onclick="toggleKebab(event, 'kebab-{{ m.id }}')"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 20 20" fill="currentColor">
+                      <circle cx="10" cy="4"  r="1.5"/>
+                      <circle cx="10" cy="10" r="1.5"/>
+                      <circle cx="10" cy="16" r="1.5"/>
+                    </svg>
+                  </button>
+
+                  <!-- Dropdown menu -->
+                  <div class="kebab-menu" id="kebab-{{ m.id }}">
+
+                    <!-- Suspend / Activate -->
+                    <form method="post" action="{% url 'manage_user_account' m.id %}">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="{% if m.is_active %}suspend{% else %}activate{% endif %}">
+                      <button type="submit" class="kebab-item">
+                        {% if m.is_active %}
+                          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+                          Suspend Account
+                        {% else %}
+                          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                          Activate Account
+                        {% endif %}
+                      </button>
+                    </form>
+
+                    <!-- Make / Remove Admin -->
+                    <form method="post" action="{% url 'manage_user_account' m.id %}">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="{% if m.is_staff or m.is_superuser %}remove_admin{% else %}make_admin{% endif %}">
+                      <button type="submit" class="kebab-item">
+                        {% if m.is_staff or m.is_superuser %}
+                          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                          Remove Admin
+                        {% else %}
+                          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                          Make Admin
+                        {% endif %}
+                      </button>
+                    </form>
+
+                    <div class="kebab-divider"></div>
+
+                    <!-- Delete -->
+                    <form method="post" action="{% url 'manage_user_account' m.id %}" onsubmit="return confirm('Delete this account permanently?')">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="delete">
+                      <button type="submit" class="kebab-item danger">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        Delete Account
+                      </button>
+                    </form>
+
+                  </div>
+                {% endif %}
+              </td>
+              {% endif %}
+            </tr>
+            {% empty %}
+            <tr><td colspan="{% if can_manage_accounts %}6{% else %}5{% endif %}" style="padding:16px;color:#777">No members found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="section-label">System</div>
+    <div class="danger-card">
+      <div class="danger-header">
+        <div class="danger-icon">
+          <svg width="16" height="16" fill="none" stroke="var(--red)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+        </div>
+        <div>
+          <div class="danger-title">System Maintenance - Danger Zone</div>
+          <div class="danger-sub">These actions are irreversible. Confirm before execution.</div>
+        </div>
+      </div>
+      <div class="danger-body">
+        <div class="danger-row">
+          <div class="danger-row-info">
+            <div class="danger-row-title">Clear Dataset</div>
+            <div class="danger-row-desc">Delete all customer and upload records from database.</div>
+          </div>
+          {% if can_manage_dataset %}
+            <button class="btn-danger-outline" type="button" onclick="openClearModal()">Clear Dataset</button>
+          {% else %}
+            <button class="btn-danger-outline" type="button" disabled style="opacity:0.55;cursor:not-allowed">Admin Only</button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if can_manage_dataset %}
+<div class="modal-backdrop" id="clearModal" onclick="closeIfBackdrop(event,'clearModal')">
+  <div class="modal">
+    <div class="modal-top">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div class="modal-icon-wrap red">
+          <svg width="20" height="20" fill="none" stroke="var(--red)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7"/></svg>
+        </div>
+        <div>
+          <div class="modal-title-text red">Confirm Dataset Deletion</div>
+          <div class="modal-subtitle">Type DELETE to continue</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeModal('clearModal')">X</button>
+    </div>
+    <div class="modal-body">
+      <div class="confirm-label">To confirm, type <strong>DELETE</strong></div>
+      <input type="text" class="confirm-input" id="clearConfirmInput" placeholder="Type DELETE to confirm" oninput="checkClearConfirm()">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-sec" onclick="closeModal('clearModal')">Cancel</button>
+      <button class="btn-modal-confirm" id="clearConfirmBtn" disabled type="submit" form="clearDatasetForm">Confirm Delete</button>
+    </div>
+  </div>
+</div>
+<form id="clearDatasetForm" method="post" action="{% url 'clear_dataset' %}" style="display:none">
+  {% csrf_token %}
+</form>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'scripts/dashboard_settings.js' %}"></script>
+<script>
+  // ── Kebab menu logic ──
+  function toggleKebab(e, id) {
+    e.stopPropagation();
+    const menu = document.getElementById(id);
+    const isOpen = menu.classList.contains('open');
+
+    // close all open menus first
+    document.querySelectorAll('.kebab-menu.open').forEach(m => m.classList.remove('open'));
+
+    if (!isOpen) menu.classList.add('open');
+  }
+
+  // close on outside click
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.kebab-menu.open').forEach(m => m.classList.remove('open'));
+  });
+
+  // prevent closing when clicking inside the menu
+  document.querySelectorAll('.kebab-menu').forEach(menu => {
+    menu.addEventListener('click', e => e.stopPropagation());
+  });
+</script>
+{% endblock %}

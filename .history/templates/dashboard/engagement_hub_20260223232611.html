@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %}Engagement Hub - VigilPay{% endblock %}
+{% block page_title %}Engagement Hub{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Retention Snapshot</div>
+        <div class="card-sub">Unified risk + action plan</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <p><strong>User:</strong> {{ retention_payload.user_info.username }} ({{ retention_payload.user_info.type }})</p>
+      <p><strong>Loyalty:</strong> {{ retention_payload.user_info.loyalty_score }}</p>
+      <p><strong>Risk:</strong> {{ retention_payload.risk_analysis.probability }}% ({{ retention_payload.risk_analysis.tier }})</p>
+      <p><strong>Factors:</strong> {{ retention_payload.risk_analysis.factors|join:", " }}</p>
+      <p><strong>Active Resolutions:</strong> {{ retention_payload.actionable_items.active_resolutions|join:", "|default:"None" }}</p>
+      <p><strong>Suggested Products:</strong> {{ retention_payload.actionable_items.suggested_products|join:", "|default:"None" }}</p>
+    </div>
+  </div>
+
+  <div class="top-grid">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Submit Complaint</div></div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="submit_complaint" />
+          <textarea name="complaint_text" rows="4" style="width:100%" placeholder="Describe your issue"></textarea>
+          <button class="btn-edit" type="submit" style="margin-top:8px">Send Complaint</button>
+        </form>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Quick Survey</div></div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="submit_survey" />
+          <label>Rating (1-5)</label>
+          <input type="number" min="1" max="5" name="rating" value="4" style="width:100%" />
+          <textarea name="feedback" rows="3" style="width:100%;margin-top:8px" placeholder="Feedback"></textarea>
+          <button class="btn-edit" type="submit" style="margin-top:8px">Submit Survey</button>
+        </form>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Savings Goal</div></div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="create_goal" />
+          <input type="text" name="goal_title" placeholder="Goal title" style="width:100%" />
+          <input type="number" step="0.01" name="target_amount" placeholder="Target amount" style="width:100%;margin-top:8px" />
+          <button class="btn-edit" type="submit" style="margin-top:8px">Create Goal</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="card-header"><div class="card-title">Complaints</div></div>
+    <div class="card-body">
+      <table class="team-table">
+        <thead><tr><th>User</th><th>Text</th><th>Category</th><th>Status</th>{% if is_admin %}<th>Action</th>{% endif %}</tr></thead>
+        <tbody>
+          {% for c in complaints %}
+          <tr>
+            <td>{{ c.user.username }}</td>
+            <td>{{ c.text|truncatechars:60 }}</td>
+            <td>{{ c.get_category_display }}</td>
+            <td>{{ c.get_status_display }}</td>
+            {% if is_admin %}
+            <td>
+              {% if c.status == 'open' %}
+              <form method="post" style="display:flex;gap:6px">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="resolve_complaint" />
+                <input type="hidden" name="complaint_id" value="{{ c.id }}" />
+                <input type="text" name="resolution_note" placeholder="Resolution note" />
+                <button class="btn-edit" type="submit">Resolve</button>
+              </form>
+              {% else %}
+              Resolved
+              {% endif %}
+            </td>
+            {% endif %}
+          </tr>
+          {% empty %}
+          <tr><td colspan="{% if is_admin %}5{% else %}4{% endif %}">No complaints yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="card-header"><div class="card-title">Notifications</div></div>
+    <div class="card-body">
+      {% if is_admin %}
+      <form method="post" style="display:flex;gap:8px;margin-bottom:10px">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create_notification" />
+        <input type="text" name="notification_title" placeholder="Title" />
+        <input type="text" name="notification_message" placeholder="Message" style="min-width:300px" />
+        <button class="btn-edit" type="submit">Create</button>
+      </form>
+      {% endif %}
+      <table class="team-table">
+        <thead><tr><th>Title</th><th>Message</th><th>Reviewed</th><th>Confirmed</th>{% if is_admin %}<th>Action</th>{% endif %}</tr></thead>
+        <tbody>
+          {% for n in notifications %}
+          <tr>
+            <td>{{ n.title }}</td>
+            <td>{{ n.message|truncatechars:70 }}</td>
+            <td>{{ n.is_reviewed }}</td>
+            <td>{{ n.is_confirmed }}</td>
+            {% if is_admin %}
+            <td style="display:flex;gap:6px">
+              <form method="post">{% csrf_token %}<input type="hidden" name="action" value="review_notification" /><input type="hidden" name="notification_id" value="{{ n.id }}" /><button class="btn-edit" type="submit">Review</button></form>
+              <form method="post">{% csrf_token %}<input type="hidden" name="action" value="confirm_notification" /><input type="hidden" name="notification_id" value="{{ n.id }}" /><button class="btn-edit" type="submit">Confirm</button></form>
+            </td>
+            {% endif %}
+          </tr>
+          {% empty %}
+          <tr><td colspan="{% if is_admin %}5{% else %}4{% endif %}">No notifications.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
