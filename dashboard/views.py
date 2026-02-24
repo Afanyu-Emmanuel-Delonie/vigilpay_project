@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
+from django.db import DatabaseError
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import CharField, Q
 from django.db.models.functions import Cast
@@ -93,7 +94,11 @@ def _compact_number(value, currency=False):
 
 @login_required(login_url="login_page")
 def dashboard_page(request):
-    customers = list(Customer.objects.all())
+    try:
+        customers = list(Customer.objects.all())
+    except DatabaseError:
+        messages.error(request, "Customer dataset is unavailable. Upload a dataset to continue.")
+        customers = []
 
     scored_customers = []
     geo_count = {}
