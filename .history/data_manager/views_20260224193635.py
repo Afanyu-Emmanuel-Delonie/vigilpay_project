@@ -92,7 +92,9 @@ def _validate_row(row, idx):
 @method_decorator(login_required(login_url="login_page"), name="dispatch")
 class UploadDataView(View):
     def post(self, request, *args, **kwargs):
-        
+        if not request.user.is_staff:
+            return JsonResponse({"error": "Only admin users can upload datasets."}, status=403)
+
         uploaded = request.FILES.get("file")
         if not uploaded:
             return JsonResponse({"error": "No file uploaded."}, status=400)
