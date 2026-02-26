@@ -169,3 +169,28 @@ def logout_page(request):
         return redirect("login_page")
     # GET requests just redirect back — no logout without a form POST
     return redirect("dashboard_page")
+
+
+# ---------------------------------------------------------------------------
+# Health Check / Ping (for keeping app active)
+# ---------------------------------------------------------------------------
+
+def health_check(request):
+    """
+    Simple health check endpoint that returns a JSON response.
+    Use this with external services like cron-job.org to keep the app active.
+    
+    Example cronjob URL: https://your-app.onrender.com/api/ping/
+    """
+    from django.http import JsonResponse
+    from django.utils import timezone
+    import random
+    
+    # Optionally trigger a small database query to keep the connection active
+    user_count = User.objects.count() if request.method == "POST" else None
+    
+    return JsonResponse({
+        "status": "active",
+        "message": "VigilPay is running",
+        "timestamp": timezone.now().isoformat(),
+    })
