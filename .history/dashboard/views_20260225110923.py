@@ -123,7 +123,7 @@ def _score_all_customers(customers: list) -> list:
             "balance": float(customer.balance or 0),
             "num_of_products": customer.num_of_products,
             "is_active_member": int(customer.is_active_member or 0),
-            "score": score,
+            "risk_score": score,
             "risk_level": _risk_level(score),
             "risk_class": _risk_level(score).lower(),
             "driver": _safe_driver(customer),
@@ -365,7 +365,7 @@ def data_management_page(request):
     )
     return render(request, "dashboard/data_management.html", {
         "upload_history": upload_history,
-        "can_manage_dataset": request.user.is_staff,
+        "can_manage_dataset": True,
     })
 
 
@@ -514,7 +514,7 @@ def settings_page(request):
     return render(request, "dashboard/settings.html", {
         "members": members,
         "member_count": members.count(),
-        "can_manage_dataset": request.user.is_staff,
+        "can_manage_dataset": True,
         "can_view_all_users": can_view_all,
     })
 

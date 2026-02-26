@@ -46,23 +46,25 @@ class RegisterSerializer(serializers.Serializer):
 
 
 class LoginSerializer(serializers.Serializer):
-    identifier = serializers.CharField(help_text="Username or email")
+    email = serializers.EmailField(help_text="User email address")
     password = serializers.CharField(write_only=True)
 
     def validate(self, attrs):
-        identifier = attrs["identifier"].strip()
+        email = attrs["email"].strip().lower()
         password = attrs["password"]
         request = self.context.get("request")
 
-        user = authenticate(request=request, username=identifier, password=password)
-
-        if user is None and "@" in identifier:
-            match = User.objects.filter(email__iexact=identifier).first()
-            if match:
-                user = authenticate(request=request, username=match.username, password=password)
+        # Find user by email
+        user_obj = User.objects.filter(email__iexact=email).first()
+        
+        if user_obj is None:
+            raise serializers.ValidationError({"detail": "Invalid email or password."})
+        
+        # Authenticate using username (Django standard)
+        user = authenticate(request=request, username=user_obj.username, password=password)
 
         if user is None:
-            raise serializers.ValidationError({"detail": "Invalid credentials."})
+            raise serializers.ValidationError({"detail": "Invalid email or password."})
         if not user.is_active:
             raise serializers.ValidationError({"detail": "Account is deactivated."})
         if not user.is_customer:
@@ -78,7 +80,7 @@ class LoginSerializer(serializers.Serializer):
 
 class UserSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
-    member_since = serializers.DateField(source="created_at", format="%Y-%m-%d")
+    member_since = serializers.DateTimeField(source="created_at", format="%Y-%m-%d") 
 
     class Meta:
         model = User
@@ -92,8 +94,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_full_name(self, obj):
         return obj.get_full_name()
-
-
+    
 class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User

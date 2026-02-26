@@ -365,7 +365,7 @@ def data_management_page(request):
     )
     return render(request, "dashboard/data_management.html", {
         "upload_history": upload_history,
-        "can_manage_dataset": request.user.is_staff,
+        "can_manage_dataset": True,
     })
 
 
@@ -514,7 +514,7 @@ def settings_page(request):
     return render(request, "dashboard/settings.html", {
         "members": members,
         "member_count": members.count(),
-        "can_manage_dataset": request.user.is_staff,
+        "can_manage_dataset": True,
         "can_view_all_users": can_view_all,
     })
 

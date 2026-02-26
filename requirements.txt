@@ -5,6 +5,7 @@ djangorestframework-simplejwt
 python-dotenv
 django-crispy-forms
 crispy-bootstrap5
+django-cors-headers
 
 # --- Data Science & ML ---
 pandas>=2.1.0

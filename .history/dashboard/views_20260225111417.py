@@ -1,4 +1,4 @@
-﻿import logging
+﻿﻿import logging
 from functools import wraps
 
 from django.contrib import messages
@@ -123,7 +123,7 @@ def _score_all_customers(customers: list) -> list:
             "balance": float(customer.balance or 0),
             "num_of_products": customer.num_of_products,
             "is_active_member": int(customer.is_active_member or 0),
-            "score": score,
+            "risk_score": score,
             "risk_level": _risk_level(score),
             "risk_class": _risk_level(score).lower(),
             "driver": _safe_driver(customer),
@@ -228,18 +228,18 @@ def dashboard_page(request):
         messages.error(request, "Customer dataset is unavailable. Upload a dataset to continue.")
         customers = []
 
-    # Score all customers in one pass â€” avoids repeated ML calls per page
+    # Score all customers in one pass — avoids repeated ML calls per page
     scored = _score_all_customers(customers)
-    scored.sort(key=lambda c: c["score"], reverse=True)
+    scored.sort(key=lambda c: c["risk_score"], reverse=True)
 
     total = len(scored)
-    high   = sum(1 for c in scored if c["score"] >= 70)
-    medium = sum(1 for c in scored if 40 <= c["score"] < 70)
+    high   = sum(1 for c in scored if c["risk_score"] >= 70)
+    medium = sum(1 for c in scored if 40 <= c["risk_score"] < 70)
     low    = total - high - medium
 
-    avg_score      = round(sum(c["score"] for c in scored) / total, 2) if total else 0.0
+    avg_score      = round(sum(c["risk_score"] for c in scored) / total, 2) if total else 0.0
     churn_rate     = round((high / total) * 100, 2) if total else 0.0
-    at_risk_balance = sum(c["balance"] for c in scored if c["score"] >= 80)
+    at_risk_balance = sum(c["balance"] for c in scored if c["risk_score"] >= 80)
     active_members = sum(1 for c in scored if c["is_active_member"] == 1)
 
     # Geography breakdown
@@ -255,7 +255,7 @@ def dashboard_page(request):
     tenure_count = {str(i): 0   for i in range(11)}
     for customer, row in zip(customers, scored):
         key = str(max(0, min(10, int(customer.tenure or 0))))
-        tenure_sum[key]   += row["score"]
+        tenure_sum[key]   += row["risk_score"]
         tenure_count[key] += 1
 
     tenure_values = [
@@ -264,8 +264,8 @@ def dashboard_page(request):
     ]
 
     # Scatter data (capped for performance)
-    high_points = [{"x": c["age"], "y": c["balance"]} for c in scored if c["score"] >= 50][:250]
-    low_points  = [{"x": c["age"], "y": c["balance"]} for c in scored if c["score"] < 50][:250]
+    high_points = [{"x": c["age"], "y": c["balance"]} for c in scored if c["risk_score"] >= 50][:250]
+    low_points  = [{"x": c["age"], "y": c["balance"]} for c in scored if c["risk_score"] < 50][:250]
 
     try:
         feature_importance = get_feature_importance()
@@ -287,7 +287,7 @@ def dashboard_page(request):
         "highest_geo": geo_labels[0] if geo_labels else "N/A",
         "highest_geo_count": geo_values[0] if geo_values else 0,
         "inactive_low_balance": sum(1 for c in scored if c["is_active_member"] == 0 and c["balance"] < 10000),
-        "multi_product_stable": sum(1 for c in scored if c["num_of_products"] >= 2 and c["score"] < 40),
+        "multi_product_stable": sum(1 for c in scored if c["num_of_products"] >= 2 and c["risk_score"] < 40),
         "feature_importance": feature_importance,
         "dashboard_data": {
             "bar":    {"labels": ["Low Risk", "Medium Risk", "High Risk"], "values": [low, medium, high]},
@@ -324,11 +324,11 @@ def risk_level_page(request):
         and (not query or query in str(c["customer_id"]).lower() or query in c["surname"].lower())
     ]
 
-    rows.sort(key=lambda c: c["score"], reverse=True)
+    rows.sort(key=lambda c: c["risk_score"], reverse=True)
 
     total  = len(rows)
-    high   = sum(1 for c in rows if c["score"] >= 70)
-    medium = sum(1 for c in rows if 40 <= c["score"] < 70)
+    high   = sum(1 for c in rows if c["risk_score"] >= 70)
+    medium = sum(1 for c in rows if 40 <= c["risk_score"] < 70)
     low    = total - high - medium
 
     geographies = sorted({c["geography"] for c in scored if c["geography"]})
@@ -365,7 +365,7 @@ def data_management_page(request):
     )
     return render(request, "dashboard/data_management.html", {
         "upload_history": upload_history,
-        "can_manage_dataset": request.user.is_staff,
+        "can_manage_dataset": True,
     })
 
 
@@ -514,7 +514,7 @@ def settings_page(request):
     return render(request, "dashboard/settings.html", {
         "members": members,
         "member_count": members.count(),
-        "can_manage_dataset": request.user.is_staff,
+        "can_manage_dataset": True,
         "can_view_all_users": can_view_all,
     })
 

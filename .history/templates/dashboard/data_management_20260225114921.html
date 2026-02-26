@@ -23,7 +23,7 @@
             <span style="font-size:0.62rem;font-weight:800;letter-spacing:0.08em;padding:3px 9px;border-radius:5px;background:var(--red-muted);color:var(--red)">CSV ONLY</span>
           </div>
           <div class="card-body">
-            
+            {% if can_manage_dataset %}
               <div class="upload-zone" id="uploadZone">
                 <input type="file" accept=".csv" id="fileInput">
                 <div class="upload-icon">
@@ -54,12 +54,12 @@
               </div>
             </div>
 
-            
+            {% if can_manage_dataset %}
               <button class="btn-upload" id="btnUpload" data-upload-url="{% url 'data_management_upload' %}">
                 <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
                 Begin ML Ingestion
               </button>
-          
+            {% endif %}
 
             <div class="processor" id="processor">
               <div class="proc-header">

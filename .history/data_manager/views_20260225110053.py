@@ -174,18 +174,10 @@ class UploadDataView(View):
             model_result = train_churn_model(training_samples, training_labels)
 
         created = 0
-        existing_customer_ids = set(Customer.objects.values_list('customer_id', flat=True))
         with transaction.atomic():
+            Customer.objects.all().delete()
             for idx, row, payload in prepared_rows:
                 customer_id = _to_int(_pick(row, "CustomerId", "customer_id", "customerid"), idx)
-                # Generate a unique customer_id if it already exists
-                original_customer_id = customer_id
-                counter = 1
-                while customer_id in existing_customer_ids:
-                    customer_id = f"{original_customer_id}_{counter}"
-                    counter += 1
-                existing_customer_ids.add(customer_id)
-                
                 predicted_score = predict_churn(payload)
                 Customer.objects.create(
                     customer_id=customer_id,
