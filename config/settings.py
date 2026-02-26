@@ -18,11 +18,15 @@ DEBUG = os.getenv("DEBUG", "False" if ON_RENDER else "True").lower() in {
 }
 
 _env_hosts = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "").split(",") if h.strip()]
-_default_hosts = ["127.0.0.1", "localhost"]
+_default_hosts = ["127.0.0.1", "localhost", "10.0.2.2", "0.0.0.0"]
 _render_hostname = os.getenv("RENDER_EXTERNAL_HOSTNAME", "").strip()
 if _render_hostname:
     _default_hosts.append(_render_hostname)
-ALLOWED_HOSTS = _env_hosts if _env_hosts else _default_hosts
+
+if DEBUG:
+    ALLOWED_HOSTS = ["*"]
+else:
+    ALLOWED_HOSTS = _env_hosts if _env_hosts else _default_hosts
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -33,8 +37,9 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
-    
-    # local apps 
+    "corsheaders",
+
+    # local apps
     "core",
     "customers",
     "data_manager",
@@ -45,6 +50,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -117,37 +123,26 @@ STORAGES = {
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "core.User"
 
-# Security hardening for hosted environments (Render/proxied HTTPS).
+# ── Security ──────────────────────────────────────────────────────────────────
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", str(not DEBUG)).lower() in {
-    "1",
-    "true",
-    "yes",
-    "on",
+    "1", "true", "yes", "on",
 }
 SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", str(not DEBUG)).lower() in {
-    "1",
-    "true",
-    "yes",
-    "on",
+    "1", "true", "yes", "on",
 }
 CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", str(not DEBUG)).lower() in {
-    "1",
-    "true",
-    "yes",
-    "on",
+    "1", "true", "yes", "on",
 }
 SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "0" if DEBUG else "31536000"))
 SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv(
     "SECURE_HSTS_INCLUDE_SUBDOMAINS", "True"
 ).lower() in {"1", "true", "yes", "on"}
 SECURE_HSTS_PRELOAD = os.getenv("SECURE_HSTS_PRELOAD", "True").lower() in {
-    "1",
-    "true",
-    "yes",
-    "on",
+    "1", "true", "yes", "on",
 }
 
+# ── Django REST Framework ─────────────────────────────────────────────────────
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -159,13 +154,66 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 20,
 }
 
+# ── CORS ──────────────────────────────────────────────────────────────────────
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True  # 👈 allows emulator + any dev client freely
+else:
+    CORS_ALLOWED_ORIGINS = [
+        # web clients
+        "http://localhost:3000",
+        "http://localhost:8000",
+        "http://localhost:8001",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:8000",
+        "http://0.0.0.0:8000",
+        "http://0.0.0.0:3000",
+        # Android emulator
+        "http://10.0.2.2:8000",
+        "http://10.0.2.2:8001",
+    ]
+
+    # append any extra origins from environment
+    _cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
+    for _origin in _cors_origins:
+        _origin = _origin.strip()
+        if _origin and _origin not in CORS_ALLOWED_ORIGINS:
+            CORS_ALLOWED_ORIGINS.append(_origin)
+
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
+
+# ── CSRF ──────────────────────────────────────────────────────────────────────
+CSRF_TRUSTED_ORIGINS = [
+    "http://10.0.2.2:8000",      
+    "http://10.0.2.2:8001",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "https://127.0.0.1:8443",
+    "https://localhost:8443",
+]
+
+# append render hostname if available
+if _render_hostname:
+    CSRF_TRUSTED_ORIGINS.append(f"https://{_render_hostname}")
+
+# ── Simple JWT ────────────────────────────────────────────────────────────────
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
-    'ROTATE_REFRESH_TOKENS': True,
+    'ACCESS_TOKEN_LIFETIME':        timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME':       timedelta(days=30),
+    'ROTATE_REFRESH_TOKENS':        True,
+    'BLACKLIST_AFTER_ROTATION':     True,   
+    'AUTH_HEADER_TYPES':            ('Bearer',),
+    'AUTH_TOKEN_CLASSES':           ('rest_framework_simplejwt.tokens.AccessToken',),
 }
 
-CSRF_TRUSTED_ORIGINS = [
-    'https://127.0.0.1:8443',
-    'https://localhost:8443',
-]
+
