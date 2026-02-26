@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
-    # django_crontab is added dynamically on Unix-like systems (Windows lacks fcntl)
+    "django_crontab",
 
     # local apps
     "core",
@@ -218,22 +218,16 @@ SIMPLE_JWT = {
 }
 
 # ── Cronjobs (Scheduled Tasks) ─────────────────────────────────────────────────
-# Only configure django-crontab on non-Windows platforms
-import sys
-if sys.platform != 'win32':
-    INSTALLED_APPS.append('django_crontab')
-    CRONJOBS = [
-        # Update churn risk scores daily at 2 AM
-        ('0 2 * * *', 'core.management.commands.update_churn_risk.Command', '>> /tmp/churn_update.log 2>&1'),
-        
-        # Generate recommendations every 6 hours
-        ('0 */6 * * *', 'core.management.commands.generate_recommendations.Command', '>> /tmp/recommendations.log 2>&1'),
-        
-        # Clean up old data weekly (Sundays at 3 AM)
-        ('0 3 * * 0', 'core.management.commands.cleanup_old_data.Command', '>> /tmp/cleanup.log 2>&1'),
-    ]
-else:
-    CRONJOBS = []
+CRONJOBS = [
+    # Update churn risk scores daily at 2 AM
+    ('0 2 * * *', 'core.management.commands.update_churn_risk.Command', '>> /tmp/churn_update.log 2>&1'),
+    
+    # Generate recommendations every 6 hours
+    ('0 */6 * * *', 'core.management.commands.generate_recommendations.Command', '>> /tmp/recommendations.log 2>&1'),
+    
+    # Clean up old data weekly (Sundays at 3 AM)
+    ('0 3 * * 0', 'core.management.commands.cleanup_old_data.Command', '>> /tmp/cleanup.log 2>&1'),
+]
 
 # Disable cronjobs in test/development if needed
 if DEBUG:
